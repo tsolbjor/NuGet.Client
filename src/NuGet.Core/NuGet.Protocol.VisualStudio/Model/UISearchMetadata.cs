@@ -9,7 +9,7 @@ using NuGet.Packaging.Core;
 namespace NuGet.Protocol.VisualStudio
 {
     /// <summary>
-    /// Model for Search results displayed by Visual Studio Package Manager dialog UI.
+    /// Model for Rank results displayed by Visual Studio Package Manager dialog UI.
     /// </summary>
     public class UISearchMetadata
     {
