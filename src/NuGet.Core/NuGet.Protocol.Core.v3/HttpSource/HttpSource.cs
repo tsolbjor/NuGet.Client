@@ -24,7 +24,7 @@ namespace NuGet.Protocol
     public class HttpSource : IDisposable
     {
         private const int BufferSize = 8192;
-        private readonly Func<Task<HttpHandlerResource>> _messageHandlerFactory;
+        private readonly Func<Task<HttpSourceHandler>> _messageHandlerFactory;
         private readonly Uri _baseUri;
         private HttpClient _httpClient;
         private bool _disposed;
@@ -40,10 +40,19 @@ namespace NuGet.Protocol
         // the default is 256 which is easy to hit if we don't limit concurrency
         private readonly static SemaphoreSlim _throttle = new SemaphoreSlim(ConcurrencyLimit, ConcurrencyLimit);
 
-        // Only one source may prompt at a time
-        private readonly static SemaphoreSlim _credentialPromptLock = new SemaphoreSlim(1, 1);
+        public HttpSource(string sourceUrl)
+        {
+            if (sourceUrl == null)
+            {
+                throw new ArgumentNullException(nameof(sourceUrl));
+            }
 
-        public HttpSource(string sourceUrl, Func<Task<HttpHandlerResource>> messageHandlerFactory)
+            _baseUri = new Uri(sourceUrl);
+            _messageHandlerFactory = () => HttpSourceHandlerFactory.CreateHandler(new PackageSource(sourceUrl));
+        }
+
+
+        public HttpSource(string sourceUrl, Func<Task<HttpSourceHandler>> messageHandlerFactory)
         {
             if (sourceUrl == null)
             {
@@ -85,6 +94,9 @@ namespace NuGet.Protocol
                 return result;
             }
 
+            var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            STSAuthHelper.PrepareSTSRequest(_baseUri, CredentialStore.Instance, request);
+
             await _throttle.WaitAsync();
 
             try
@@ -93,78 +105,29 @@ namespace NuGet.Protocol
 
                 Logger.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}.", "GET", uri));
 
-                ICredentials credentials = CredentialStore.Instance.GetCredentials(_baseUri);
-
-                var handlerResource = await _messageHandlerFactory();
-
-                var retry = true;
-                while (retry)
-                {
-                    if (credentials != null)
-                    {
-                        handlerResource.ClientHandler.Credentials = credentials;
-                    }
-                    else
-                    {
-                        handlerResource.ClientHandler.UseDefaultCredentials = true;
-                    }
-
-                    var request = new HttpRequestMessage(HttpMethod.Get, uri);
-                    STSAuthHelper.PrepareSTSRequest(_baseUri, CredentialStore.Instance, request);
-
-                    // Read the response headers before reading the entire stream to avoid timeouts from large packages.
-                    using (var response = await _httpClient.SendAsync(
+                // Read the response headers before reading the entire stream to avoid timeouts from large packages.
+                using (var response = await SendWithCredentialSupportAsync(
                         request,
                         HttpCompletionOption.ResponseHeadersRead,
+                        Logger,
                         cancellationToken))
+                {
+                    if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
                     {
-                        if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
-                        {
-                            Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
-                                "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
-                            return new HttpSourceResult();
-                        }
-
-                        if (response.StatusCode == HttpStatusCode.Unauthorized)
-                        {
-                            if (STSAuthHelper.TryRetrieveSTSToken(_baseUri, CredentialStore.Instance, response))
-                            {
-                                continue;
-                            }
-
-                            if (HttpHandlerResourceV3.PromptForCredentials != null)
-                            {
-                                credentials = await HttpHandlerResourceV3.PromptForCredentials(_baseUri, cancellationToken);
-                            }
-
-                            if (credentials == null)
-                            {
-                                response.EnsureSuccessStatusCode();
-                            }
-                            else
-                            {
-                                continue;
-                            }
-                        }
-
-                        retry = false;
-                        response.EnsureSuccessStatusCode();
-
-                        if (HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null && credentials != null)
-                        {
-                            HttpHandlerResourceV3.CredentialsSuccessfullyUsed(_baseUri, credentials);
-                        }
-
-                        await CreateCacheFile(result, response, context, cancellationToken);
-
                         Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
                             "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
-
-                        return result;
+                        return new HttpSourceResult();
                     }
-                }
 
-                return result;
+                    response.EnsureSuccessStatusCode();
+
+                    await CreateCacheFile(result, response, context, cancellationToken);
+
+                    Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
+                        "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
+
+                    return result;
+                }
             }
             finally
             {
@@ -175,6 +138,7 @@ namespace NuGet.Protocol
         private async Task<HttpResponseMessage> SendWithCredentialSupportAsync(
             HttpRequestMessage request,
             HttpCompletionOption completionOption,
+            ILogger log,
             CancellationToken cancellationToken)
         {
             HttpResponseMessage response = null;
@@ -212,9 +176,11 @@ namespace NuGet.Protocol
                             continue;
                         }
 
+                        log.LogDebug($"Unauthorized: {request.RequestUri}");
+
                         // Give up after 10 tries.
                         _authRetries++;
-                        if (_authRetries >= 10)
+                        if (_authRetries >= HttpSourceHandlerFactory.MaxAuthRetries)
                         {
                             return response;
                         }
@@ -244,9 +210,9 @@ namespace NuGet.Protocol
                     }
                 }
 
-                if (promptCredentials != null && HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null)
+                if (promptCredentials != null && HttpSourceHandler.CredentialsSuccessfullyUsed != null)
                 {
-                    HttpHandlerResourceV3.CredentialsSuccessfullyUsed(_baseUri, promptCredentials);
+                    HttpSourceHandler.CredentialsSuccessfullyUsed(_baseUri, promptCredentials);
                 }
 
                 return response;
@@ -257,19 +223,19 @@ namespace NuGet.Protocol
         {
             ICredentials promptCredentials = null;
 
-            if (HttpHandlerResourceV3.PromptForCredentials != null)
+            if (HttpSourceHandler.PromptForCredentials != null)
             {
                 try
                 {
                     // Only one prompt may display at a time.
-                    await _credentialPromptLock.WaitAsync();
+                    await HttpSourceHandlerFactory.CredentialPromptLock.WaitAsync();
 
                     promptCredentials =
-                        await HttpHandlerResourceV3.PromptForCredentials(_baseUri, cancellationToken);
+                        await HttpSourceHandler.PromptForCredentials(_baseUri, cancellationToken);
                 }
                 finally
                 {
-                    _credentialPromptLock.Release();
+                    HttpSourceHandlerFactory.CredentialPromptLock.Release();
                 }
             }
 
@@ -480,6 +446,8 @@ namespace NuGet.Protocol
             {
                 _httpClient.Dispose();
             }
+
+            _httpClientLock.Dispose();
         }
     }
 }

@@ -47,12 +47,12 @@ namespace NuGet.Protocol.Core.v3.Data
         /// <summary>
         /// Default caching handler used by the data client
         /// </summary>
-        public static HttpHandlerResourceV3 CreateHandler(HttpClientHandler clientHandler)
+        public static HttpSourceHandler CreateHandler(HttpClientHandler clientHandler)
         {
             // Retry handler wrapping the client
             var messageHandler = new RetryHandler(clientHandler, maxTries: 3);
 
-            return new HttpHandlerResourceV3(clientHandler, messageHandler);
+            return new HttpSourceHandler(clientHandler, messageHandler);
         }
 
         /// <summary>
