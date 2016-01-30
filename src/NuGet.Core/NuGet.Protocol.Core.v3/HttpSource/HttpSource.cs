@@ -34,11 +34,14 @@ namespace NuGet.Protocol
         private readonly SemaphoreSlim _httpClientLock = new SemaphoreSlim(1, 1);
 
         // In order to avoid too many open files error, set concurrent requests number to 16 on Mac
-        private readonly static int ConcurrencyLimit = RuntimeEnvironmentHelper.IsMacOSX ? 16 : 128;
+        private readonly static int ConcurrencyLimit = 16;
 
         // Limiting concurrent requests to limit the amount of files open at a time on Mac OSX
         // the default is 256 which is easy to hit if we don't limit concurrency
-        private readonly static SemaphoreSlim _throttle = new SemaphoreSlim(ConcurrencyLimit, ConcurrencyLimit);
+        private readonly static SemaphoreSlim _throttle =
+            RuntimeEnvironmentHelper.IsMacOSX 
+                ? new SemaphoreSlim(ConcurrencyLimit, ConcurrencyLimit)
+                : null;
 
         public HttpSource(PackageSource source, Func<Task<HttpHandlerResource>> messageHandlerFactory)
         {
@@ -99,42 +102,54 @@ namespace NuGet.Protocol
             }
 
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
-            STSAuthHelper.PrepareSTSRequest(_baseUri, CredentialStore.Instance, request);
+            log.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}.", "GET", uri));
 
-            await _throttle.WaitAsync();
+            // Read the response headers before reading the entire stream to avoid timeouts from large packages.
+            Func<Task<HttpResponseMessage>> throttleRequest = () => SendWithCredentialSupportAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
 
-            try
+            using (var response = await GetThrottled(throttleRequest, log))
             {
-                log.LogVerbose($"Current http requests queued: {_throttle.CurrentCount + 1}");
-
-                log.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}.", "GET", uri));
-
-                // Read the response headers before reading the entire stream to avoid timeouts from large packages.
-                using (var response = await SendWithCredentialSupportAsync(
-                        request,
-                        HttpCompletionOption.ResponseHeadersRead,
-                        cancellationToken))
+                if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
                 {
-                    if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
-                    {
-                        log.LogInformation(string.Format(CultureInfo.InvariantCulture,
-                            "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
-                        return new HttpSourceResult();
-                    }
-
-                    response.EnsureSuccessStatusCode();
-
-                    await CreateCacheFile(result, response, cacheContext, cancellationToken);
-
                     log.LogInformation(string.Format(CultureInfo.InvariantCulture,
                         "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
-
-                    return result;
+                    return new HttpSourceResult();
                 }
+
+                response.EnsureSuccessStatusCode();
+
+                await CreateCacheFile(result, response, cacheContext, cancellationToken);
+
+                log.LogInformation(string.Format(CultureInfo.InvariantCulture,
+                    "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
+
+                return result;
             }
-            finally
+        }
+
+        private static async Task<HttpResponseMessage> GetThrottled(Func<Task<HttpResponseMessage>> request, ILogger log)
+        {
+            if (_throttle == null)
             {
-                _throttle.Release();
+                return await request();
+            }
+            else
+            {
+                try
+                {
+                    await _throttle.WaitAsync();
+
+                    log.LogVerbose($"Current http requests queued: {_throttle.CurrentCount + 1}");
+
+                    return await request();
+                }
+                finally
+                {
+                    _throttle.Release();
+                }
             }
         }
 
@@ -169,6 +184,9 @@ namespace NuGet.Protocol
             // Keep a local copy of the http client, this allows the thread to check if another thread has
             // already added new credentials.
             var httpClient = _httpClient;
+
+            // Update the request for STS
+            STSAuthHelper.PrepareSTSRequest(_baseUri, CredentialStore.Instance, request);
 
             // Authorizing may take multiple attempts
             while (true)
