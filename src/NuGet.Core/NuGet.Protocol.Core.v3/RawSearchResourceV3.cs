@@ -10,21 +10,20 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Protocol.Core.Types;
-using NuGet.Protocol.Core.v3.Data;
 
 namespace NuGet.Protocol.Core.v3
 {
     public class RawSearchResourceV3 : INuGetResource
     {
-        private readonly DataClient _client;
+        private readonly HttpSource _client;
         private readonly Uri[] _searchEndpoints;
 
-        public RawSearchResourceV3(HttpMessageHandler handler, IEnumerable<Uri> searchEndpoints)
+        public RawSearchResourceV3(HttpSource client, IEnumerable<Uri> searchEndpoints)
             : base()
         {
-            if (handler == null)
+            if (client == null)
             {
-                throw new ArgumentNullException("handler");
+                throw new ArgumentNullException(nameof(client));
             }
 
             if (searchEndpoints == null)
@@ -32,7 +31,7 @@ namespace NuGet.Protocol.Core.v3
                 throw new ArgumentNullException("searchEndpoints");
             }
 
-            _client = new DataClient(handler);
+            _client = client;
             _searchEndpoints = searchEndpoints.ToArray();
         }
 

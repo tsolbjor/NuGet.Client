@@ -19,14 +19,14 @@ using NuGet.Versioning;
 
 namespace NuGet.Protocol.Core.v3.DependencyInfo
 {
-    internal static class ResolverMetadataClient
+    internal static class ResolverMetaDataClient
     {
         /// <summary>
         /// Retrieve the <see cref="RemoteSourceDependencyInfo" /> for a registration.
         /// </summary>
         /// <returns>Returns an empty sequence if the package does not exist.</returns>
         public static async Task<IEnumerable<RemoteSourceDependencyInfo>> GetDependencies(
-            HttpClient httpClient,
+            HttpSource httpClient,
             Uri registrationUri,
             VersionRange range,
             CancellationToken token)
@@ -112,7 +112,7 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
         /// </summary>
         /// <returns>Returns Null if the package does not exist</returns>
         public static async Task<RegistrationInfo> GetRegistrationInfo(
-            HttpClient httpClient,
+            HttpSource httpClient,
             Uri registrationUri,
             VersionRange range,
             NuGetFramework projectTargetFramework,

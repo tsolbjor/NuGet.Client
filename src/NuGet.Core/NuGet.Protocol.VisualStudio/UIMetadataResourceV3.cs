@@ -11,7 +11,6 @@ using NuGet.Frameworks;
 using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.v3;
-using NuGet.Protocol.Core.v3.Data;
 using NuGet.Versioning;
 
 namespace NuGet.Protocol.VisualStudio
@@ -20,9 +19,9 @@ namespace NuGet.Protocol.VisualStudio
     {
         private readonly RegistrationResourceV3 _regResource;
         private readonly ReportAbuseResourceV3 _reportAbuseResource;
-        private readonly DataClient _client;
+        private readonly HttpSource _client;
 
-        public UIMetadataResourceV3(DataClient client, RegistrationResourceV3 regResource, ReportAbuseResourceV3 reportAbuseResource)
+        public UIMetadataResourceV3(HttpSource client, RegistrationResourceV3 regResource, ReportAbuseResourceV3 reportAbuseResource)
             : base()
         {
             _regResource = regResource;

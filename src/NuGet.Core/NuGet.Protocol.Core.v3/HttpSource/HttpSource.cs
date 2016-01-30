@@ -17,7 +17,6 @@ using NuGet.Configuration;
 using NuGet.Logging;
 using NuGet.Protocol.Core.Types;
 using NuGet.Protocol.Core.v3;
-using NuGet.Protocol.Core.v3.Data;
 
 namespace NuGet.Protocol
 {
@@ -39,6 +38,22 @@ namespace NuGet.Protocol
         // Limiting concurrent requests to limit the amount of files open at a time on Mac OSX
         // the default is 256 which is easy to hit if we don't limit concurrency
         private readonly static SemaphoreSlim _throttle = new SemaphoreSlim(ConcurrencyLimit, ConcurrencyLimit);
+
+        public HttpSource(PackageSource source, Func<Task<HttpHandlerResource>> messageHandlerFactory)
+        {
+            if (source == null)
+            {
+                throw new ArgumentNullException(nameof(source));
+            }
+
+            if (messageHandlerFactory == null)
+            {
+                throw new ArgumentNullException(nameof(messageHandlerFactory));
+            }
+
+            _baseUri = new Uri(source.Source);
+            _messageHandlerFactory = messageHandlerFactory;
+        }
 
         public HttpSource(string sourceUrl, Func<Task<HttpHandlerResource>> messageHandlerFactory)
         {
@@ -432,6 +447,13 @@ namespace NuGet.Protocol
             }
 
             _httpClientLock.Dispose();
+        }
+
+        public static HttpSource Create(SourceRepository source)
+        {
+            Func<Task<HttpHandlerResource>> factory = () => source.GetResourceAsync<HttpHandlerResource>();
+
+            return new HttpSource(source.PackageSource, factory);
         }
     }
 }

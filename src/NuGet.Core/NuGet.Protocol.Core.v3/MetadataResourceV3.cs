@@ -19,9 +19,9 @@ namespace NuGet.Protocol.Core.v3
     public class MetadataResourceV3 : MetadataResource
     {
         private RegistrationResourceV3 _regResource;
-        private HttpClient _client;
+        private HttpSource _client;
 
-        public MetadataResourceV3(HttpClient client, RegistrationResourceV3 regResource)
+        public MetadataResourceV3(HttpSource client, RegistrationResourceV3 regResource)
             : base()
         {
             if (client == null)

@@ -21,7 +21,7 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
             return new VersionRange(range.MinVersion, range.IsMinInclusive, range.MaxVersion, range.IsMaxInclusive, includePrerelease);
         }
 
-        public static async Task<JObject> GetJObjectAsync(HttpClient httpClient, Uri registrationUri)
+        public static async Task<JObject> GetJObjectAsync(HttpSource httpClient, Uri registrationUri)
         {
             var json = await httpClient.GetStringAsync(registrationUri);
             return JObject.Parse(json);
@@ -32,7 +32,7 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
             return new string(Enumerable.Repeat(' ', depth).ToArray());
         }
 
-        public static async Task<JObject> LoadResource(HttpClient httpClient, Uri uri, CancellationToken token)
+        public static async Task<JObject> LoadResource(HttpSource httpClient, Uri uri, CancellationToken token)
         {
             var response = await httpClient.GetAsync(uri, token);
 
@@ -49,7 +49,7 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
             return obj;
         }
 
-        public static async Task<bool> ResourceExists(HttpClient httpClient, Uri uri, CancellationToken token)
+        public static async Task<bool> ResourceExists(HttpSource httpClient, Uri uri, CancellationToken token)
         {
             using (var response = await httpClient.GetAsync(uri, token))
             {
@@ -58,7 +58,7 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
         }
 
         public async static Task<IEnumerable<JObject>> LoadRanges(
-            HttpClient httpClient,
+            HttpSource httpClient,
             Uri registrationUri,
             VersionRange range,
             CancellationToken token)

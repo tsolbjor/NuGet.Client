@@ -22,9 +22,9 @@ namespace NuGet.Protocol.Core.v3
     /// </summary>
     public class RegistrationResourceV3 : INuGetResource
     {
-        private readonly HttpClient _client;
+        private readonly HttpSource _client;
 
-        public RegistrationResourceV3(HttpClient client, Uri baseUrl)
+        public RegistrationResourceV3(HttpSource client, Uri baseUrl)
         {
             if (client == null)
             {

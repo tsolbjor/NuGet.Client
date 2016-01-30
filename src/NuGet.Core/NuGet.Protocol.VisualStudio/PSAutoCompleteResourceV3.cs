@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using NuGet.Protocol.Core.Types;
 using NuGet.Protocol.Core.v3;
-using NuGet.Protocol.Core.v3.Data;
 using NuGet.Versioning;
 
 namespace NuGet.Protocol.VisualStudio
@@ -18,9 +17,9 @@ namespace NuGet.Protocol.VisualStudio
     {
         private readonly RegistrationResourceV3 _regResource;
         private readonly ServiceIndexResourceV3 _serviceIndex;
-        private readonly DataClient _client;
+        private readonly HttpSource _client;
 
-        public PSAutoCompleteResourceV3(DataClient client, ServiceIndexResourceV3 serviceIndex, RegistrationResourceV3 regResource)
+        public PSAutoCompleteResourceV3(HttpSource client, ServiceIndexResourceV3 serviceIndex, RegistrationResourceV3 regResource)
             : base()
         {
             _regResource = regResource;

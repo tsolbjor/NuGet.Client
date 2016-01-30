@@ -21,13 +21,13 @@ namespace NuGet.Protocol.Core.v3
     public class DownloadResourceV3 : DownloadResource
     {
         private readonly RegistrationResourceV3 _regResource;
-        private readonly HttpClient _client;
+        private readonly HttpSource _client;
         private readonly string _packageBaseAddressUrl;
 
         /// <summary>
         /// Download packages using the download url found in the registration resource.
         /// </summary>
-        public DownloadResourceV3(HttpClient client, RegistrationResourceV3 regResource)
+        public DownloadResourceV3(HttpSource client, RegistrationResourceV3 regResource)
             : this(client)
         {
             if (regResource == null)
@@ -41,7 +41,7 @@ namespace NuGet.Protocol.Core.v3
         /// <summary>
         /// Download packages using the package base address container resource.
         /// </summary>
-        public DownloadResourceV3(HttpClient client, string packageBaseAddress)
+        public DownloadResourceV3(HttpSource client, string packageBaseAddress)
             : this(client)
         {
             if (packageBaseAddress == null)
@@ -52,7 +52,7 @@ namespace NuGet.Protocol.Core.v3
             _packageBaseAddressUrl = packageBaseAddress.TrimEnd('/');
         }
 
-        private DownloadResourceV3(HttpClient client)
+        private DownloadResourceV3(HttpSource client)
         {
             if (client == null)
             {

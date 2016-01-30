@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using NuGet.Configuration;
 using NuGet.Protocol.Core.Types;
-using NuGet.Protocol.Core.v3.Data;
 using NuGet.Versioning;
 
 namespace NuGet.Protocol.Core.v3
@@ -43,53 +42,18 @@ namespace NuGet.Protocol.Core.v3
         // An exception will be thrown on failure.
         private async Task<JObject> GetIndexJson(SourceRepository source, CancellationToken token)
         {
-            var uri = new Uri(source.PackageSource.Source);
-            ICredentials credentials = CredentialStore.Instance.GetCredentials(uri);
-            while (true)
+            using (var client = HttpSource.Create(source))
             {
-                var messageHandlerResource = await source.GetResourceAsync<HttpHandlerResource>(token);
-                if (credentials != null)
+                var response = await client.GetAsync(source.PackageSource.Source, token);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    messageHandlerResource.ClientHandler.Credentials = credentials;
-                }
-                else
-                {
-                    messageHandlerResource.ClientHandler.UseDefaultCredentials = true;
-                }
-
-                using (var client = new DataClient(messageHandlerResource))
-                {
-                    var response = await client.GetAsync(uri, token);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        if (HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null && credentials != null)
-                        {
-                            HttpHandlerResourceV3.CredentialsSuccessfullyUsed(uri, credentials);
-                        }
-
-                        var text = await response.Content.ReadAsStringAsync();
-                        return JObject.Parse(text);
-                    }
-                    else if (response.StatusCode == HttpStatusCode.Unauthorized)
-                    {
-                        credentials = null;
-                        if (HttpHandlerResourceV3.PromptForCredentials != null)
-                        {
-                            credentials = await HttpHandlerResourceV3.PromptForCredentials(uri, token);
-                        }
-
-                        if (credentials == null)
-                        {
-                            response.EnsureSuccessStatusCode();
-                        }
-                    }
-                    else
-                    {
-                        response.EnsureSuccessStatusCode();
-                    }
+                    var text = await response.Content.ReadAsStringAsync();
+                    return JObject.Parse(text);
                 }
             }
+
+            return null;
         }
 
         public override async Task<Tuple<bool, INuGetResource>> TryCreate(SourceRepository source, CancellationToken token)
