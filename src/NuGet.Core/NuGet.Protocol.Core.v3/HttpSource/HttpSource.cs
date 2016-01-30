@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Logging;
@@ -82,7 +83,7 @@ namespace NuGet.Protocol
 
         internal async Task<HttpSourceResult> GetAsync(string uri,
             string cacheKey,
-            HttpSourceCacheContext context,
+            HttpSourceCacheContext cacheContext,
             ILogger log,
             bool ignoreNotFounds,
             CancellationToken cancellationToken)
@@ -90,7 +91,7 @@ namespace NuGet.Protocol
             var sw = new Stopwatch();
             sw.Start();
 
-            var result = await TryCache(uri, cacheKey, context, cancellationToken);
+            var result = await TryCache(uri, cacheKey, cacheContext, cancellationToken);
             if (result.Stream != null)
             {
                 log.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}", "CACHE", uri));
@@ -123,7 +124,7 @@ namespace NuGet.Protocol
 
                     response.EnsureSuccessStatusCode();
 
-                    await CreateCacheFile(result, response, context, cancellationToken);
+                    await CreateCacheFile(result, response, cacheContext, cancellationToken);
 
                     log.LogInformation(string.Format(CultureInfo.InvariantCulture,
                         "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
@@ -135,6 +136,26 @@ namespace NuGet.Protocol
             {
                 _throttle.Release();
             }
+        }
+
+        public async Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken token)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<string> GetStringAsync(Uri uri)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<Stream> GetStreamAsync(Uri uri)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<JObject> GetJObjectAsync(Uri uri, CancellationToken token)
+        {
+            throw new NotImplementedException();
         }
 
         private async Task<HttpResponseMessage> SendWithCredentialSupportAsync(

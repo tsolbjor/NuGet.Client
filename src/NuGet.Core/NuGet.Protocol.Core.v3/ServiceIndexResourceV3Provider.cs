@@ -42,9 +42,11 @@ namespace NuGet.Protocol.Core.v3
         // An exception will be thrown on failure.
         private async Task<JObject> GetIndexJson(SourceRepository source, CancellationToken token)
         {
+            var uri = new Uri(source.PackageSource.Source);
+
             using (var client = HttpSource.Create(source))
             {
-                var response = await client.GetAsync(source.PackageSource.Source, token);
+                var response = await client.GetAsync(uri, token);
 
                 if (response.IsSuccessStatusCode)
                 {
