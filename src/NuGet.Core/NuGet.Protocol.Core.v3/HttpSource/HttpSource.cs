@@ -56,19 +56,19 @@ namespace NuGet.Protocol
             _messageHandlerFactory = messageHandlerFactory;
         }
 
-        public ILogger Logger { get; set; }
-
         internal Task<HttpSourceResult> GetAsync(string uri,
             string cacheKey,
             HttpSourceCacheContext context,
+            ILogger log,
             CancellationToken cancellationToken)
         {
-            return GetAsync(uri, cacheKey, context, ignoreNotFounds: false, cancellationToken: cancellationToken);
+            return GetAsync(uri, cacheKey, context, log, ignoreNotFounds: false, cancellationToken: cancellationToken);
         }
 
         internal async Task<HttpSourceResult> GetAsync(string uri,
             string cacheKey,
             HttpSourceCacheContext context,
+            ILogger log,
             bool ignoreNotFounds,
             CancellationToken cancellationToken)
         {
@@ -78,7 +78,7 @@ namespace NuGet.Protocol
             var result = await TryCache(uri, cacheKey, context, cancellationToken);
             if (result.Stream != null)
             {
-                Logger.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}", "CACHE", uri));
+                log.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}", "CACHE", uri));
                 return result;
             }
 
@@ -89,9 +89,9 @@ namespace NuGet.Protocol
 
             try
             {
-                Logger.LogVerbose($"Current http requests queued: {_throttle.CurrentCount + 1}");
+                log.LogVerbose($"Current http requests queued: {_throttle.CurrentCount + 1}");
 
-                Logger.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}.", "GET", uri));
+                log.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}.", "GET", uri));
 
                 // Read the response headers before reading the entire stream to avoid timeouts from large packages.
                 using (var response = await SendWithCredentialSupportAsync(
@@ -101,7 +101,7 @@ namespace NuGet.Protocol
                 {
                     if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
                     {
-                        Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
+                        log.LogInformation(string.Format(CultureInfo.InvariantCulture,
                             "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
                         return new HttpSourceResult();
                     }
@@ -110,7 +110,7 @@ namespace NuGet.Protocol
 
                     await CreateCacheFile(result, response, context, cancellationToken);
 
-                    Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
+                    log.LogInformation(string.Format(CultureInfo.InvariantCulture,
                         "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
 
                     return result;
