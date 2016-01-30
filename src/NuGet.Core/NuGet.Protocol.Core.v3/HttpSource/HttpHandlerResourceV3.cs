@@ -8,17 +8,17 @@ using System.Threading.Tasks;
 using NuGet.Protocol.Core.Types;
 using System.Threading;
 
-namespace NuGet.Protocol
+namespace NuGet.Protocol.Core.v3
 {
     /// <summary>
     /// Resource wrapper for an HttpClient
     /// </summary>
-    public class HttpSourceHandler
+    public class HttpHandlerResourceV3 : HttpHandlerResource
     {
         private readonly HttpClientHandler _clientHandler;
         private readonly HttpMessageHandler _messageHandler;
 
-        public HttpSourceHandler(HttpClientHandler clientHandler, HttpMessageHandler messageHandler)
+        public HttpHandlerResourceV3(HttpClientHandler clientHandler, HttpMessageHandler messageHandler)
         {
             if (clientHandler == null)
             {
@@ -34,12 +34,12 @@ namespace NuGet.Protocol
             _messageHandler = messageHandler;
         }
 
-        public HttpClientHandler ClientHandler
+        public override HttpClientHandler ClientHandler
         {
             get { return _clientHandler; }
         }
 
-        public HttpMessageHandler MessageHandler
+        public override HttpMessageHandler MessageHandler
         {
             get { return _messageHandler; }
         }

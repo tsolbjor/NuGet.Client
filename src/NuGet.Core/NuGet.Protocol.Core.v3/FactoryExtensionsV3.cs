@@ -26,7 +26,6 @@ namespace NuGet.Protocol.Core.v3
         {
             yield return new Lazy<INuGetResourceProvider>(() => new DependencyInfoResourceV3Provider());
             yield return new Lazy<INuGetResourceProvider>(() => new DownloadResourceV3Provider());
-            yield return new Lazy<INuGetResourceProvider>(() => new HttpHandlerResourceV3Provider());
             yield return new Lazy<INuGetResourceProvider>(() => new MetadataResourceV3Provider());
             yield return new Lazy<INuGetResourceProvider>(() => new RawSearchResourceV3Provider());
             yield return new Lazy<INuGetResourceProvider>(() => new RegistrationResourceV3Provider());

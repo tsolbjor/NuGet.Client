@@ -63,9 +63,9 @@ namespace NuGet.Protocol.Core.v3
 
                     if (response.IsSuccessStatusCode)
                     {
-                        if (HttpSourceHandler.CredentialsSuccessfullyUsed != null && credentials != null)
+                        if (HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null && credentials != null)
                         {
-                            HttpSourceHandler.CredentialsSuccessfullyUsed(uri, credentials);
+                            HttpHandlerResourceV3.CredentialsSuccessfullyUsed(uri, credentials);
                         }
 
                         var text = await response.Content.ReadAsStringAsync();
@@ -74,9 +74,9 @@ namespace NuGet.Protocol.Core.v3
                     else if (response.StatusCode == HttpStatusCode.Unauthorized)
                     {
                         credentials = null;
-                        if (HttpSourceHandler.PromptForCredentials != null)
+                        if (HttpHandlerResourceV3.PromptForCredentials != null)
                         {
-                            credentials = await HttpSourceHandler.PromptForCredentials(uri, token);
+                            credentials = await HttpHandlerResourceV3.PromptForCredentials(uri, token);
                         }
 
                         if (credentials == null)

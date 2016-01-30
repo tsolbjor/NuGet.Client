@@ -38,7 +38,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         public HttpFileSystemBasedFindPackageByIdResource(
             IReadOnlyList<Uri> baseUris,
-            HttpHandlerResource handlerFactory)
+            Func<Task<HttpHandlerResource>> handlerFactory)
         {
             if (baseUris == null)
             {

@@ -24,7 +24,7 @@ namespace NuGet.Protocol
     public class HttpSource : IDisposable
     {
         private const int BufferSize = 8192;
-        private readonly Func<Task<HttpSourceHandler>> _messageHandlerFactory;
+        private readonly Func<Task<HttpHandlerResource>> _messageHandlerFactory;
         private readonly Uri _baseUri;
         private HttpClient _httpClient;
         private bool _disposed;
@@ -40,19 +40,7 @@ namespace NuGet.Protocol
         // the default is 256 which is easy to hit if we don't limit concurrency
         private readonly static SemaphoreSlim _throttle = new SemaphoreSlim(ConcurrencyLimit, ConcurrencyLimit);
 
-        public HttpSource(string sourceUrl)
-        {
-            if (sourceUrl == null)
-            {
-                throw new ArgumentNullException(nameof(sourceUrl));
-            }
-
-            _baseUri = new Uri(sourceUrl);
-            _messageHandlerFactory = () => HttpSourceHandlerFactory.CreateHandler(new PackageSource(sourceUrl));
-        }
-
-
-        public HttpSource(string sourceUrl, Func<Task<HttpSourceHandler>> messageHandlerFactory)
+        public HttpSource(string sourceUrl, Func<Task<HttpHandlerResource>> messageHandlerFactory)
         {
             if (sourceUrl == null)
             {
@@ -109,7 +97,6 @@ namespace NuGet.Protocol
                 using (var response = await SendWithCredentialSupportAsync(
                         request,
                         HttpCompletionOption.ResponseHeadersRead,
-                        Logger,
                         cancellationToken))
                 {
                     if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
@@ -138,7 +125,6 @@ namespace NuGet.Protocol
         private async Task<HttpResponseMessage> SendWithCredentialSupportAsync(
             HttpRequestMessage request,
             HttpCompletionOption completionOption,
-            ILogger log,
             CancellationToken cancellationToken)
         {
             HttpResponseMessage response = null;
@@ -176,11 +162,9 @@ namespace NuGet.Protocol
                             continue;
                         }
 
-                        log.LogDebug($"Unauthorized: {request.RequestUri}");
-
                         // Give up after 10 tries.
                         _authRetries++;
-                        if (_authRetries >= HttpSourceHandlerFactory.MaxAuthRetries)
+                        if (_authRetries >= 10)
                         {
                             return response;
                         }
@@ -210,9 +194,9 @@ namespace NuGet.Protocol
                     }
                 }
 
-                if (promptCredentials != null && HttpSourceHandler.CredentialsSuccessfullyUsed != null)
+                if (promptCredentials != null && HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null)
                 {
-                    HttpSourceHandler.CredentialsSuccessfullyUsed(_baseUri, promptCredentials);
+                    HttpHandlerResourceV3.CredentialsSuccessfullyUsed(_baseUri, promptCredentials);
                 }
 
                 return response;
@@ -223,19 +207,19 @@ namespace NuGet.Protocol
         {
             ICredentials promptCredentials = null;
 
-            if (HttpSourceHandler.PromptForCredentials != null)
+            if (HttpHandlerResourceV3.PromptForCredentials != null)
             {
                 try
                 {
                     // Only one prompt may display at a time.
-                    await HttpSourceHandlerFactory.CredentialPromptLock.WaitAsync();
+                    await HttpHandlerResourceV3Provider.CredentialPromptLock.WaitAsync();
 
                     promptCredentials =
-                        await HttpSourceHandler.PromptForCredentials(_baseUri, cancellationToken);
+                        await HttpHandlerResourceV3.PromptForCredentials(_baseUri, cancellationToken);
                 }
                 finally
                 {
-                    HttpSourceHandlerFactory.CredentialPromptLock.Release();
+                    HttpHandlerResourceV3Provider.CredentialPromptLock.Release();
                 }
             }
 

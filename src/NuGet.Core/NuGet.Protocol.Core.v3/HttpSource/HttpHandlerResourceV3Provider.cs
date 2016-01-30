@@ -13,23 +13,46 @@ using NuGet.Protocol.Core.v3;
 
 namespace NuGet.Protocol
 {
-    public static class HttpSourceHandlerFactory
+    public class HttpHandlerResourceV3Provider : ResourceProvider
     {
         // Only one source may prompt at a time
         internal readonly static SemaphoreSlim CredentialPromptLock = new SemaphoreSlim(1, 1);
         internal const int MaxAuthRetries = 10;
 
-        public static Task<HttpSourceHandler> CreateHandler(PackageSource packageSource)
+        public HttpHandlerResourceV3Provider()
+            : base(typeof(HttpHandlerResource),
+                  nameof(HttpHandlerResourceV3Provider),
+                  NuGetResourceProviderPositions.Last)
+        {
+        }
+
+        public override Task<Tuple<bool, INuGetResource>> TryCreate(SourceRepository source, CancellationToken token)
+        {
+            Debug.Assert(source.PackageSource.IsHttp, "HTTP handler requested for a non-http source.");
+
+            HttpHandlerResourceV3 curResource = null;
+
+            if (source.PackageSource.IsHttp)
+            {
+                var clientHandler = CreateCredentialHandler(source.PackageSource);
+
+                // replace the handler with the proxy aware handler
+                curResource = CreateHandler(source.PackageSource);
+            }
+
+            return Task.FromResult(new Tuple<bool, INuGetResource>(curResource != null, curResource));
+        }
+
+        private static HttpHandlerResourceV3 CreateHandler(PackageSource packageSource)
         {
             var handler = CreateCredentialHandler(packageSource);
 
             var retryHandler = new RetryHandler(handler, maxTries: 3);
 
-            var resource = new HttpSourceHandler(handler, retryHandler);
+            var resource = new HttpHandlerResourceV3(handler, retryHandler);
 
-            return Task.FromResult<HttpSourceHandler>(resource);
+            return resource;
         }
-
 
 #if DNXCORE50
         public static HttpClientHandler CreateCredentialHandler(PackageSource packageSource)
@@ -90,9 +113,9 @@ namespace NuGet.Protocol
                     try
                     {
                         var response = await base.SendAsync(request, cancellationToken);
-                        if (HttpSourceHandler.ProxyPassed != null && Proxy != null)
+                        if (HttpHandlerResourceV3.ProxyPassed != null && Proxy != null)
                         {
-                            HttpSourceHandler.ProxyPassed(Proxy);
+                            HttpHandlerResourceV3.ProxyPassed(Proxy);
                         }
 
                         return response;
@@ -100,7 +123,7 @@ namespace NuGet.Protocol
                     catch (HttpRequestException ex)
                     {
                         if (ProxyAuthenticationRequired(ex) &&
-                            HttpSourceHandler.PromptForProxyCredentials != null)
+                            HttpHandlerResourceV3.PromptForProxyCredentials != null)
                         {
                             ICredentials currentCredentials = Proxy.Credentials;
 
@@ -122,7 +145,7 @@ namespace NuGet.Protocol
                                 }
 
                                 // prompt use for proxy credentials.
-                                var credentials = await HttpSourceHandler
+                                var credentials = await HttpHandlerResourceV3
                                     .PromptForProxyCredentials(request.RequestUri, Proxy, cancellationToken);
 
                                 if (credentials == null)
