@@ -84,6 +84,9 @@ namespace NuGet.Protocol
             return GetAsync(uri, cacheKey, context, log, ignoreNotFounds: false, cancellationToken: cancellationToken);
         }
 
+        /// <summary>
+        /// Caching Get request.
+        /// </summary>
         internal async Task<HttpSourceResult> GetAsync(string uri,
             string cacheKey,
             HttpSourceCacheContext cacheContext,
@@ -130,6 +133,30 @@ namespace NuGet.Protocol
             }
         }
 
+        /// <summary>
+        /// Wraps logging of the initial request and throttling.
+        /// This method does not use the cache.
+        /// </summary>
+        private async Task<HttpResponseMessage> GetAsync(
+            HttpRequestMessage request,
+            ILogger log,
+            CancellationToken cancellationToken)
+        {
+            log.LogInformation(string.Format(CultureInfo.InvariantCulture, "  {0} {1}.",
+                request.Method.Method.ToUpperInvariant(),
+                request.RequestUri));
+
+            // Read the response headers before reading the entire stream to avoid timeouts from large packages.
+            Func<Task<HttpResponseMessage>> throttleRequest = () => SendWithCredentialSupportAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
+
+            var response = await GetThrottled(throttleRequest, log);
+
+            return response;
+        }
+
         private static async Task<HttpResponseMessage> GetThrottled(Func<Task<HttpResponseMessage>> request, ILogger log)
         {
             if (_throttle == null)
@@ -153,24 +180,38 @@ namespace NuGet.Protocol
             }
         }
 
-        public async Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken token)
+        public Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var request = new HttpRequestMessage(HttpMethod.Get, uri);
+
+            return GetAsync(request, NullLogger.Instance, token);
         }
 
         public async Task<string> GetStringAsync(Uri uri)
         {
-            throw new NotImplementedException();
+            using (var response = await GetAsync(uri, CancellationToken.None))
+            {
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadAsStringAsync();
+            }
         }
 
         public async Task<Stream> GetStreamAsync(Uri uri)
         {
-            throw new NotImplementedException();
+            using (var response = await GetAsync(uri, CancellationToken.None))
+            {
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadAsStreamAsync();
+            }
         }
 
         public async Task<JObject> GetJObjectAsync(Uri uri, CancellationToken token)
         {
-            throw new NotImplementedException();
+            var json = await GetStringAsync(uri);
+
+            return JObject.Parse(json);
         }
 
         private async Task<HttpResponseMessage> SendWithCredentialSupportAsync(
