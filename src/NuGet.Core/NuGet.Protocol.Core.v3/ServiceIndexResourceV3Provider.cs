@@ -40,13 +40,13 @@ namespace NuGet.Protocol.Core.v3
 
         // Read the source's end point to get the index json.
         // An exception will be thrown on failure.
-        private async Task<JObject> GetIndexJson(SourceRepository source, CancellationToken token)
+        private async Task<JObject> GetIndexJson(SourceRepository source, Logging.ILogger log, CancellationToken token)
         {
             var uri = new Uri(source.PackageSource.Source);
 
             using (var client = HttpSource.Create(source))
             {
-                var response = await client.GetAsync(uri, token);
+                var response = await client.GetAsync(uri, log, token);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -89,7 +89,7 @@ namespace NuGet.Protocol.Core.v3
                         if (!_cache.TryGetValue(url, out cacheInfo) ||
                             entryValidCutoff > cacheInfo.CachedTime)
                         {
-                            var json = await GetIndexJson(source, token);
+                            var json = await GetIndexJson(source, Logging.NullLogger.Instance, token);
 
                             // Use SemVer instead of NuGetVersion, the service index should always be
                             // in strict SemVer format

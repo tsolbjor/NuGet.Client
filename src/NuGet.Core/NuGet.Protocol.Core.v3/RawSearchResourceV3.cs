@@ -35,7 +35,7 @@ namespace NuGet.Protocol.Core.v3
             _searchEndpoints = searchEndpoints.ToArray();
         }
 
-        public virtual async Task<JObject> SearchPage(string searchTerm, SearchFilter filters, int skip, int take, CancellationToken cancellationToken)
+        public virtual async Task<JObject> SearchPage(string searchTerm, SearchFilter filters, int skip, int take, Logging.ILogger log, CancellationToken cancellationToken)
         {
             for (var i = 0; i < _searchEndpoints.Length; i++)
             {
@@ -78,7 +78,7 @@ namespace NuGet.Protocol.Core.v3
                     JObject searchJson = null;
                     try
                     {
-                        searchJson = await _client.GetJObjectAsync(queryUrl.Uri, cancellationToken);
+                        searchJson = await _client.GetJObjectAsync(queryUrl.Uri, log, cancellationToken);
                     }
                     catch when (i < _searchEndpoints.Length - 1)
                     {
@@ -104,9 +104,9 @@ namespace NuGet.Protocol.Core.v3
             throw new FatalProtocolException(Strings.Protocol_MissingSearchService);
         }
 
-        public virtual async Task<IEnumerable<JObject>> Search(string searchTerm, SearchFilter filters, int skip, int take, CancellationToken cancellationToken)
+        public virtual async Task<IEnumerable<JObject>> Search(string searchTerm, SearchFilter filters, int skip, int take, Logging.ILogger log, CancellationToken cancellationToken)
         {
-            var results = await SearchPage(searchTerm, filters, skip, take, cancellationToken);
+            var results = await SearchPage(searchTerm, filters, skip, take, log, cancellationToken);
 
             var data = results.GetJArray("data");
             if (data == null)

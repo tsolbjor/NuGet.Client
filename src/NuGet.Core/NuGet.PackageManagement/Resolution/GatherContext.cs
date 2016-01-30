@@ -68,5 +68,16 @@ namespace NuGet.PackageManagement
         /// Project context for logging
         /// </summary>
         public INuGetProjectContext ProjectContext { get; set; }
+
+        /// <summary>
+        /// Logging adapter
+        /// </summary>
+        public Logging.ILogger Log
+        {
+            get
+            {
+                return new LoggerAdapter(ProjectContext);
+            }
+        }
     }
 }

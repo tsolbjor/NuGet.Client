@@ -47,7 +47,7 @@ namespace NuGet.Protocol.VisualStudio
             queryUrl.Query = queryString;
 
             var queryUri = queryUrl.Uri;
-            var results = await _client.GetJObjectAsync(queryUri, token);
+            var results = await _client.GetJObjectAsync(queryUri, Logging.NullLogger.Instance, token);
             token.ThrowIfCancellationRequested();
             if (results == null)
             {
@@ -79,7 +79,7 @@ namespace NuGet.Protocol.VisualStudio
             CancellationToken token)
         {
             //*TODOs : Take prerelease as parameter. Also it should return both listed and unlisted for powershell ?
-            var packages = await _regResource.GetPackageMetadata(packageId, includePrerelease, false, token);
+            var packages = await _regResource.GetPackageMetadata(packageId, includePrerelease, false, Logging.NullLogger.Instance, token);
             var versions = new List<NuGetVersion>();
             foreach (var package in packages)
             {

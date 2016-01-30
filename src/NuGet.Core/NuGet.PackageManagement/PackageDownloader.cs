@@ -133,7 +133,7 @@ namespace NuGet.PackageManagement
         public static async Task<DownloadResourceResult> GetDownloadResourceResultAsync(SourceRepository sourceRepository,
             PackageIdentity packageIdentity,
             Configuration.ISettings settings,
-            Logging.ILogger logger,
+            Logging.ILogger log,
             CancellationToken token)
         {
             if (sourceRepository == null)
@@ -163,7 +163,7 @@ namespace NuGet.PackageManagement
             token.ThrowIfCancellationRequested();
 
             result
-                = await downloadResource.GetDownloadResourceResultAsync(packageIdentity, settings, token);
+                = await downloadResource.GetDownloadResourceResultAsync(packageIdentity, settings, log, token);
 
             if (result == null)
             {

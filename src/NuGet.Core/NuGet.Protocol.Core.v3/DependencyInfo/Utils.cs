@@ -9,6 +9,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using NuGet.Logging;
 using NuGet.Versioning;
 
 namespace NuGet.Protocol.Core.v3.DependencyInfo
@@ -21,39 +22,22 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
             return new VersionRange(range.MinVersion, range.IsMinInclusive, range.MaxVersion, range.IsMaxInclusive, includePrerelease);
         }
 
-        public static async Task<JObject> GetJObjectAsync(HttpSource httpClient, Uri registrationUri)
+        public static async Task<JObject> LoadResource(HttpSource httpClient, Uri uri, ILogger log, CancellationToken token)
         {
-            var json = await httpClient.GetStringAsync(registrationUri);
-            return JObject.Parse(json);
-        }
-
-        public static string Indent(int depth)
-        {
-            return new string(Enumerable.Repeat(' ', depth).ToArray());
-        }
-
-        public static async Task<JObject> LoadResource(HttpSource httpClient, Uri uri, CancellationToken token)
-        {
-            var response = await httpClient.GetAsync(uri, token);
-
-            if (response.StatusCode == HttpStatusCode.NotFound)
+            using (var response = await httpClient.GetAsync(uri, log, token))
             {
-                return null;
-            }
 
-            response.EnsureSuccessStatusCode();
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
 
-            var json = await response.Content.ReadAsStringAsync();
-            var obj = JObject.Parse(json);
+                response.EnsureSuccessStatusCode();
 
-            return obj;
-        }
+                var json = await response.Content.ReadAsStringAsync();
+                var obj = JObject.Parse(json);
 
-        public static async Task<bool> ResourceExists(HttpSource httpClient, Uri uri, CancellationToken token)
-        {
-            using (var response = await httpClient.GetAsync(uri, token))
-            {
-                return response.IsSuccessStatusCode;
+                return obj;
             }
         }
 
@@ -61,9 +45,10 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
             HttpSource httpClient,
             Uri registrationUri,
             VersionRange range,
+            ILogger log,
             CancellationToken token)
         {
-            var index = await LoadResource(httpClient, registrationUri, token);
+            var index = await LoadResource(httpClient, registrationUri, log, token);
 
             if (index == null)
             {
@@ -87,7 +72,7 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
                     {
                         var rangeUri = item["@id"].ToObject<Uri>();
 
-                        rangeTasks.Add(LoadResource(httpClient, rangeUri, token));
+                        rangeTasks.Add(LoadResource(httpClient, rangeUri, log, token));
                     }
                     else
                     {

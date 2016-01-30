@@ -180,16 +180,16 @@ namespace NuGet.Protocol
             }
         }
 
-        public Task<HttpResponseMessage> GetAsync(Uri uri, CancellationToken token)
+        public Task<HttpResponseMessage> GetAsync(Uri uri, ILogger log, CancellationToken token)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, uri);
 
-            return GetAsync(request, NullLogger.Instance, token);
+            return GetAsync(request, log, token);
         }
 
-        public async Task<string> GetStringAsync(Uri uri)
+        public async Task<string> GetStringAsync(Uri uri, ILogger log, CancellationToken token)
         {
-            using (var response = await GetAsync(uri, CancellationToken.None))
+            using (var response = await GetAsync(uri, log, token))
             {
                 response.EnsureSuccessStatusCode();
 
@@ -197,9 +197,9 @@ namespace NuGet.Protocol
             }
         }
 
-        public async Task<Stream> GetStreamAsync(Uri uri)
+        public async Task<Stream> GetStreamAsync(Uri uri, ILogger log, CancellationToken token)
         {
-            using (var response = await GetAsync(uri, CancellationToken.None))
+            using (var response = await GetAsync(uri, log, token))
             {
                 response.EnsureSuccessStatusCode();
 
@@ -207,9 +207,9 @@ namespace NuGet.Protocol
             }
         }
 
-        public async Task<JObject> GetJObjectAsync(Uri uri, CancellationToken token)
+        public async Task<JObject> GetJObjectAsync(Uri uri, ILogger log, CancellationToken token)
         {
-            var json = await GetStringAsync(uri);
+            var json = await GetStringAsync(uri, log, token);
 
             return JObject.Parse(json);
         }

@@ -17,6 +17,7 @@ namespace NuGet.Protocol.Core.Types
         public abstract Task<DownloadResourceResult> GetDownloadResourceResultAsync(
             PackageIdentity identity,
             ISettings settings,
+            Logging.ILogger log,
             CancellationToken token);
 
         public event EventHandler<PackageProgressEventArgs> Progress;

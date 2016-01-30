@@ -32,6 +32,7 @@ namespace NuGet.Protocol.Core.v2
         public override Task<DownloadResourceResult> GetDownloadResourceResultAsync(
             PackageIdentity identity,
             Configuration.ISettings settings,
+            Logging.ILogger log,
             CancellationToken token)
         {
             // settings are not used here, since, global packages folder are not used for v2 sources

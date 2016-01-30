@@ -99,7 +99,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
             // This is invoked from inside a lock.
             await EnsureDependencyProvider(cancellationToken);
 
-            return await _dependencyInfoResource.ResolvePackages(id, cancellationToken);
+            return await _dependencyInfoResource.ResolvePackages(id, Logger, cancellationToken);
         }
 
         private async Task EnsureDependencyProvider(CancellationToken cancellationToken)

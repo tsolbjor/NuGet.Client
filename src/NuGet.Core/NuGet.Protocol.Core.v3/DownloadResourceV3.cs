@@ -68,7 +68,7 @@ namespace NuGet.Protocol.Core.v3
         /// 2. A url will be constructed for the flat container location if the source has that resource.
         /// 3. The download url will be found in the registration blob as a fallback.
         /// </summary>
-        private async Task<Uri> GetDownloadUrl(PackageIdentity identity, CancellationToken token)
+        private async Task<Uri> GetDownloadUrl(PackageIdentity identity, Logging.ILogger log, CancellationToken token)
         {
             Uri downloadUri = null;
             var sourcePackage = identity as SourcePackageDependencyInfo;
@@ -90,7 +90,7 @@ namespace NuGet.Protocol.Core.v3
             else if (_regResource != null)
             {
                 // Read the url from the registration information
-                var blob = await _regResource.GetPackageMetadata(identity, token);
+                var blob = await _regResource.GetPackageMetadata(identity, log, token);
 
                 if (blob != null
                     && blob["packageContent"] != null)
@@ -104,6 +104,7 @@ namespace NuGet.Protocol.Core.v3
 
         public override async Task<DownloadResourceResult> GetDownloadResourceResultAsync(PackageIdentity identity,
             ISettings settings,
+            ILogger log,
             CancellationToken token)
         {
             if (identity == null)
@@ -116,10 +117,10 @@ namespace NuGet.Protocol.Core.v3
                 throw new ArgumentNullException(nameof(settings));
             }
 
-            var uri = await GetDownloadUrl(identity, token);
+            var uri = await GetDownloadUrl(identity, log, token);
             if (uri != null)
             {
-                return await GetDownloadResultAsync(identity, uri, settings, token);
+                return await GetDownloadResultAsync(identity, uri, settings, log, token);
             }
 
             return null;
@@ -129,6 +130,7 @@ namespace NuGet.Protocol.Core.v3
             PackageIdentity identity,
             Uri uri,
             ISettings settings,
+            ILogger log,
             CancellationToken token)
         {
             // Uri is not null, so the package exists in the source
@@ -148,7 +150,7 @@ namespace NuGet.Protocol.Core.v3
             {
                 try
                 {
-                    using (var packageStream = await _client.GetStreamAsync(uri))
+                    using (var packageStream = await _client.GetStreamAsync(uri, log, token))
                     {
                         var downloadResult = await GlobalPackagesFolderUtility.AddPackageAsync(identity,
                             packageStream,
