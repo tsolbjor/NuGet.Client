@@ -16,25 +16,45 @@ using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Logging;
 using NuGet.Protocol.Core.Types;
+using NuGet.Protocol.Core.v3;
 using NuGet.Protocol.Core.v3.Data;
 
-namespace NuGet.Protocol.Core.v3.RemoteRepositories
+namespace NuGet.Protocol
 {
-    internal class HttpSource
+    public class HttpSource : IDisposable
     {
         private const int BufferSize = 8192;
         private readonly Func<Task<HttpHandlerResource>> _messageHandlerFactory;
         private readonly Uri _baseUri;
+        private HttpClient _httpClient;
+        private bool _disposed;
+        private int _authRetries;
 
-        // In order to avoid too many open files error, set concurrent requests number to 64 on Mac
-        private readonly static int ConcurrencyLimit= RuntimeEnvironmentHelper.IsMacOSX? 64 : 128;
+        // Only one thread may re-create the http client at a time.
+        private readonly SemaphoreSlim _httpClientLock = new SemaphoreSlim(1, 1);
+
+        // In order to avoid too many open files error, set concurrent requests number to 16 on Mac
+        private readonly static int ConcurrencyLimit = RuntimeEnvironmentHelper.IsMacOSX ? 16 : 128;
 
         // Limiting concurrent requests to limit the amount of files open at a time on Mac OSX
         // the default is 256 which is easy to hit if we don't limit concurrency
         private readonly static SemaphoreSlim _throttle = new SemaphoreSlim(ConcurrencyLimit, ConcurrencyLimit);
 
+        // Only one source may prompt at a time
+        private readonly static SemaphoreSlim _credentialPromptLock = new SemaphoreSlim(1, 1);
+
         public HttpSource(string sourceUrl, Func<Task<HttpHandlerResource>> messageHandlerFactory)
         {
+            if (sourceUrl == null)
+            {
+                throw new ArgumentNullException(nameof(sourceUrl));
+            }
+
+            if (messageHandlerFactory == null)
+            {
+                throw new ArgumentNullException(nameof(messageHandlerFactory));
+            }
+
             _baseUri = new Uri(sourceUrl);
             _messageHandlerFactory = messageHandlerFactory;
         }
@@ -75,75 +95,72 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
                 ICredentials credentials = CredentialStore.Instance.GetCredentials(_baseUri);
 
+                var handlerResource = await _messageHandlerFactory();
+
                 var retry = true;
                 while (retry)
                 {
-                    var handlerResource = await _messageHandlerFactory();
-
-                    using (var client = new DataClient(handlerResource))
+                    if (credentials != null)
                     {
-                        if (credentials != null)
+                        handlerResource.ClientHandler.Credentials = credentials;
+                    }
+                    else
+                    {
+                        handlerResource.ClientHandler.UseDefaultCredentials = true;
+                    }
+
+                    var request = new HttpRequestMessage(HttpMethod.Get, uri);
+                    STSAuthHelper.PrepareSTSRequest(_baseUri, CredentialStore.Instance, request);
+
+                    // Read the response headers before reading the entire stream to avoid timeouts from large packages.
+                    using (var response = await _httpClient.SendAsync(
+                        request,
+                        HttpCompletionOption.ResponseHeadersRead,
+                        cancellationToken))
+                    {
+                        if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
                         {
-                            handlerResource.ClientHandler.Credentials = credentials;
-                        }
-                        else
-                        {
-                            handlerResource.ClientHandler.UseDefaultCredentials = true;
-                        }
-
-                        var request = new HttpRequestMessage(HttpMethod.Get, uri);
-                        STSAuthHelper.PrepareSTSRequest(_baseUri, CredentialStore.Instance, request);
-
-                        // Read the response headers before reading the entire stream to avoid timeouts from large packages.
-                        using (var response = await client.SendAsync(
-                            request,
-                            HttpCompletionOption.ResponseHeadersRead,
-                            cancellationToken))
-                        {
-                            if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
-                            {
-                                Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
-                                    "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
-                                return new HttpSourceResult();
-                            }
-
-                            if (response.StatusCode == HttpStatusCode.Unauthorized)
-                            {
-                                if (STSAuthHelper.TryRetrieveSTSToken(_baseUri, CredentialStore.Instance, response))
-                                {
-                                    continue;
-                                }
-
-                                if (HttpHandlerResourceV3.PromptForCredentials != null)
-                                {
-                                    credentials = await HttpHandlerResourceV3.PromptForCredentials(_baseUri, cancellationToken);
-                                }
-
-                                if (credentials == null)
-                                {
-                                    response.EnsureSuccessStatusCode();
-                                }
-                                else
-                                {
-                                    continue;
-                                }
-                            }
-
-                            retry = false;
-                            response.EnsureSuccessStatusCode();
-
-                            if (HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null && credentials != null)
-                            {
-                                HttpHandlerResourceV3.CredentialsSuccessfullyUsed(_baseUri, credentials);
-                            }
-
-                            await CreateCacheFile(result, response, context, cancellationToken);
-
                             Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
                                 "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
-
-                            return result;
+                            return new HttpSourceResult();
                         }
+
+                        if (response.StatusCode == HttpStatusCode.Unauthorized)
+                        {
+                            if (STSAuthHelper.TryRetrieveSTSToken(_baseUri, CredentialStore.Instance, response))
+                            {
+                                continue;
+                            }
+
+                            if (HttpHandlerResourceV3.PromptForCredentials != null)
+                            {
+                                credentials = await HttpHandlerResourceV3.PromptForCredentials(_baseUri, cancellationToken);
+                            }
+
+                            if (credentials == null)
+                            {
+                                response.EnsureSuccessStatusCode();
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+
+                        retry = false;
+                        response.EnsureSuccessStatusCode();
+
+                        if (HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null && credentials != null)
+                        {
+                            HttpHandlerResourceV3.CredentialsSuccessfullyUsed(_baseUri, credentials);
+                        }
+
+                        await CreateCacheFile(result, response, context, cancellationToken);
+
+                        Logger.LogInformation(string.Format(CultureInfo.InvariantCulture,
+                            "  {1} {0} {2}ms", uri, response.StatusCode.ToString(), sw.ElapsedMilliseconds.ToString()));
+
+                        return result;
                     }
                 }
 
@@ -153,6 +170,127 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
             {
                 _throttle.Release();
             }
+        }
+
+        private async Task<HttpResponseMessage> SendWithCredentialSupportAsync(
+            HttpRequestMessage request,
+            HttpCompletionOption completionOption,
+            CancellationToken cancellationToken)
+        {
+            HttpResponseMessage response = null;
+            ICredentials promptCredentials = null;
+
+            // Keep a local copy of the http client, this allows the thread to check if another thread has
+            // already added new credentials.
+            var httpClient = _httpClient;
+
+            // Authorizing may take multiple attempts
+            while (true)
+            {
+                // Clean up any previous responses
+                if (response != null)
+                {
+                    response.Dispose();
+                }
+
+                // Read the response headers before reading the entire stream to avoid timeouts from large packages.
+                response = await httpClient.SendAsync(
+                    request,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    cancellationToken);
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    try
+                    {
+                        // Only one request may prompt and attempt to auth at a time
+                        await _httpClientLock.WaitAsync();
+
+                        // Auth may have happened on another thread, if so just continue
+                        if (!object.ReferenceEquals(httpClient, _httpClient))
+                        {
+                            continue;
+                        }
+
+                        // Give up after 10 tries.
+                        _authRetries++;
+                        if (_authRetries >= 10)
+                        {
+                            return response;
+                        }
+
+                        // Windows auth
+                        if (STSAuthHelper.TryRetrieveSTSToken(_baseUri, CredentialStore.Instance, response))
+                        {
+                            // Auth token found, create a new message handler and retry.
+                            _httpClient = await CreateHttpClient();
+                            continue;
+                        }
+
+                        // Prompt the user
+                        promptCredentials = await PromptForCredentials(cancellationToken);
+
+                        if (promptCredentials != null)
+                        {
+                            // The user entered credentials, create a new message handler that includes
+                            // these and retry.
+                            _httpClient = await CreateHttpClient();
+                            continue;
+                        }
+                    }
+                    finally
+                    {
+                        _httpClientLock.Release();
+                    }
+                }
+
+                if (promptCredentials != null && HttpHandlerResourceV3.CredentialsSuccessfullyUsed != null)
+                {
+                    HttpHandlerResourceV3.CredentialsSuccessfullyUsed(_baseUri, promptCredentials);
+                }
+
+                return response;
+            }
+        }
+
+        private async Task<ICredentials> PromptForCredentials(CancellationToken cancellationToken)
+        {
+            ICredentials promptCredentials = null;
+
+            if (HttpHandlerResourceV3.PromptForCredentials != null)
+            {
+                try
+                {
+                    // Only one prompt may display at a time.
+                    await _credentialPromptLock.WaitAsync();
+
+                    promptCredentials =
+                        await HttpHandlerResourceV3.PromptForCredentials(_baseUri, cancellationToken);
+                }
+                finally
+                {
+                    _credentialPromptLock.Release();
+                }
+            }
+
+            return promptCredentials;
+        }
+
+        private async Task<HttpClient> CreateHttpClient()
+        {
+            var credentials = CredentialStore.Instance.GetCredentials(_baseUri);
+            var handlerResource = await _messageHandlerFactory();
+
+            if (credentials != null)
+            {
+                handlerResource.ClientHandler.Credentials = credentials;
+            }
+            else
+            {
+                handlerResource.ClientHandler.UseDefaultCredentials = true;
+            }
+
+            return new HttpClient(handlerResource.MessageHandler);
         }
 
         private static Task CreateCacheFile(
@@ -236,7 +374,7 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
             var baseFolderName = RemoveInvalidFileNameChars(ComputeHash(_baseUri.OriginalString));
             var baseFileName = RemoveInvalidFileNameChars(cacheKey) + ".dat";
             var cacheAgeLimit = context.MaxAge;
-            var cacheFolder =  Path.Combine(NuGetEnvironment.GetFolderPath(NuGetFolderPath.HttpCacheDirectory), baseFolderName);
+            var cacheFolder = Path.Combine(NuGetEnvironment.GetFolderPath(NuGetFolderPath.HttpCacheDirectory), baseFolderName);
             var cacheFile = Path.Combine(cacheFolder, baseFileName);
 
             if (!Directory.Exists(cacheFolder)
@@ -324,6 +462,24 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
             }
 
             return false;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing && !_disposed)
+            {
+                _disposed = true;
+
+                Dispose();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_httpClient != null)
+            {
+                _httpClient.Dispose();
+            }
         }
     }
 }
