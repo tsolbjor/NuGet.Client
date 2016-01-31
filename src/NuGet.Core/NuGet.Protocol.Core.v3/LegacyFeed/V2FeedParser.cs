@@ -45,6 +45,8 @@ namespace NuGet.Protocol
         private static readonly XName _xnamePublished = XName.Get("Published", DataServicesNS);
         private static readonly XName _xnameName = XName.Get("name", W3Atom);
         private static readonly XName _xnameAuthor = XName.Get("author", W3Atom);
+        private static readonly XName _xnamePackageHash = XName.Get("PackageHash", DataServicesNS);
+        private static readonly XName _xnamePackageHashAlgorithm = XName.Get("PackageHashAlgorithm", DataServicesNS);
 
         private readonly HttpSource _httpSource;
         private readonly PackageSource _source;
@@ -79,6 +81,20 @@ namespace NuGet.Protocol
         }
 
         /// <summary>
+        /// Get an exact package
+        /// </summary>
+        public async Task<V2FeedPackageInfo> GetPackage(
+            PackageIdentity package,
+            ILogger log,
+            CancellationToken token)
+        {
+            // TODO add support for the exact call
+            var packages = await FindPackagesByIdAsync(package.Id, log, token);
+
+            return packages.FirstOrDefault(entry => entry.Version == package.Version);
+        }
+
+        /// <summary>
         /// Retrieves all packages with the given Id from a V2 feed.
         /// </summary>
         public async Task<IEnumerable<V2FeedPackageInfo>> FindPackagesByIdAsync(string id, ILogger log, CancellationToken token)
@@ -98,7 +114,7 @@ namespace NuGet.Protocol
             // TODO: re-implement caching at a higher level for both v2 and v3
             while (!token.IsCancellationRequested && urlRequest != null)
             {
-                // TODO: Pages for a package Id are cahced separately.
+                // TODO: Pages for a package Id are cached separately.
                 // So we will get inaccurate data when a page shrinks.
                 // However, (1) In most cases the pages grow rather than shrink;
                 // (2) cache for pages is valid for only 30 min.
@@ -190,6 +206,9 @@ namespace NuGet.Protocol
             string downloadCount = GetValue(properties, _xnameDownloadCount);
             bool requireLicenseAcceptance = GetValue(properties, _xnameRequireLicenseAcceptance) == "true";
 
+            string packageHash = GetValue(properties, _xnamePackageHash);
+            string packageHashAlgorithm = GetValue(properties, _xnamePackageHashAlgorithm);
+
             DateTimeOffset? published = null;
 
             DateTimeOffset pubVal = DateTimeOffset.MinValue;
@@ -213,7 +232,9 @@ namespace NuGet.Protocol
             return new V2FeedPackageInfo(new PackageIdentity(identityId, version),
                 title, summary, description, authors, owners, iconUrl, licenseUrl,
                 projectUrl, reportAbuseUrl, tags, published, dependencies,
-                requireLicenseAcceptance, downloadUrl, downloadCount);
+                requireLicenseAcceptance, downloadUrl, downloadCount,
+                packageHash,
+                packageHashAlgorithm);
         }
 
         /// <summary>

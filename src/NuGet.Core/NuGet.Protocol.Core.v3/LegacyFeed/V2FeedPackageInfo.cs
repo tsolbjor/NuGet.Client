@@ -30,10 +30,13 @@ namespace NuGet.Protocol
         private readonly DateTimeOffset? _published;
         private readonly string _dependencies;
         private readonly string _downloadUrl;
+        private readonly string _packageHash;
+        private readonly string _packageHashAlgorithm;
 
         public V2FeedPackageInfo(PackageIdentity identity, string title, string summary, string description, IEnumerable<string> authors, IEnumerable<string> owners,
             string iconUrl, string licenseUrl, string projectUrl, string reportAbuseUrl,
-            string tags, DateTimeOffset? published, string dependencies, bool requireLicenseAccept, string downloadUrl, string downloadCount)
+            string tags, DateTimeOffset? published, string dependencies, bool requireLicenseAccept, string downloadUrl, string downloadCount,
+            string packageHash, string packageHashAlgorithm)
             : base(identity.Id, identity.Version)
         {
             _summary = summary;
@@ -53,6 +56,8 @@ namespace NuGet.Protocol
             _downloadUrl = downloadUrl;
             _downloadCount = downloadCount;
             _published = published;
+            _packageHash = packageHash;
+            _packageHashAlgorithm = packageHashAlgorithm;
         }
 
         public string Title
@@ -241,6 +246,22 @@ namespace NuGet.Protocol
             get
             {
                 return _requireLicenseAcceptance;
+            }
+        }
+
+        public string PackageHash
+        {
+            get
+            {
+                return _packageHash;
+            }
+        }
+
+        public string PackageHashAlgorithm
+        {
+            get
+            {
+                return _packageHashAlgorithm;
             }
         }
     }
