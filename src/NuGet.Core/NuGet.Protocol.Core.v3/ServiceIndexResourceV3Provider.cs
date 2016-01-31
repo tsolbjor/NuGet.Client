@@ -48,6 +48,8 @@ namespace NuGet.Protocol.Core.v3
             {
                 var response = await client.GetAsync(uri, log, token);
 
+                response.EnsureSuccessStatusCode();
+
                 if (response.IsSuccessStatusCode)
                 {
                     var text = await response.Content.ReadAsStringAsync();

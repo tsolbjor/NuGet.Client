@@ -1,4 +1,5 @@
-﻿using NuGet.Logging;
+﻿using System;
+using NuGet.Logging;
 
 namespace NuGet.ProjectManagement
 {
@@ -7,10 +8,15 @@ namespace NuGet.ProjectManagement
     /// </summary>
     public class LoggerAdapter : ILogger
     {
-        public INuGetProjectContext ProjectLogger { get; set; }
+        public INuGetProjectContext ProjectLogger { get; }
 
         public LoggerAdapter(INuGetProjectContext projectLogger)
         {
+            if (projectLogger == null)
+            {
+                throw new ArgumentNullException(nameof(projectLogger));
+            }
+
             ProjectLogger = projectLogger;
         }
 

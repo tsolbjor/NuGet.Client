@@ -144,7 +144,7 @@ namespace NuGet.Protocol.Core.v3
                 return packageFromGlobalPackages;
             }
 
-            Logger.Instance.LogVerbose($"  GET: {uri}");
+            log.LogVerbose($"  GET: {uri}");
 
             for (int i = 0; i < 3; i++)
             {
@@ -155,7 +155,7 @@ namespace NuGet.Protocol.Core.v3
                         var downloadResult = await GlobalPackagesFolderUtility.AddPackageAsync(identity,
                             packageStream,
                             settings,
-                            Logger.Instance,
+                            log,
                             token);
 
                         return downloadResult;
@@ -165,7 +165,7 @@ namespace NuGet.Protocol.Core.v3
                 {
                     string message = $"Error downloading {identity} from {uri} {ExceptionUtilities.DisplayMessage(ex)}";
 
-                    Logger.Instance.LogWarning(message);
+                    log.LogWarning(message);
                 }
                 catch (Exception ex)
                 {

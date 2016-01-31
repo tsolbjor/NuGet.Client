@@ -33,6 +33,7 @@ namespace NuGet.Protocol.Core.v3
             yield return new Lazy<INuGetResourceProvider>(() => new SearchLatestResourceV3Provider());
             yield return new Lazy<INuGetResourceProvider>(() => new ServiceIndexResourceV3Provider());
             yield return new Lazy<INuGetResourceProvider>(() => new SimpleSearchResourceV3Provider());
+            yield return new Lazy<INuGetResourceProvider>(() => new HttpHandlerResourceV3Provider());
             yield return new Lazy<INuGetResourceProvider>(() => new HttpFileSystemBasedFindPackageByIdResourceProvider());
             yield return new Lazy<INuGetResourceProvider>(() => new RemoteV3FindPackagePackageByIdResourceProvider());
             yield return new Lazy<INuGetResourceProvider>(() => new RemoteV2FindPackageByIdResourceProvider());

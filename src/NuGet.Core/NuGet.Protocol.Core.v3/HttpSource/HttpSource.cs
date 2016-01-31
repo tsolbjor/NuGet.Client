@@ -39,24 +39,13 @@ namespace NuGet.Protocol
         // Limiting concurrent requests to limit the amount of files open at a time on Mac OSX
         // the default is 256 which is easy to hit if we don't limit concurrency
         private readonly static SemaphoreSlim _throttle =
-            RuntimeEnvironmentHelper.IsMacOSX 
+            RuntimeEnvironmentHelper.IsMacOSX
                 ? new SemaphoreSlim(ConcurrencyLimit, ConcurrencyLimit)
                 : null;
 
         public HttpSource(PackageSource source, Func<Task<HttpHandlerResource>> messageHandlerFactory)
+            : this(source.Source, messageHandlerFactory)
         {
-            if (source == null)
-            {
-                throw new ArgumentNullException(nameof(source));
-            }
-
-            if (messageHandlerFactory == null)
-            {
-                throw new ArgumentNullException(nameof(messageHandlerFactory));
-            }
-
-            _baseUri = new Uri(source.Source);
-            _messageHandlerFactory = messageHandlerFactory;
         }
 
         public HttpSource(string sourceUrl, Func<Task<HttpHandlerResource>> messageHandlerFactory)
@@ -189,22 +178,18 @@ namespace NuGet.Protocol
 
         public async Task<string> GetStringAsync(Uri uri, ILogger log, CancellationToken token)
         {
-            using (var response = await GetAsync(uri, log, token))
-            {
-                response.EnsureSuccessStatusCode();
+            var response = await GetAsync(uri, log, token);
+            response.EnsureSuccessStatusCode();
 
-                return await response.Content.ReadAsStringAsync();
-            }
+            return await response.Content.ReadAsStringAsync();
         }
 
         public async Task<Stream> GetStreamAsync(Uri uri, ILogger log, CancellationToken token)
         {
-            using (var response = await GetAsync(uri, log, token))
-            {
-                response.EnsureSuccessStatusCode();
+            var response = await GetAsync(uri, log, token);
+            response.EnsureSuccessStatusCode();
 
-                return await response.Content.ReadAsStreamAsync();
-            }
+            return await response.Content.ReadAsStreamAsync();
         }
 
         public async Task<JObject> GetJObjectAsync(Uri uri, ILogger log, CancellationToken token)
@@ -225,6 +210,25 @@ namespace NuGet.Protocol
             // Keep a local copy of the http client, this allows the thread to check if another thread has
             // already added new credentials.
             var httpClient = _httpClient;
+
+            // Create the http client on the first call
+            if (httpClient == null)
+            {
+                await _httpClientLock.WaitAsync();
+                try
+                {
+                    // Double check
+                    if (_httpClient == null)
+                    {
+                        _httpClient = await CreateHttpClient();
+                        httpClient = _httpClient;
+                    }
+                }
+                finally
+                {
+                    _httpClientLock.Release();
+                }
+            }
 
             // Update the request for STS
             STSAuthHelper.PrepareSTSRequest(_baseUri, CredentialStore.Instance, request);

@@ -76,7 +76,7 @@ namespace NuGet.PackageManagement
         {
             get
             {
-                return new LoggerAdapter(ProjectContext);
+                return ProjectContext == null ? Logging.NullLogger.Instance : new LoggerAdapter(ProjectContext);
             }
         }
     }
