@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Globalization;
-using System.Net;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using NuGet.Configuration;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
@@ -46,14 +46,19 @@ namespace NuGet.Protocol.Core.v3
 
             using (var client = HttpSource.Create(source))
             {
-                var response = await client.GetAsync(uri, log, token);
-
-                response.EnsureSuccessStatusCode();
-
-                if (response.IsSuccessStatusCode)
+                using (var response = await client.GetAsync(uri, log, token))
                 {
-                    var text = await response.Content.ReadAsStringAsync();
-                    return JObject.Parse(text);
+                    response.EnsureSuccessStatusCode();
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        using (var stream = await response.Content.ReadAsStreamAsync())
+                        using (var reader = new StreamReader(stream))
+                        using (var jsonReader = new JsonTextReader(reader))
+                        {
+                            return JObject.Load(jsonReader);
+                        }
+                    }
                 }
             }
 

@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Common;
 using NuGet.Configuration;
@@ -35,6 +36,9 @@ namespace NuGet.Protocol
 
         // In order to avoid too many open files error, set concurrent requests number to 16 on Mac
         private readonly static int ConcurrencyLimit = 16;
+
+        // Only one source may prompt at a time
+        private readonly static SemaphoreSlim _credentialPromptLock = new SemaphoreSlim(1, 1);
 
         // Limiting concurrent requests to limit the amount of files open at a time on Mac OSX
         // the default is 256 which is easy to hit if we don't limit concurrency
@@ -176,14 +180,6 @@ namespace NuGet.Protocol
             return GetAsync(request, log, token);
         }
 
-        public async Task<string> GetStringAsync(Uri uri, ILogger log, CancellationToken token)
-        {
-            var response = await GetAsync(uri, log, token);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadAsStringAsync();
-        }
-
         public async Task<Stream> GetStreamAsync(Uri uri, ILogger log, CancellationToken token)
         {
             var response = await GetAsync(uri, log, token);
@@ -194,9 +190,13 @@ namespace NuGet.Protocol
 
         public async Task<JObject> GetJObjectAsync(Uri uri, ILogger log, CancellationToken token)
         {
-            var json = await GetStringAsync(uri, log, token);
+            var stream = await GetStreamAsync(uri, log, token);
 
-            return JObject.Parse(json);
+            using (var reader = new StreamReader(stream))
+            using (var jsonReader = new JsonTextReader(reader))
+            {
+                return JObject.Load(jsonReader);
+            }
         }
 
         private async Task<HttpResponseMessage> SendWithCredentialSupportAsync(
@@ -276,7 +276,8 @@ namespace NuGet.Protocol
                         if (STSAuthHelper.TryRetrieveSTSToken(_baseUri, CredentialStore.Instance, response))
                         {
                             // Auth token found, create a new message handler and retry.
-                            _httpClient = await CreateHttpClient();
+                            httpClient = await CreateHttpClient();
+                            _httpClient = httpClient;
                             continue;
                         }
 
@@ -287,7 +288,8 @@ namespace NuGet.Protocol
                         {
                             // The user entered credentials, create a new message handler that includes
                             // these and retry.
-                            _httpClient = await CreateHttpClient();
+                            httpClient = await CreateHttpClient();
+                            _httpClient = httpClient; 
                             continue;
                         }
                     }
@@ -315,14 +317,14 @@ namespace NuGet.Protocol
                 try
                 {
                     // Only one prompt may display at a time.
-                    await HttpHandlerResourceV3Provider.CredentialPromptLock.WaitAsync();
+                    await _credentialPromptLock.WaitAsync();
 
                     promptCredentials =
                         await HttpHandlerResourceV3.PromptForCredentials(_baseUri, cancellationToken);
                 }
                 finally
                 {
-                    HttpHandlerResourceV3Provider.CredentialPromptLock.Release();
+                    _credentialPromptLock.Release();
                 }
             }
 
@@ -379,8 +381,11 @@ namespace NuGet.Protocol
                         BufferSize,
                         useAsync: true))
                     {
-                        await response.Content.CopyToAsync(stream);
-                        await stream.FlushAsync(cancellationToken);
+                        using (var responseStream = await response.Content.ReadAsStreamAsync())
+                        {
+                            await responseStream.CopyToAsync(stream, bufferSize: 8192, cancellationToken: token);
+                            await stream.FlushAsync(cancellationToken);
+                        }
                     }
 
                     if (File.Exists(result.CacheFileName))

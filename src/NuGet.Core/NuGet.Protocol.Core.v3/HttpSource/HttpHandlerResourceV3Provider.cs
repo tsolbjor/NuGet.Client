@@ -16,7 +16,7 @@ namespace NuGet.Protocol
     public class HttpHandlerResourceV3Provider : ResourceProvider
     {
         // Only one source may prompt at a time
-        internal readonly static SemaphoreSlim CredentialPromptLock = new SemaphoreSlim(1, 1);
+        private readonly static SemaphoreSlim _credentialPromptLock = new SemaphoreSlim(1, 1);
         internal const int MaxAuthRetries = 10;
 
         public HttpHandlerResourceV3Provider()
@@ -129,7 +129,7 @@ namespace NuGet.Protocol
 
                             try
                             {
-                                await CredentialPromptLock.WaitAsync();
+                                await _credentialPromptLock.WaitAsync();
 
                                 // Check if the credentials have already changed
                                 if (!object.ReferenceEquals(currentCredentials, Proxy.Credentials))
@@ -158,7 +158,7 @@ namespace NuGet.Protocol
                             }
                             finally
                             {
-                                CredentialPromptLock.Release();
+                                _credentialPromptLock.Release();
                             }
                         }
                         else

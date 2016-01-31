@@ -3,11 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NuGet.Logging;
 using NuGet.Versioning;
@@ -22,11 +23,14 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
             return new VersionRange(range.MinVersion, range.IsMinInclusive, range.MaxVersion, range.IsMaxInclusive, includePrerelease);
         }
 
-        public static async Task<JObject> LoadResource(HttpSource httpClient, Uri uri, ILogger log, CancellationToken token)
+        public static async Task<JObject> LoadResource(
+            HttpSource httpClient,
+            Uri uri,
+            ILogger log,
+            CancellationToken token)
         {
             using (var response = await httpClient.GetAsync(uri, log, token))
             {
-
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
                     return null;
@@ -34,10 +38,12 @@ namespace NuGet.Protocol.Core.v3.DependencyInfo
 
                 response.EnsureSuccessStatusCode();
 
-                var json = await response.Content.ReadAsStringAsync();
-                var obj = JObject.Parse(json);
-
-                return obj;
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                using (var reader = new StreamReader(stream))
+                using (var jsonReader = new JsonTextReader(reader))
+                {
+                    return JObject.Load(jsonReader);
+                }
             }
         }
 
