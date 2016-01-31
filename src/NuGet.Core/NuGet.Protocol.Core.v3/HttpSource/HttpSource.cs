@@ -250,6 +250,10 @@ namespace NuGet.Protocol
 
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                 {
+                    // Create a copy of the request for the next call.
+                    // Requests may only be sent once.
+                    request = CloneRequest(request);
+
                     try
                     {
                         // Only one request may prompt and attempt to auth at a time
@@ -538,6 +542,30 @@ namespace NuGet.Protocol
             Func<Task<HttpHandlerResource>> factory = () => source.GetResourceAsync<HttpHandlerResource>();
 
             return new HttpSource(source.PackageSource, factory);
+        }
+
+        /// <summary>
+        /// Clones an <see cref="HttpRequestMessage" /> request.
+        /// </summary>
+        public static HttpRequestMessage CloneRequest(HttpRequestMessage request)
+        {
+            var clone = new HttpRequestMessage(request.Method, request.RequestUri)
+            {
+                Content = request.Content,
+                Version = request.Version
+            };
+
+            foreach (var header in request.Headers)
+            {
+                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            foreach (var property in request.Properties)
+            {
+                clone.Properties.Add(property);
+            }
+
+            return clone;
         }
     }
 }
