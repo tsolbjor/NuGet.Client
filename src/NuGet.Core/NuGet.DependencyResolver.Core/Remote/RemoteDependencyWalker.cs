@@ -482,6 +482,13 @@ namespace NuGet.DependencyResolver
                     return localMatch;
                 }
 
+                // Check for the specific version remotely.
+                var exactRemoteMatch = await FindLibraryByVersion(libraryRange, framework, _context.RemoteLibraryProviders, cancellationToken);
+                if (exactRemoteMatch != null)
+                {
+                    return exactRemoteMatch;
+                }
+
                 // Either we found a local match but it wasn't the exact version, or 
                 // we didn't find a local match.
                 var remoteMatch = await FindLibraryByVersion(libraryRange, framework, _context.RemoteLibraryProviders, cancellationToken);
@@ -581,6 +588,31 @@ namespace NuGet.DependencyResolver
             return null;
         }
 
+        private async Task<RemoteMatch> FindLibraryByIdentity(LibraryIdentity identity, NuGetFramework framework, IEnumerable<IRemoteDependencyProvider> providers, CancellationToken token)
+        {
+            // Try the non http sources first
+            var nonHttpMatch = await FindLibrary(identity, providers.Where(p => !p.IsHttp), provider => provider.GetDependenciesAsync(identity, framework, token));
+
+            // If we found an exact match then use it
+            if (nonHttpMatch != null)
+            {
+                return nonHttpMatch;
+            }
+
+            // Otherwise try the http sources
+            var httpMatch = await FindLibrary(identity, providers.Where(p => p.IsHttp), provider => provider.GetDependenciesAsync(identity, framework, token));
+
+            // Pick the best match of the 2
+            if (libraryRange.VersionRange.IsBetter(
+                nonHttpMatch?.Library?.Version,
+                httpMatch?.Library.Version))
+            {
+                return httpMatch;
+            }
+
+            return nonHttpMatch;
+        }
+
         private async Task<RemoteMatch> FindLibraryByVersion(LibraryRange libraryRange, NuGetFramework framework, IEnumerable<IRemoteDependencyProvider> providers, CancellationToken token)
         {
             if (libraryRange.VersionRange.IsFloating)
@@ -611,6 +643,47 @@ namespace NuGet.DependencyResolver
             }
 
             return nonHttpMatch;
+        }
+
+        private static async Task<Library> FindLibrary(
+            LibraryIdentity identity,
+            IEnumerable<IRemoteDependencyProvider> providers,
+            Func<IRemoteDependencyProvider, Task<LibraryIdentity>> action)
+        {
+            var tasks = new List<Task<RemoteMatch>>();
+            foreach (var provider in providers)
+            {
+                Func<Task<RemoteMatch>> taskWrapper = async () =>
+                {
+                    var library = await action(provider);
+                    if (library != null)
+                    {
+                        return new RemoteMatch
+                        {
+                            Provider = provider,
+                            Library = await action(provider)
+                        };
+                    }
+
+                    return null;
+                };
+
+                tasks.Add(taskWrapper());
+            }
+
+            while (tasks.Count > 0)
+            {
+                var task = await Task.WhenAny(tasks);
+                tasks.Remove(task);
+                var match = await task;
+
+                if (match != null)
+                {
+                    return match;
+                }
+            }
+
+            return null;
         }
 
         private static async Task<RemoteMatch> FindLibrary(
