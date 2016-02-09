@@ -9,10 +9,10 @@ using NuGet.Protocol.Core.v3;
 
 namespace NuGet.Protocol
 {
-    public class UIMetadataResourceV3Provider : ResourceProvider
+    public class PackageMetadataResourceV3Provider : ResourceProvider
     {
-        public UIMetadataResourceV3Provider()
-            : base(typeof(PackageMetadataResource), nameof(UIMetadataResourceV3Provider), nameof(UIMetadataResourceV2FeedProvider))
+        public PackageMetadataResourceV3Provider()
+            : base(typeof(PackageMetadataResource), nameof(PackageMetadataResourceV3Provider), nameof(PackageMetadataResourceV2FeedProvider))
         {
         }
 

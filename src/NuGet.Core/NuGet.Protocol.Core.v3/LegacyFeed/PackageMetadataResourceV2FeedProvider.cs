@@ -8,12 +8,12 @@ using NuGet.Protocol.Core.Types;
 
 namespace NuGet.Protocol
 {
-    public class UIMetadataResourceV2FeedProvider : ResourceProvider
+    public class PackageMetadataResourceV2FeedProvider : ResourceProvider
     {
-        public UIMetadataResourceV2FeedProvider()
+        public PackageMetadataResourceV2FeedProvider()
             : base(typeof(PackageMetadataResource),
-                  nameof(UIMetadataResourceV2FeedProvider),
-                  "UIMetadataResourceLocalProvider")
+                  nameof(PackageMetadataResourceV2FeedProvider),
+                  "PackageMetadataResourceLocalProvider")
         {
         }
 

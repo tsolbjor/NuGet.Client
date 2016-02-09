@@ -9,11 +9,11 @@ using NuGet.Protocol.Core.v2;
 
 namespace NuGet.Protocol.VisualStudio
 {
-    public class UIMetadataResourceLocalProvider : V2ResourceProvider
+    public class PackageMetadataResourceLocalProvider : V2ResourceProvider
     {
-        public UIMetadataResourceLocalProvider()
+        public PackageMetadataResourceLocalProvider()
             : base(typeof(PackageMetadataResource),
-                  nameof(UIMetadataResourceLocalProvider),
+                  nameof(PackageMetadataResourceLocalProvider),
                   NuGetResourceProviderPositions.Last)
         {
         }
