@@ -33,9 +33,8 @@ namespace NuGet.PackageManagement.PowerShellCmdlets
                         }
                         else
                         {
-                            // result has at least 1 element, so call First()
-                            var nVersion = result.First();
-                            return new[] { nVersion };
+                            // result has at least 1 element
+                            return result.Take(1);
                         }
                     }
 
