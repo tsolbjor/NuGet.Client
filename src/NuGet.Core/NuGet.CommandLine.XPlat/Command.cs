@@ -74,5 +74,16 @@ namespace NuGet.CommandLine.XPlat
                 System.Console.ForegroundColor = currentColor;
             }
         }
+
+        protected string GetApiKey(CommandOption apiKeyOption, string source, ISettings settings)
+        {
+            var apiKey = apiKeyOption.Value();
+            if (!String.IsNullOrEmpty(apiKey))
+            {
+                return apiKey;
+            }
+
+            return SettingsUtility.GetDecryptedValue(settings, "apikeys", source);
+        }
     }
 }

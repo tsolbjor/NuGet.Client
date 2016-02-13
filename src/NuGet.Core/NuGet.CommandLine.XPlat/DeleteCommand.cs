@@ -63,7 +63,7 @@ namespace NuGet.CommandLine.XPlat
                     var pushCommandResource = await GetPushCommandResource(source, setting);
                     await pushCommandResource.Delete(packageId,
                         packageVersion,
-                        s => apikey.Value(),
+                        (s) => GetApiKey(apikey, s, setting),
                         (desc) => Confirm(nonInteractive.HasValue(), desc),
                         logger);
                     return 0;

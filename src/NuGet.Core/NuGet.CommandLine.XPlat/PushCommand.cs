@@ -71,7 +71,7 @@ namespace NuGet.CommandLine.XPlat
 
                     await pushCommandResource.Push(packagePath,
                         t,
-                        (s) => apikey.Value(),
+                        (s) => GetApiKey(apikey, s, setting),
                         logger);
 
                     return 0;
