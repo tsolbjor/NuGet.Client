@@ -3,7 +3,15 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.VisualStudio.Shell;
 
 [assembly: AssemblyTitle("NuGet.Tools")]
 [assembly: AssemblyDescription("Visual Studio Extensibility Package (vsix)")]
 [assembly: ComVisible(false)]
+[assembly: ProvideBindingRedirection(
+    AssemblyName = "Microsoft.VisualStudio.Services.Client",
+    PublicKeyToken = "b03f5f7f11d50a3a",
+    Culture = "neutral",
+    OldVersionLowerBound = "0.0.0.0",
+    OldVersionUpperBound = "15.0.0.0",
+    NewVersion = "15.0.0.0")]
