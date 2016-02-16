@@ -7,7 +7,9 @@ namespace NuGet.Test.Server
     {
         ConnectFailure,
         ServerProtocolViolation,
-        NameResolutionFailure
+        NameResolutionFailure,
+        FailedDownload,
+        DelayedDownload
     }
 
     public interface ITestServer
