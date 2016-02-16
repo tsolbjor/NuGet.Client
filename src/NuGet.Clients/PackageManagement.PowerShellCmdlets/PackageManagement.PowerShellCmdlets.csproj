@@ -133,7 +133,6 @@
     <Compile Include="VersionType.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="PackageManagement.PowerShellCmdlets.nuspec" />
     <None Include="project.json" />
   </ItemGroup>

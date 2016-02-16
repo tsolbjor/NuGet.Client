@@ -125,7 +125,6 @@
       <Link>Modules\NuGet\Profile.ps1</Link>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <None Include="app.config" />
     <None Include="project.json" />
     <None Include="Resources\nugetAbout.ico" />
     <None Include="Resources\Toolbar.png" />
