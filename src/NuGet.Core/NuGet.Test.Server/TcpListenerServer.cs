@@ -19,15 +19,18 @@ namespace NuGet.Test.Server
                         action,
                         StartServerProtocolViolationAsync);
 
+                case TestServerMode.DelayedDownload:
+                    return await ExecuteAsync(
+                        action,
+                        StartDelayedDownloadAsync);
+
                 default:
                     throw new InvalidOperationException($"The mode {Mode} is not supported by this server.");
             }
         }
 
         public TestServerMode Mode { get; set; } = TestServerMode.ServerProtocolViolation;
-
-        public string Content { get; set; } = @"{""foo"": ""bar""}";
-
+        
         private async Task<T> ExecuteAsync<T>(Func<string, Task<T>> action, Func<TcpListener, CancellationToken, Task> startServer)
         {
             var portReserver = new PortReserver();
@@ -53,6 +56,37 @@ namespace NuGet.Test.Server
                 CancellationToken.None);
         }
 
+        private async Task StartDelayedDownloadAsync(TcpListener tcpListener, CancellationToken token)
+        {
+            // This server does not process any request body.
+            while (!token.IsCancellationRequested)
+            {
+                using (var client = await Task.Run(tcpListener.AcceptTcpClientAsync, token))
+                using (var stream = client.GetStream())
+                using (var reader = new StreamReader(stream, Encoding.ASCII))
+                using (var writer = new StreamWriter(stream, Encoding.ASCII))
+                {
+                    while (!string.IsNullOrEmpty(reader.ReadLine()))
+                    {
+                    }
+
+                    var before = @"{""foo"": 1,";
+                    var after = @" ""bar"": 2}";
+
+                    writer.WriteLine("HTTP/1.1 200 OK");
+                    writer.WriteLine($"Date: {DateTimeOffset.UtcNow:R}");
+                    writer.WriteLine("Content-Type: application/json");
+                    writer.WriteLine($"Content-Length: {before.Length + after.Length}");
+                    writer.WriteLine();
+                    writer.Write(before);
+                    writer.Flush();
+                    await Task.Delay(Delay);
+                    writer.Write(after);
+                    writer.Flush();
+                }
+            }
+        }
+
         private async Task StartServerProtocolViolationAsync(TcpListener tcpListener, CancellationToken token)
         {
             // This server does not process any request body.
@@ -60,7 +94,7 @@ namespace NuGet.Test.Server
             {
                 using (var client = await Task.Run(tcpListener.AcceptTcpClientAsync, token))
                 using (var stream = client.GetStream())
-                using (var reader = new StreamReader(stream))
+                using (var reader = new StreamReader(stream, Encoding.ASCII, false, 1))
                 using (var writer = new StreamWriter(stream, Encoding.ASCII))
                 {
                     while (!string.IsNullOrEmpty(reader.ReadLine()))
@@ -74,5 +108,7 @@ namespace NuGet.Test.Server
                 }
             }
         }
+
+        public TimeSpan Delay { get; set; } = TimeSpan.FromSeconds(5);
     }
 }
