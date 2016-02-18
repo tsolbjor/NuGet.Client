@@ -17,7 +17,7 @@ namespace NuGet.Test.Server
             {
                 case TestServerMode.FailedDownload:
                     arguments = $"{TestServerMode.DelayedDownload} -d 120";
-                    waitSeconds = 2;
+                    waitSeconds = 5;
                     break;
 
                 default:
@@ -31,6 +31,7 @@ namespace NuGet.Test.Server
             {
                 // read the address, which signals that the server is ready
                 var address = process.StandardOutput.ReadLine();
+                Console.WriteLine($"address = {address}");
 
                 // execute the action
                 var actionTask = action(address);
@@ -68,14 +69,9 @@ namespace NuGet.Test.Server
         {
             // build DNX and server paths
             var dnxPath = Path.Combine(PlatformServices.Default.Runtime.RuntimePath, "dnx");
-            Console.WriteLine($"dnxPath: {dnxPath} (exists: {File.Exists(dnxPath)})");
-
             var appPath = PlatformServices.Default.Application.ApplicationBasePath;
-            Console.WriteLine($"appPath: {appPath} (exists: {Directory.Exists(appPath)})");
             var basePath = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(appPath)));
-            Console.WriteLine($"basePath: {basePath} (exists: {Directory.Exists(basePath)})");
             var testServerPath = Path.Combine(basePath, "src", "NuGet.Core", "NuGet.Test.Server");
-            Console.WriteLine($"testServerPath: {testServerPath} (exists: {Directory.Exists(testServerPath)})");
 
             // start the process
             var process = new Process
