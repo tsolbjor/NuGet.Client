@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Protocol.Core.Types;
 using NuGet.Test.Server;
@@ -18,6 +19,12 @@ namespace NuGet.Protocol.Core.v3.Tests
         [Fact]
         public async Task HttpSource_ThrowsExceptionWhenJsonDownloadFails()
         {
+            // https://github.com/NuGet/Home/issues/2096
+            if (!RuntimeEnvironmentHelper.IsWindows)
+            {
+                return;
+            }
+
             // Arrange
             var server = new OutOfProcessServer { Mode = TestServerMode.FailedDownload };
 
@@ -39,6 +46,12 @@ namespace NuGet.Protocol.Core.v3.Tests
         [Fact]
         public async Task HttpSource_ThrowsExceptionWhenCacheDownloadFails()
         {
+            // https://github.com/NuGet/Home/issues/2096
+            if (!RuntimeEnvironmentHelper.IsWindows)
+            {
+                return;
+            }
+
             // Arrange
             var server = new OutOfProcessServer { Mode = TestServerMode.FailedDownload };
             var cacheKey = $"test_{Guid.NewGuid()}";
