@@ -29,6 +29,9 @@ Write-Host ""
 
 $BuildErrors = @()
 
+Invoke-BuildStep 'Installing runtime' { Install-DNX CoreCLR; Install-DNX CLR -Default } `
+    -ev +BuildErrors
+
 Invoke-BuildStep 'Updating sub-modules' { Update-SubModules } `
     -skip:($SkipSubModules -or $Fast) `
     -ev +BuildErrors
