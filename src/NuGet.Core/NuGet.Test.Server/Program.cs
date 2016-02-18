@@ -57,7 +57,7 @@ namespace NuGet.Test.Server
             switch (mode)
             {
                 case TestServerMode.DelayedDownload:
-                    var kestrelServer = new KestrelServer();
+                    var tcpListenerServer = new TcpListenerServer { Mode = mode };
 
                     var unparsedDelay = GetOption(args, "-d");
                     if (unparsedDelay != null)
@@ -71,10 +71,10 @@ namespace NuGet.Test.Server
                             return false;
                         }
 
-                        kestrelServer.DownloadDelay = TimeSpan.FromSeconds(parsedDelay);
+                        tcpListenerServer.Delay = TimeSpan.FromSeconds(parsedDelay);
                     }
 
-                    server = kestrelServer;
+                    server = tcpListenerServer;
                     return true;
 
                 default:
@@ -107,7 +107,7 @@ MODE: DelayedDownload
 
   Options:
     
-    -d   The time in seconds to delay. The default is 10 seconds.");
+    -d   The time in seconds to delay. The default is 5 seconds.");
         }
     }
 }
