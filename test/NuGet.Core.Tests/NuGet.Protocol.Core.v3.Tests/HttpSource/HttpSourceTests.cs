@@ -37,9 +37,14 @@ namespace NuGet.Protocol.Core.v3.Tests
                         CancellationToken.None));
 
                 // Act & Assert
-                var ioException = await Assert.ThrowsAnyAsync<IOException>(actionAsync);
-                var socketException = Assert.IsType<SocketException>(ioException.InnerException);
-                Assert.Equal(SocketError.ConnectionReset, socketException.SocketErrorCode);
+                var exception = await Assert.ThrowsAnyAsync<IOException>(actionAsync);
+#if DNXCORE50
+                Assert.NotNull(exception.InnerException);
+                Assert.Equal("The connection with the server was terminated abnormally", exception.InnerException.Message);
+#else
+                var innerException = Assert.IsType<SocketException>(exception.InnerException);
+                Assert.Equal(SocketError.ConnectionReset, innerException.SocketErrorCode);
+#endif
             }
         }
 
@@ -67,9 +72,14 @@ namespace NuGet.Protocol.Core.v3.Tests
                         CancellationToken.None));
 
                 // Act & Assert
-                var ioException = await Assert.ThrowsAnyAsync<IOException>(actionAsync);
-                var socketException = Assert.IsType<SocketException>(ioException.InnerException);
-                Assert.Equal(SocketError.ConnectionReset, socketException.SocketErrorCode);
+                var exception = await Assert.ThrowsAnyAsync<IOException>(actionAsync);
+#if DNXCORE50
+                Assert.NotNull(exception.InnerException);
+                Assert.Equal("The connection with the server was terminated abnormally", exception.InnerException.Message);
+#else
+                var innerException = Assert.IsType<SocketException>(exception.InnerException);
+                Assert.Equal(SocketError.ConnectionReset, innerException.SocketErrorCode);
+#endif
             }
         }
 
