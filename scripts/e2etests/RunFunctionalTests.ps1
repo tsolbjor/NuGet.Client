@@ -52,14 +52,23 @@ Write-Host "Remove any NuGet.Tests module that may have been loaded already and 
 ExecuteCommand $dte2 "View.PackageManagerConsole" "Get-Module NuGet.Tests | Remove-Module" "Running command: 'Get-Module NuGet.Tests | Remove-Module' ..." 1
 
 $NuGetTestsModulePath = Join-Path $NuGetTestPath "NuGet.Tests.psm1"
+$NuGetTestsModulePath = Join-Path $PSScriptRoot "NuGet.Tests.psm1"
+if ((Test-Path $NuGetTestsModulePath) -eq $false)
+{
+    $NuGetTestsModulePath = Join-Path $NuGetTestPath "NuGet.Tests.psm1"
+}
+
 Write-Host "Import NuGet.Tests module from $NuGetTestPath and wait for 5 seconds."
 ExecuteCommand $dte2 "View.PackageManagerConsole" "Import-Module $NuGetTestsModulePath" "Running command: 'Import-Module $NuGetTestsModulePath' ..." 5
 
+<#
 Write-Host "Executing the provided Package manager console command: ""$PMCCommand"""
 ExecuteCommand $dte2 "View.PackageManagerConsole" $PMCCommand "Running command: $PMCCommand ..."
 
 Write-Host "Starting functional tests with command '$PMCCommand'"
 $resultsHtmlFile = RealTimeLogResults $NuGetTestPath $EachTestTimoutInSecs
+#>
+
 
 if (!$resultsHtmlFile)
 {
