@@ -329,6 +329,19 @@ namespace NuGet.Client
                             "ref/{tfm}/{assembly}",
                         });
 
+                NativeLibraries = new PatternSet(
+                    conventions.Properties,
+                    groupPatterns: new PatternDefinition[]
+                        {
+                            "runtimes/{rid}/native/{any?}",
+                            "native/{any?}",
+                        },
+                    pathPatterns: new PatternDefinition[]
+                    {
+                        "runtimes/{rid}/native/{any}",
+                        "native/{any}",
+                    });
+
                 ResourceAssemblies = new PatternSet(
                     conventions.Properties,
                     groupPatterns: new PatternDefinition[]

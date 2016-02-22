@@ -351,7 +351,7 @@ namespace NuGet.ProjectModel
                 json[SubtargetsProperty] = WriteObject(ordered, WriteSubtarget);
             }
 
-            return new JProperty(library.Name + "/" + library.Version.ToNormalizedString(), );
+            return new JProperty(library.Name + "/" + library.Version.ToNormalizedString(), json);
         }
 
         private static JObject WriteTargetLibraryCore(LockFileTargetLibrary library)
