@@ -243,6 +243,11 @@ namespace NuGet.Client
             public PatternSet AnyTargettedFile { get; }
 
             /// <summary>
+            /// Pattern used to locate all files designed for loading as managed code assemblies at run-time in specific runtime environments
+            /// </summary>
+            public PatternSet RuntimeSpecificAssemblies { get; }
+
+            /// <summary>
             /// Pattern used to locate all files designed for loading as managed code assemblies at run-time
             /// </summary>
             public PatternSet RuntimeAssemblies { get; }
@@ -256,6 +261,11 @@ namespace NuGet.Client
             /// Pattern used to locate all files designed for loading as native code libraries at run-time
             /// </summary>
             public PatternSet NativeLibraries { get; }
+
+            /// <summary>
+            /// Pattern used to locate all files designed for loading as native code libraries at run-time in specific runtime environments
+            /// </summary>
+            public PatternSet RuntimeSpecificNativeLibraries { get; }
 
             /// <summary>
             /// Pattern used to locate all files designed for loading as managed code resource assemblies at run-time
@@ -319,19 +329,6 @@ namespace NuGet.Client
                             "ref/{tfm}/{assembly}",
                         });
 
-                NativeLibraries = new PatternSet(
-                    conventions.Properties,
-                    groupPatterns: new PatternDefinition[]
-                        {
-                            "runtimes/{rid}/native/{any?}",
-                            "native/{any?}",
-                        },
-                    pathPatterns: new PatternDefinition[]
-                    {
-                        "runtimes/{rid}/native/{any}",
-                        "native/{any}",
-                    });
-
                 ResourceAssemblies = new PatternSet(
                     conventions.Properties,
                     groupPatterns: new PatternDefinition[]
@@ -373,6 +370,28 @@ namespace NuGet.Client
                     pathPatterns: new PatternDefinition[]
                     {
                         "contentFiles/{codeLanguage}/{tfm}/{any?}"
+                    });
+
+                RuntimeSpecificAssemblies = new PatternSet(
+                    conventions.Properties,
+                    groupPatterns: new PatternDefinition[]
+                    {
+                            "runtimes/{rid}/lib/{tfm}/{any?}"
+                    },
+                    pathPatterns: new PatternDefinition[]
+                    {
+                            "runtimes/{rid}/lib/{tfm}/{assembly}"
+                    });
+
+                RuntimeSpecificNativeLibraries = new PatternSet(
+                    conventions.Properties,
+                    groupPatterns: new PatternDefinition[]
+                    {
+                        "runtimes/{rid}/native/{any?}",
+                    },
+                    pathPatterns: new PatternDefinition[]
+                    {
+                        "runtimes/{rid}/native/{any}",
                     });
             }
         }

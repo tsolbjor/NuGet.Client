@@ -10,6 +10,7 @@ using NuGet.Packaging;
 using NuGet.Packaging.Core;
 using NuGet.ProjectModel;
 using NuGet.Repositories;
+using NuGet.Client;
 
 namespace NuGet.Commands
 {
@@ -171,6 +172,12 @@ namespace NuGet.Commands
                 lockFileLib.NativeLibraries = nativeGroup.Items.Select(p => new LockFileItem(p.Path)).ToList();
             }
 
+            // If we're building for a RID-less target, check for RID-specific assets
+            if(string.IsNullOrEmpty(runtimeIdentifier))
+            {
+                BuildSubtargets(contentItems, targetGraph, lockFileLib.Subtargets);
+            }
+
             // content v2 items
             var contentFileGroups = contentItems.FindItemGroups(targetGraph.Conventions.Patterns.ContentFiles);
 
@@ -234,6 +241,42 @@ namespace NuGet.Commands
             }
 
             return lockFileLib;
+        }
+
+        private static void BuildSubtargets(ContentItemCollection contentItems, RestoreTargetGraph targetGraph, IList<LockFileSubtarget> subtargets)
+        {
+            // Collect all the relevant assets and group by RIDs
+            var runtimeSpecificAssemblies = contentItems
+                .FindItems(targetGraph.Conventions.Patterns.RuntimeSpecificAssemblies)
+                .GroupBy(c => (string)c.Properties[ManagedCodeConventions.PropertyNames.RuntimeIdentifier])
+                .ToDictionary(g => g.Key, g => (IEnumerable<ContentItem>)g);
+            var runtimeSpecificNativeLibraries = contentItems
+                .FindItems(targetGraph.Conventions.Patterns.RuntimeSpecificNativeLibraries)
+                .GroupBy(c => (string)c.Properties[ManagedCodeConventions.PropertyNames.RuntimeIdentifier])
+                .ToDictionary(g => g.Key, g => (IEnumerable<ContentItem>)g);
+
+            // Find the list of RIDs
+            var rids = Enumerable.Concat(runtimeSpecificAssemblies.Keys, runtimeSpecificNativeLibraries.Keys)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            // Build subtargets for each RID
+            foreach(var rid in rids)
+            {
+                var definition = new LockFileTargetLibrary();
+
+                IEnumerable<ContentItem> items;
+                if(runtimeSpecificAssemblies.TryGetValue(rid, out items))
+                {
+                    definition.RuntimeAssemblies = items.Select(c => new LockFileItem(c.Path)).ToList();
+                }
+
+                if(runtimeSpecificNativeLibraries.TryGetValue(rid, out items))
+                {
+                    definition.NativeLibraries = items.Select(c => new LockFileItem(c.Path)).ToList();
+                }
+
+                subtargets.Add(new LockFileSubtarget(rid, definition));
+            }
         }
 
         private static bool HasItems(ContentItemGroup compileGroup)

@@ -42,6 +42,7 @@ namespace NuGet.ProjectModel
         private const string PathProperty = "path";
         private const string MSBuildProjectProperty = "msbuildProject";
         private const string FrameworkProperty = "framework";
+        private const string SubtargetsProperty = "subtargets";
 
         // Legacy property names
         private const string RuntimeAssembliesProperty = "runtimeAssemblies";
@@ -262,7 +263,17 @@ namespace NuGet.ProjectModel
 
         private static LockFileTargetLibrary ReadTargetLibrary(string property, JToken json)
         {
-            var library = new LockFileTargetLibrary();
+            var library = ReadTargetLibraryCore(json);
+
+            var jObject = json as JObject;
+            library.Type = ReadProperty<string>(jObject, TypeProperty);
+            library.Framework = ReadProperty<string>(jObject, FrameworkProperty);
+            library.Dependencies = ReadObject(json[DependenciesProperty] as JObject, ReadPackageDependency);
+            library.FrameworkAssemblies = ReadArray(json[FrameworkAssembliesProperty] as JArray, ReadString);
+            library.CompileTimeAssemblies = ReadObject(json[CompileProperty] as JObject, ReadFileItem);
+            library.ResourceAssemblies = ReadObject(json[ResourceProperty] as JObject, ReadFileItem);
+            library.ContentFiles = ReadObject(json[ContentFilesProperty] as JObject, ReadFileItem);
+            library.Subtargets = ReadObject(json[SubtargetsProperty] as JObject, ReadSubtarget);
 
             var parts = property.Split(new[] { '/' }, 2);
             library.Name = parts[0];
@@ -271,24 +282,22 @@ namespace NuGet.ProjectModel
                 library.Version = NuGetVersion.Parse(parts[1]);
             }
 
-            var jObject = json as JObject;
-            library.Type = ReadProperty<string>(jObject, TypeProperty);
-            library.Framework = ReadProperty<string>(jObject, FrameworkProperty);
+            return library;
+        }
 
-            library.Dependencies = ReadObject(json[DependenciesProperty] as JObject, ReadPackageDependency);
-            library.FrameworkAssemblies = ReadArray(json[FrameworkAssembliesProperty] as JArray, ReadString);
+        private static LockFileTargetLibrary ReadTargetLibraryCore(JToken json)
+        {
+            var library = new LockFileTargetLibrary();
+
             library.RuntimeAssemblies = ReadObject(json[RuntimeProperty] as JObject, ReadFileItem);
-            library.CompileTimeAssemblies = ReadObject(json[CompileProperty] as JObject, ReadFileItem);
-            library.ResourceAssemblies = ReadObject(json[ResourceProperty] as JObject, ReadFileItem);
             library.NativeLibraries = ReadObject(json[NativeProperty] as JObject, ReadFileItem);
-            library.ContentFiles = ReadObject(json[ContentFilesProperty] as JObject, ReadFileItem);
 
             return library;
         }
 
         private static JProperty WriteTargetLibrary(LockFileTargetLibrary library)
         {
-            var json = new JObject();
+            var json = WriteTargetLibraryCore(library);
 
             if (library.Type != null)
             {
@@ -321,25 +330,11 @@ namespace NuGet.ProjectModel
                 json[CompileProperty] = WriteObject(ordered, WriteFileItem);
             }
 
-            if (library.RuntimeAssemblies.Count > 0)
-            {
-                var ordered = library.RuntimeAssemblies.OrderBy(assembly => assembly.Path, StringComparer.Ordinal);
-
-                json[RuntimeProperty] = WriteObject(ordered, WriteFileItem);
-            }
-
             if (library.ResourceAssemblies.Count > 0)
             {
                 var ordered = library.ResourceAssemblies.OrderBy(assembly => assembly.Path, StringComparer.Ordinal);
 
                 json[ResourceProperty] = WriteObject(ordered, WriteFileItem);
-            }
-
-            if (library.NativeLibraries.Count > 0)
-            {
-                var ordered = library.NativeLibraries.OrderBy(assembly => assembly.Path, StringComparer.Ordinal);
-
-                json[NativeProperty] = WriteObject(ordered, WriteFileItem);
             }
 
             if (library.ContentFiles.Count > 0)
@@ -349,7 +344,46 @@ namespace NuGet.ProjectModel
                 json[ContentFilesProperty] = WriteObject(ordered, WriteFileItem);
             }
 
-            return new JProperty(library.Name + "/" + library.Version.ToNormalizedString(), json);
+            if (library.Subtargets.Count > 0)
+            {
+                var ordered = library.Subtargets.OrderBy(target => target.RuntimeIdentifier, StringComparer.Ordinal);
+
+                json[SubtargetsProperty] = WriteObject(ordered, WriteSubtarget);
+            }
+
+            return new JProperty(library.Name + "/" + library.Version.ToNormalizedString(), );
+        }
+
+        private static JObject WriteTargetLibraryCore(LockFileTargetLibrary library)
+        {
+            var json = new JObject();
+
+            if (library.RuntimeAssemblies.Count > 0)
+            {
+                var ordered = library.RuntimeAssemblies.OrderBy(assembly => assembly.Path, StringComparer.Ordinal);
+
+                json[RuntimeProperty] = WriteObject(ordered, WriteFileItem);
+            }
+
+            if (library.NativeLibraries.Count > 0)
+            {
+                var ordered = library.NativeLibraries.OrderBy(assembly => assembly.Path, StringComparer.Ordinal);
+
+                json[NativeProperty] = WriteObject(ordered, WriteFileItem);
+            }
+
+            return json;
+        }
+
+        private static LockFileSubtarget ReadSubtarget(string property, JToken json)
+        {
+            var definition = ReadTargetLibraryCore(json);
+            return new LockFileSubtarget(property, definition);
+        }
+
+        private static JProperty WriteSubtarget(LockFileSubtarget arg)
+        {
+            return new JProperty(arg.RuntimeIdentifier, WriteTargetLibraryCore(arg.Definition));
         }
 
         private static ProjectFileDependencyGroup ReadProjectFileDependencyGroup(string property, JToken json)
