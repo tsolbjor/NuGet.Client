@@ -7,6 +7,12 @@ param([parameter(Mandatory = $true)]
 $ErrorActionPreference = "Stop"
 $FileKind = "{6BB5F8EE-4483-11D3-8BCF-00C04F8EC28C}"
 
+function GetDTE
+{
+    Write-Host 'Getting dte...'
+    return $dte
+}
+
 function New-BuildIntegratedProj 
 {
     param(
@@ -14,7 +20,7 @@ function New-BuildIntegratedProj
         [parameter(ValueFromPipeline = $true)]$SolutionFolder
     )
 
-    if ($dte.Version -ge '14.0')
+    if ((GetDTE).Version -ge '14.0')
     {
         $SolutionFolder | New-Project BuildIntegratedProj $ProjectName
     }
@@ -31,7 +37,7 @@ function New-CpsApp
         [parameter(ValueFromPipeline = $true)]$SolutionFolder
     )
 
-    if ($dte.Version -ge '14.0')
+    if ((GetDTE).Version -ge '14.0')
     {
         $SolutionFolder | New-Project CpsApp $ProjectName
     }
@@ -42,8 +48,10 @@ function New-CpsApp
 }
 
 function Get-SolutionDir {
-    if($dte.Solution -and $dte.Solution.IsOpen) {
-        return Split-Path $dte.Solution.FullName
+    Write-Host "Get-SolutionDir function"
+
+    if((GetDTE).Solution -and (GetDTE).Solution.IsOpen) {
+        return Split-Path (GetDTE).Solution.FullName
     }
     else {
         throw "Solution not avaliable"
@@ -51,16 +59,21 @@ function Get-SolutionDir {
 }
 
 function Ensure-Solution {
-    if(!$dte.Solution -or !$dte.Solution.IsOpen) {
+    Write-Host "Ensure-Solution function"
+
+    if(!(GetDTE).Solution -or !(GetDTE).Solution.IsOpen) {
         New-Solution
     }
 }
 
 function Close-Solution 
 {
-    if ($dte.Solution -and $dte.Solution.IsOpen) 
+    Write-Host "Close-Solution function"
+
+    $dteLocal = GetDTE
+    if ($dteLocal.Solution -and $dteLocal.Solution.IsOpen) 
     {
-        $dte.Solution.Close()
+        $dteLocal.Solution.Close()
     }
 }
 
@@ -72,8 +85,10 @@ function Open-Solution
         [parameter(Mandatory = $true)]
         $Path
     )
+
+    Write-Host "Open-Solution function"
     
-    $dte.Solution.Open($Path)
+    (GetDTE).Solution.Open($Path)
 }
 
 function Ensure-Dir {
@@ -92,21 +107,9 @@ function New-Solution {
         [string]$solutionName
     )
 
-    if ($solutionName) {
-        $name = $solutionName 
-    }
-    else {
-        $id = New-Guid
-        $name = "Solution_$id"
-    }
-
-    $solutionDir = Join-Path $OutputPath $name
-    $solutionPath = Join-Path $solutionDir $name
-    
-    Ensure-Dir $solutionDir
-     
-    $dte.Solution.Create($solutionDir, $name) | Out-Null
-    $dte.Solution.SaveAs($solutionPath) | Out-Null    
+    Write-Host "New-Solution function"
+    [API.Test.VSHelper]::CreateNewSolution($solutionName)
+    Write-Host "New-Solution function: End"
 }
 
 function New-Project {
@@ -116,6 +119,8 @@ function New-Project {
          [string]$ProjectName,
          [parameter(ValueFromPipeline = $true)]$SolutionFolder
     )
+
+    Write-Host "New-Project function"
 
     $id = New-Guid
     if (!$ProjectName) {
@@ -132,7 +137,8 @@ function New-Project {
 		$lang = 'CSharp/Web'
 
 		# Find the vs template file
-		$projectTemplateFilePath = $dte.Solution.GetProjectTemplate($projectTemplatePath, $lang)
+        Write-Host "Find the vs template file"
+		$projectTemplateFilePath = (GetDTE).Solution.GetProjectTemplate($projectTemplatePath, $lang)
 	}
 	else
 	{
@@ -153,21 +159,22 @@ function New-Project {
     
     # Store the active window so that we can set focus to it after the command completes
     # When we add a project to VS it usually tries to set focus to some page
-    $window = $dte.ActiveWindow
+    Write-Host "Get Active Window"
+    $window = (GetDTE).ActiveWindow
     
     if($SolutionFolder) {
         $SolutionFolder.Object.AddFromTemplate($projectTemplateFilePath, $destPath, $projectName) | Out-Null
     }
     else {
         # Add the project to the solution from th template file specified
-        $dte.Solution.AddFromTemplate($projectTemplateFilePath, $destPath, $projectName, $false) | Out-Null
+        (GetDTE).Solution.AddFromTemplate($projectTemplateFilePath, $destPath, $projectName, $false) | Out-Null
     }
     
     # Close all active documents
-    $dte.Documents | %{ try { $_.Close() } catch { } }
+    (GetDTE).Documents | %{ try { $_.Close() } catch { } }
 
     # Change the configuration of the project to x86
-    $dte.Solution.SolutionBuild.SolutionConfigurations | % { if ($_.PlatformName -eq 'x86') { $_.Activate() } } | Out-Null
+    (GetDTE).Solution.SolutionBuild.SolutionConfigurations | % { if ($_.PlatformName -eq 'x86') { $_.Activate() } } | Out-Null
 
     # Set the focus back on the shell
     $window.SetFocus()
@@ -234,7 +241,7 @@ function New-SolutionFolder {
         # Make sure there is a solution
         Ensure-Solution
 
-        $solution = Get-Interface $dte.Solution ([EnvDTE80.Solution2])
+        $solution = Get-Interface (GetDTE).Solution ([EnvDTE80.Solution2])
     }
     elseif($SolutionFolder.Object.AddSolutionFolder) {
         $solution = $SolutionFolder.Object
@@ -297,7 +304,7 @@ function New-BuildIntegratedProj
         [parameter(ValueFromPipeline = $true)]$SolutionFolder
     )
 
-    if ($dte.Version -ge '14.0')
+    if ((GetDTE).Version -ge '14.0')
     {
         $SolutionFolder | New-Project BuildIntegratedProj $ProjectName
     }
@@ -316,11 +323,11 @@ function New-JavaScriptApplication
 
     try 
     {
-        if ($dte.Version -eq '12.0')
+        if ((GetDTE).Version -eq '12.0')
         {
             $SolutionFolder | New-Project WinJSBlue $ProjectName
         }
-        elseif ($dte.Version -eq '14.0')
+        elseif ((GetDTE).Version -eq '14.0')
         {
             $SolutionFolder | New-Project WinJS_Dev14 $ProjectName
         }
@@ -381,11 +388,11 @@ function New-NativeWinStoreApplication
 
     try
     {
-        if ($dte.Version -eq '12.0' -or $dte.Version -eq '14.0')
+        if ((GetDTE).Version -eq '12.0' -or (GetDTE).Version -eq '14.0')
         {
             $SolutionFolder | New-Project CppWinStoreApplicationBlue $ProjectName
         }
-        elseif ($dte.Version -eq '14.0')
+        elseif ((GetDTE).Version -eq '14.0')
         {
             $SolutionFolder | New-Project CppWinStoreApplication_Dev14 $ProjectName
         }
@@ -507,7 +514,7 @@ function New-WindowsPhoneClassLibrary {
     )
 
     try {
-        if ($dte.Version -eq '14.0') {
+        if ((GetDTE).Version -eq '14.0') {
             $SolutionFolder | New-Project WindowsPhoneClassLibrary81 $ProjectName
         }
         else {
@@ -558,8 +565,8 @@ function New-DNXConsoleApp
 }
 
 function New-TextFile {
-    $dte.ItemOperations.NewFile('General\Text File')
-    $dte.ActiveDocument.Object("TextDocument")
+    (GetDTE).ItemOperations.NewFile('General\Text File')
+    (GetDTE).ActiveDocument.Object("TextDocument")
 }
 
 function Build-Project {
@@ -570,21 +577,21 @@ function Build-Project {
     )    
     if(!$Configuration) {
         # If no configuration was specified then use
-        $Configuration = $dte.Solution.SolutionBuild.ActiveConfiguration.Name
+        $Configuration = (GetDTE).Solution.SolutionBuild.ActiveConfiguration.Name
     }
     
     # Build the project and wait for it to complete
-    $dte.Solution.SolutionBuild.BuildProject($Configuration, $Project.UniqueName, $true)
+    (GetDTE).Solution.SolutionBuild.BuildProject($Configuration, $Project.UniqueName, $true)
 }
 
 function Clean-Project {
     # Clean the project and wait for it to complete
-    $dte.Solution.SolutionBuild.Clean($true)
+    (GetDTE).Solution.SolutionBuild.Clean($true)
 }
 
 function Build-Solution {
     # Build and wait for it to complete
-    $dte.Solution.SolutionBuild.Build($true)
+    (GetDTE).Solution.SolutionBuild.Build($true)
 }
 
 function Get-AssemblyReference {
@@ -714,10 +721,10 @@ function Get-ErrorTasks {
         [parameter(Mandatory = $true)]
         $vsBuildErrorLevel
     )
-    $dte.ExecuteCommand("View.ErrorList", " ")
+    (GetDTE).ExecuteCommand("View.ErrorList", " ")
     
     # Make sure there are no errors in the error list
-    $errorList = $dte.Windows | ?{ $_.Caption -like 'Error List*' } | Select -First 1
+    $errorList = (GetDTE).Windows | ?{ $_.Caption -like 'Error List*' } | Select -First 1
     
     if(!$errorList) {
         throw "Unable to locate the error list"
@@ -861,17 +868,18 @@ function Remove-Project {
 }
 
 function Get-SolutionPath {
-    $dte.Solution.Properties.Item("Path").Value
+    (GetDTE).Solution.Properties.Item("Path").Value
 }
 
 function Close-Solution {
-    if ($dte.Solution) {
-        $dte.Solution.Close()
+    $dteLocal = GetDTE
+    if ($dteLocal.Solution) {
+        $dteLocal.Solution.Close()
     }
 }
 
 function Enable-PackageRestore {
-    if (!$dte.Solution -or !$dte.Solution.IsOpen) 
+    if (!(GetDTE).Solution -or !(GetDTE).Solution.IsOpen) 
     {
         throw "No solution is available."
     }

@@ -109,7 +109,7 @@ function global:Run-Test {
     param(
         [parameter(ParameterSetName="Test", Position=0)]
         [string]$Test,
-        [Parameter(Mandatory=$true, Position=1)]
+        [Parameter(Position=1)]
         [string]$RunId="",
         [parameter(ParameterSetName="File", Mandatory=$true, Position=2)]
         [string]$File,
