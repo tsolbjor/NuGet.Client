@@ -212,7 +212,7 @@ namespace API.Test
 
             window.SetFocus();
 
-            // HACK: Need to be fixed
+            // HACK: May need to be fixed
             if (newProject == null)
             {
                 if (solutionFolderProject != null)
@@ -220,14 +220,21 @@ namespace API.Test
                     foreach (ProjectItem project in solutionFolderProject.ProjectItems)
                     {
                         newProject = project.Object as Project;
-                        break;
+                        if (project.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            newProject = null;
+                        }
                     }
                 }
                 else
                 {
                     foreach(Project project in solution2.Projects)
                     {
-                        if (project.Name == projectName)
+                        if (project.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase))
                         {
                             newProject = project;
                             break;

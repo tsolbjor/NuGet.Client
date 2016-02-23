@@ -1,8 +1,8 @@
 function Test-ProjectNameReturnsUniqueName {
      # Arrange
      $f = New-SolutionFolder 'Folder1'
-     $p1 = $f | New-ClassLibrary 'ProjectA'
-     $p3 = $f | New-WebApplication 'ProjectB'
+     $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
+     $p3 = New-WebApplication 'ProjectB' 'Folder1'
 
      $p2 = New-ConsoleApplication 'ProjectA'
 
@@ -19,7 +19,7 @@ function Test-ProjectNameReturnsUniqueName {
 function Test-DefaultProjectIsCorrectWhenProjectsAreAdded {
     # Act
     $f1 = New-SolutionFolder 'Folder1'
-    $p1 = $f1 | New-ClassLibrary 'ProjectA'
+    $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
 
     # Assert
     Assert-DefaultProject $p1
@@ -38,7 +38,7 @@ function Test-DefaultProjectIsCorrectWhenProjectsAreAddedInReverseOrder {
 
     # Act
     $f1 = New-SolutionFolder 'Folder1'
-    $p2 = $f1 | New-ClassLibrary 'ProjectA'
+    $p2 = New-ClassLibrary 'ProjectA' 'Folder1'
     Assert-DefaultProject $p1
 }
 
@@ -46,8 +46,8 @@ function Test-GetProjectThrowsIfProjectNameAmbiguous {
     # Act
     $f1 = New-SolutionFolder 'foo'
     $f2 = New-SolutionFolder 'bar'
-    $p1 = $f1 | New-ClassLibrary 'A'
-    $p2 = $f2 | New-ClassLibrary 'A'
+    $p1 = New-ClassLibrary 'A' 'foo'
+    $p2 = New-ClassLibrary 'A' 'bar'
 
     # Assert
     Assert-Throws { Get-Project A } "Project 'A' is not found."
@@ -68,12 +68,12 @@ function Test-GetProjectCommandWithWildCardsWorksWithProjectHavingTheSameName {
 
     # Arrange
     $f = New-SolutionFolder 'Folder1'
-    $p1 = $f | New-ClassLibrary 'ProjectA'
-    $p2 = $f | New-ClassLibrary 'ProjectB'
+    $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
+    $p2 = New-ClassLibrary 'ProjectB' 'Folder1'
 
     $g = New-SolutionFolder 'Folder2'
-    $p3 = $g | New-ClassLibrary 'ProjectA'
-    $p4 = $g | New-ConsoleApplication 'ProjectC'
+    $p3 = New-ClassLibrary 'ProjectA' 'Folder2'
+    $p4 = New-ConsoleApplication 'ProjectC' 'Folder2'
 
     $p5 = New-ConsoleApplication 'ProjectA'
 
@@ -107,10 +107,10 @@ function Test-GetProjectCommandWithWildCardsWorksWithProjectHavingTheSameName {
 function Test-SimpleNameDoesNotWorkWhenAllProjectsAreNested {
     # Arrange
     $f = New-SolutionFolder 'Folder1'
-    $p1 = $f | New-ClassLibrary 'ProjectA'
+    $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
 
     $g = New-SolutionFolder 'Folder2'
-    $p2 = $g | New-ClassLibrary 'ProjectA'
+    $p2 = New-ClassLibrary 'ProjectA' 'Folder2'
 
     # Assert
     Assert-Throws { (Get-Project -Name 'ProjectA') } "Project 'ProjectA' is not found."
@@ -120,7 +120,7 @@ function Test-RemovingAmbiguousProjectAllowsSimpleNameToBeUsed {
     # Act
     $f1 = New-SolutionFolder 'foo'
     $p1 = New-ClassLibrary 'A'
-    $p2 = $f1 | New-ClassLibrary 'A'
+    $p2 = New-ClassLibrary 'A' 'foo'
     
 
     Assert-AreEqual $p2 (Get-Project -Name foo\A)
@@ -136,7 +136,7 @@ function Test-RenameCreatingAmbiguityFollowedByRemovalAllowsSimpleNameToBeUsed {
     # Act
     $f1 = New-SolutionFolder 'foo'
     $p1 = New-ClassLibrary 'A'
-    $p2 = $f1 | New-ClassLibrary 'B'
+    $p2 = New-ClassLibrary 'B' 'foo'
     
 
     Assert-AreEqual $p2 (Get-Project -Name foo\B)
@@ -157,7 +157,7 @@ function Test-RenamingSolutionFolderDoesNotAffectGetProject {
     # Act
     $f1 = New-SolutionFolder 'foo'
     $p1 = New-ClassLibrary 'A'
-    $p2 = $f1 | New-ClassLibrary 'B'
+    $p2 = New-ClassLibrary 'B' 'foo'
     
 
     Assert-AreEqual $p2 (Get-Project -Name foo\B)
@@ -212,7 +212,7 @@ function Test-RenamingSolutionFolderWithDeeplyNestedProjectsDoesNotAffectGetProj
 function Test-AmbiguousStartupProject {
     # Arrange
     $f = New-SolutionFolder foo
-    $p1 = $f | New-ClassLibrary A
+    $p1 = New-ClassLibrary A foo
     $p2 = New-ClassLibrary A
 
     # Make sure the default project is p1
