@@ -2,7 +2,7 @@
 function Test-BuildIntegratedInstallPackage {
     # Arrange
     Write-Host 'Test-BuildIntegratedInstallPackage. What??'
-    $project = New-BuildIntegratedProj 'ProjectA'
+    $project = New-BuildIntegratedProj UAPApp
 
     # Act
     Install-Package NuGet.Versioning -ProjectName $project.Name -version 1.0.7

@@ -120,7 +120,7 @@ namespace API.Test
                     templatePath,
                     outputPath,
                     templateName,
-                    projectName,
+                    name,
                     solutionFolderName);
             });
         }

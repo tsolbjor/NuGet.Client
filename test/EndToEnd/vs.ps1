@@ -34,12 +34,12 @@ function New-CpsApp
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     if ((GetDTE).Version -ge '14.0')
     {
-        $SolutionFolder | New-Project CpsApp $ProjectName
+        New-Project CpsApp $ProjectName $SolutionFolder
     }
     else
     {
@@ -295,20 +295,11 @@ function New-ClassLibrary {
     New-Project ClassLibrary $ProjectName $SolutionFolderName
 }
 
-function Old-New-ClassLibrary {
-    param(        
-        [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
-    )
-
-    $SolutionFolder | New-Project ClassLibrary $ProjectName
-}
-
 function New-LightSwitchApplication 
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     New-Project JScriptVisualBasicLightSwitchProjectTemplate $ProjectName $SolutionFolder
@@ -319,7 +310,7 @@ function New-PortableLibrary
     param(
         [string]$ProjectName,
         [string]$Profile = $null,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try
@@ -346,22 +337,22 @@ function New-JavaScriptApplication
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try 
     {
         if ((GetDTE).Version -eq '12.0')
         {
-            $SolutionFolder | New-Project WinJSBlue $ProjectName
+            New-Project WinJSBlue $ProjectName $SolutionFolder
         }
         elseif ((GetDTE).Version -eq '14.0')
         {
-            $SolutionFolder | New-Project WinJS_Dev14 $ProjectName
+            New-Project WinJS_Dev14 $ProjectName $SolutionFolder
         }
         else 
         {
-            $SolutionFolder | New-Project WinJS $ProjectName
+            New-Project WinJS $ProjectName $SolutionFolder
         }
     }
     catch {
@@ -375,12 +366,12 @@ function New-JavaScriptApplication81
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try 
     {
-        $SolutionFolder | New-Project WinJSBlue $ProjectName
+        New-Project WinJSBlue $ProjectName $SolutionFolder
     }
     catch {
         # If we're unable to create the project that means we probably don't have some SDK installed
@@ -393,12 +384,12 @@ function New-JavaScriptWindowsPhoneApp81
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try 
     {
-        $SolutionFolder | New-Project WindowsPhoneApp81JS $ProjectName
+        New-Project WindowsPhoneApp81JS $ProjectName $SolutionFolder
     }
     catch {
         # If we're unable to create the project that means we probably don't have some SDK installed
@@ -411,22 +402,22 @@ function New-NativeWinStoreApplication
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try
     {
         if ((GetDTE).Version -eq '12.0' -or (GetDTE).Version -eq '14.0')
         {
-            $SolutionFolder | New-Project CppWinStoreApplicationBlue $ProjectName
+            New-Project CppWinStoreApplicationBlue $ProjectName $SolutionFolder
         }
         elseif ((GetDTE).Version -eq '14.0')
         {
-            $SolutionFolder | New-Project CppWinStoreApplication_Dev14 $ProjectName
+            New-Project CppWinStoreApplication_Dev14 $ProjectName $SolutionFolder
         }
         else 
         {
-            $SolutionFolder | New-Project CppWinStoreApplication $ProjectName
+            New-Project CppWinStoreApplication $ProjectName $SolutionFolder
         }
     }
     catch {
@@ -445,117 +436,108 @@ function New-ConsoleApplication {
     New-Project ConsoleApplication $ProjectName $SolutionFolder
 }
 
-function Old-New-ConsoleApplication {
-    param(        
-        [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
-    )
-
-    $SolutionFolder | New-Project ConsoleApplication $ProjectName
-}
-
 function New-WebApplication {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project EmptyWebApplicationProject40 $ProjectName
+    New-Project EmptyWebApplicationProject40 $ProjectName $SolutionFolder
 }
 
 function New-VBConsoleApplication {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project VBConsoleApplication $ProjectName
+    New-Project VBConsoleApplication $ProjectName $SolutionFolder
 }
 
 function New-MvcApplication { 
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project EmptyMvcWebApplicationProjectTemplatev4.0.csaspx $ProjectName
+    New-Project EmptyMvcWebApplicationProjectTemplatev4.0.csaspx $ProjectName $SolutionFolder
 }
 
 function New-MvcWebSite { 
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project WebApplication45WebSite $ProjectName
+    New-Project WebApplication45WebSite $ProjectName $SolutionFolder
 }
 
 function New-WebSite {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project EmptyWeb $ProjectName
+    New-Project EmptyWeb $ProjectName $SolutionFolder
 }
 
 function New-FSharpLibrary {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project FSharpLibrary $ProjectName
+    New-Project FSharpLibrary $ProjectName $SolutionFolder
 }
 
 function New-FSharpConsoleApplication {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project FSharpConsoleApplication $ProjectName
+    New-Project FSharpConsoleApplication $ProjectName $SolutionFolder
 }
 
 function New-WPFApplication {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project WPFApplication $ProjectName
+    New-Project WPFApplication $ProjectName $SolutionFolder
 }
 
 function New-SilverlightClassLibrary {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project SilverlightClassLibrary $ProjectName
+    New-Project SilverlightClassLibrary $ProjectName $SolutionFolder
 }
 
 function New-SilverlightApplication {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
-    $SolutionFolder | New-Project SilverlightProject $ProjectName
+    New-Project SilverlightProject $ProjectName $SolutionFolder
 }
 
 function New-WindowsPhoneClassLibrary {
     param(        
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try {
         if ((GetDTE).Version -eq '14.0') {
-            $SolutionFolder | New-Project WindowsPhoneClassLibrary81 $ProjectName
+            New-Project WindowsPhoneClassLibrary81 $ProjectName $SolutionFolder
         }
         else {
-            $SolutionFolder | New-Project WindowsPhoneClassLibrary $ProjectName
+            New-Project WindowsPhoneClassLibrary $ProjectName $SolutionFolder
         }
     }
     catch {
@@ -569,12 +551,12 @@ function New-DNXClassLibrary
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try 
     {
-        $SolutionFolder | New-Project DNXClassLibrary $ProjectName
+        New-Project DNXClassLibrary $ProjectName $SolutionFolder
     }
     catch {
         # If we're unable to create the project that means we probably don't have some SDK installed
@@ -587,12 +569,12 @@ function New-DNXConsoleApp
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     try 
     {
-        $SolutionFolder | New-Project DNXConsoleApp $ProjectName
+        New-Project DNXConsoleApp $ProjectName $SolutionFolder
     }
     catch {
         # If we're unable to create the project that means we probably don't have some SDK installed
