@@ -1110,9 +1110,8 @@ function Test-InstallPackageAfterRenaming {
     )
     # Arrange
     $f = New-SolutionFolder 'Folder1' | New-SolutionFolder 'Folder2'
-    $p0 = New-ClassLibrary 'ProjectX'
-    $p1 = $f | New-ClassLibrary 'ProjectA'
-    $p2 = $f | New-ClassLibrary 'ProjectB'
+    $p1 = New-ClassLibrary 'ProjectA' 'Folder1\Folder2'
+    $p2 = New-ClassLibrary 'ProjectB' 'Folder1\Folder2'
 
     # Act
     $p1.Name = "ProjectX"
@@ -1123,7 +1122,7 @@ function Test-InstallPackageAfterRenaming {
 
     # Assert
     Assert-NotNull (Get-ProjectItem $p1 scripts\jquery-1.5.js)
-    Assert-NotNull (Get-ProjectItem $p2 scripts\jquery-1.5.js) 
+    Assert-NotNull (Get-ProjectItem $p2 scripts\jquery-1.5.js)
 }
 
 function Test-InstallPackageIntoSecondProjectWithIncompatibleAssembliesDoesNotRollbackIfInUse {

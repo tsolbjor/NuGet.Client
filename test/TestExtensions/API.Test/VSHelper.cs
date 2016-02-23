@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -12,6 +13,19 @@ namespace API.Test
 {
     public static class VSHelper
     {
+        public static void ThrowStringArgException(string value, string paramName)
+        {
+            if(string.IsNullOrEmpty(paramName))
+            {
+                throw new ArgumentException("string cannot be null or empty", nameof(paramName));
+            }
+
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new ArgumentException("string cannot be null or empty", paramName);
+            }
+        }
+
         public static string GetNewGUID()
         {
             return Guid.NewGuid().ToString("d").Substring(0, 4).Replace("-", "");
@@ -19,6 +33,9 @@ namespace API.Test
 
         public static void CreateSolution(string solutionDirectory, string name)
         {
+            ThrowStringArgException(solutionDirectory, nameof(solutionDirectory));
+            ThrowStringArgException(name, nameof(name));
+
             ThreadHelper.JoinableTaskFactory.Run(async delegate
             {
                 await CreateSolutionAsync(solutionDirectory, name);
@@ -39,6 +56,9 @@ namespace API.Test
         private static string SolutionNameFormat = "Solution_{0}";
         public static void CreateNewSolution(string outputPath, string solutionName)
         {
+            ThrowStringArgException(outputPath, nameof(outputPath));
+            ThrowStringArgException(solutionName, nameof(solutionName));
+
             var solutionDir = Path.Combine(outputPath, solutionName);
 
             Directory.CreateDirectory(solutionDir);
@@ -48,6 +68,8 @@ namespace API.Test
         
         public static void CreateNewSolution(string outputPath)
         {
+            ThrowStringArgException(outputPath, nameof(outputPath));
+
             var id = GetNewGUID();
             var solutionName = string.Format(SolutionNameFormat, id);
 
@@ -56,6 +78,8 @@ namespace API.Test
 
         public static void EnsureSolution(string outputPath)
         {
+            ThrowStringArgException(outputPath, nameof(outputPath));
+
             ThreadHelper.JoinableTaskFactory.Run(async delegate
             {
                 await EnsureSolutionAsync(outputPath);
@@ -72,20 +96,65 @@ namespace API.Test
             }
         }
         
-        // HACK: Make this handle nested solution folders
-        private static Project GetSolutionFolderProject(DTE2 dte2, string solutionFolderName)
+        private static Project GetSolutionFolderProject(DTE2 dte2, string[] solutionFolderParts)
         {
             var solution2 = (Solution2)dte2.Solution;
+
+            var solutionFolderProject = GetSolutionFolderProject(solution2.Projects, solutionFolderParts, 0);
+            return solutionFolderProject;
+        }
+
+        private static Project GetSolutionFolderProject(
+            IEnumerable projectItems,
+            string[] solutionFolderParts,
+            int level)
+        {
+            if (solutionFolderParts == null)
+            {
+                throw new ArgumentNullException(nameof(solutionFolderParts));
+            }
+
+            if (solutionFolderParts.Length == 0)
+            {
+                throw new ArgumentException("solution folder parts cannot be null", nameof(solutionFolderParts));
+            }
+
+            if (projectItems == null || level >= solutionFolderParts.Length)
+            {
+                return null;
+            }
+
+            var solutionFolderName = solutionFolderParts[level];
             Project solutionFolderProject = null;
 
-            foreach (var item in solution2.Projects)
+            foreach (var item in projectItems)
             {
-                var project = item as Project;
+                // Item could be a project or a projectItem
+                Project project = item as Project;
+
+                if (project == null)
+                {
+                    var projectItem = item as ProjectItem;
+                    if (projectItem != null)
+                    {
+                        project = projectItem.SubProject;
+                    }
+                }
+
                 if (project != null)
                 {
                     if (project.UniqueName.StartsWith(solutionFolderName, StringComparison.OrdinalIgnoreCase))
                     {
-                        solutionFolderProject = project;                        
+                        if (solutionFolderParts.Length == level + 1)
+                        {
+                            solutionFolderProject = project;
+                            break;
+                        }
+                        else
+                        {
+                            solutionFolderProject
+                                = GetSolutionFolderProject(project.ProjectItems, solutionFolderParts, level + 1);
+                        }
                     }
                 }
             }
@@ -100,12 +169,11 @@ namespace API.Test
             string projectName,
             string solutionFolderName)
         {
-            if (string.IsNullOrEmpty(templateName))
-            {
-                throw new ArgumentException(
-                    "Argument cannot be null or empty",
-                    nameof(templateName));
-            }
+            ThrowStringArgException(templatePath, nameof(templatePath));
+            ThrowStringArgException(outputPath, nameof(outputPath));
+            ThrowStringArgException(templateName, nameof(templateName));
+            // projectName can be null or empty
+            // solutionFolderName can be null or empty
 
             var name = projectName;
             if (string.IsNullOrEmpty(name))
@@ -182,7 +250,7 @@ namespace API.Test
             }
             else
             {
-                solutionFolderProject = GetSolutionFolderProject(dte2, solutionFolderName);                
+                solutionFolderProject = GetSolutionFolderProject(dte2, solutionFolderName.Split('\\'));
                 if (solutionFolderProject == null)
                 {
                     throw new ArgumentException("No corresponding solution folder exists", nameof(solutionFolderName));
