@@ -1,7 +1,8 @@
 # basic install into a build integrated project
 function Test-BuildIntegratedInstallPackage {
     # Arrange
-    $project = New-BuildIntegratedProj UAPApp
+    Write-Host 'Test-BuildIntegratedInstallPackage. What??'
+    $project = New-BuildIntegratedProj 'ProjectA'
 
     # Act
     Install-Package NuGet.Versioning -ProjectName $project.Name -version 1.0.7

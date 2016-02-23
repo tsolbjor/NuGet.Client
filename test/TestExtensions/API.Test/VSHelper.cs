@@ -71,13 +71,34 @@ namespace API.Test
                 CreateNewSolution(outputPath);
             }
         }
+        
+        // HACK: Make this handle nested solution folders
+        private static Project GetSolutionFolderProject(DTE2 dte2, string solutionFolderName)
+        {
+            var solution2 = (Solution2)dte2.Solution;
+            Project solutionFolderProject = null;
+
+            foreach (var item in solution2.Projects)
+            {
+                var project = item as Project;
+                if (project != null)
+                {
+                    if (project.UniqueName.StartsWith(solutionFolderName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        solutionFolderProject = project;                        
+                    }
+                }
+            }
+
+            return solutionFolderProject;
+        }
 
         public static object NewProject(
             string templatePath,
             string outputPath,
             string templateName,
             string projectName,
-            string solutionFolder)
+            string solutionFolderName)
         {
             if (string.IsNullOrEmpty(templateName))
             {
@@ -100,7 +121,7 @@ namespace API.Test
                     outputPath,
                     templateName,
                     projectName,
-                    solutionFolder);
+                    solutionFolderName);
             });
         }
 
@@ -109,7 +130,7 @@ namespace API.Test
             string outputPath,
             string templateName,
             string projectName,
-            string solutionFolder)
+            string solutionFolderName)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
             await EnsureSolutionAsync(outputPath);
@@ -120,12 +141,15 @@ namespace API.Test
             var dte = ServiceLocator.GetInstance<DTE>();
             var dte2 = (DTE2)dte;
             var solution2 = dte2.Solution as Solution2;
+            Project solutionFolderProject = null;
+
+            dynamic newProject = null;
+
             if (templateName.Equals("DNXClassLibrary", StringComparison.Ordinal)
                 || templateName.Equals("DNXConsoleApp", StringComparison.Ordinal))
             {
                 projectTemplatePath = templateName + ".vstemplate|FrameworkVersion=4.5";
                 var lang = "CSharp/Web";
-
 
                 projectTemplateFilePath = solution2.GetProjectItemTemplate(projectTemplatePath, lang);
             }
@@ -141,27 +165,34 @@ namespace API.Test
             var solutionDir = Path.GetDirectoryName(solution2.FullName);
 
             string destPath = null;
-            if (string.IsNullOrEmpty(solutionFolder))
+            if (string.IsNullOrEmpty(solutionFolderName))
             {
                 destPath = Path.Combine(solutionDir, projectName);
             }
             else
             {
-                destPath = Path.Combine(solutionDir, Path.Combine(solutionFolder, projectName));
+                destPath = Path.Combine(solutionDir, Path.Combine(solutionFolderName, projectName));
             }
 
             var window = dte2.ActiveWindow as Window2;
 
-            if (string.IsNullOrEmpty(solutionFolder))
+            if (string.IsNullOrEmpty(solutionFolderName))
             {
-                dte2.Solution.AddFromTemplate(projectTemplateFilePath, destPath, projectName, false);
+                newProject = solution2.AddFromTemplate(projectTemplateFilePath, destPath, projectName, Exclusive: false);
             }
             else
             {
-                throw new NotImplementedException();
+                solutionFolderProject = GetSolutionFolderProject(dte2, solutionFolderName);                
+                if (solutionFolderProject == null)
+                {
+                    throw new ArgumentException("No corresponding solution folder exists", nameof(solutionFolderName));
+                }
+
+                var solutionFolder = (SolutionFolder)solutionFolderProject.Object;
+                newProject = solutionFolder.AddFromTemplate(projectTemplateFilePath, destPath, projectName);
             }
 
-            foreach(var document in dte2.Documents)
+            foreach (var document in dte2.Documents)
             {
                 try
                 {
@@ -181,7 +212,36 @@ namespace API.Test
 
             window.SetFocus();
 
-            var projects = dte.Solution.Projects
+            // HACK: Need to be fixed
+            if (newProject == null)
+            {
+                if (solutionFolderProject != null)
+                {
+                    foreach (ProjectItem project in solutionFolderProject.ProjectItems)
+                    {
+                        newProject = project.Object as Project;
+                        break;
+                    }
+                }
+                else
+                {
+                    foreach(Project project in solution2.Projects)
+                    {
+                        if (project.Name == projectName)
+                        {
+                            newProject = project;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (newProject == null)
+            {
+                throw new InvalidOperationException("Could not create new project or could not locate newly created project");
+            }
+
+            return newProject;
         }
     }
 }

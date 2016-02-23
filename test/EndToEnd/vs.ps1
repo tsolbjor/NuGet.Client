@@ -13,16 +13,16 @@ function GetDTE
     return $dte
 }
 
-function New-BuildIntegratedProj 
+function New-BuildIntegratedProj
 {
     param(
         [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$SolutionFolder
     )
 
     if ((GetDTE).Version -ge '14.0')
     {
-        $SolutionFolder | New-Project BuildIntegratedProj $ProjectName
+        New-Project BuildIntegratedProj $ProjectName $SolutionFolder
     }
     else
     {
@@ -108,11 +108,47 @@ function New-Solution {
     )
 
     Write-Host "New-Solution function"
-    [API.Test.VSHelper]::CreateNewSolution($solutionName)
+    if ($solutionName)
+    {
+        [API.Test.VSHelper]::CreateNewSolution($OutputPath, $solutionName)
+    }
+    else
+    {
+        [API.Test.VSHelper]::CreateNewSolution($OutputPath)
+    }
+
     Write-Host "New-Solution function: End"
 }
 
 function New-Project {
+    param(
+         [parameter(Mandatory = $true)]
+         [string]$TemplateName,
+         [string]$ProjectName,
+         [string]$SolutionFolder
+    )
+
+    Write-Host "New-Project function overload"
+    $p = [API.Test.VSHelper]::NewProject($TemplatePath, $OutputPath, $TemplateName, $ProjectName, $SolutionFolder)
+    Write-Host "New-Project function overload end"
+    return $p
+}
+
+function Newer-Project {
+    param(
+         [parameter(Mandatory = $true)]
+         [string]$TemplateName,
+         [string]$ProjectName,
+         [parameter(ValueFromPipeline = $true)]$SolutionFolder
+    )
+
+    Write-Host "New-Project function"
+    $p = [API.Test.VSHelper]::NewProject($TemplatePath, $OutputPath, $TemplateName, $ProjectName, [string]$null)
+    Write-Host "New-Project function end"
+    return $p
+}
+
+function Old-New-Project {
     param(
          [parameter(Mandatory = $true)]
          [string]$TemplateName,
@@ -253,6 +289,15 @@ function New-SolutionFolder {
 function New-ClassLibrary {
     param(        
         [string]$ProjectName,
+        [string]$SolutionFolderName
+    )
+
+    New-Project ClassLibrary $ProjectName $SolutionFolderName
+}
+
+function Old-New-ClassLibrary {
+    param(        
+        [string]$ProjectName,
         [parameter(ValueFromPipeline = $true)]$SolutionFolder
     )
 
@@ -295,23 +340,6 @@ function New-PortableLibrary
     }
 
     $project
-}
-
-function New-BuildIntegratedProj 
-{
-    param(
-        [string]$ProjectName,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
-    )
-
-    if ((GetDTE).Version -ge '14.0')
-    {
-        $SolutionFolder | New-Project BuildIntegratedProj $ProjectName
-    }
-    else
-    {
-        throw "SKIP: $($_)"
-    }
 }
 
 function New-JavaScriptApplication 
@@ -409,6 +437,15 @@ function New-NativeWinStoreApplication
 }
 
 function New-ConsoleApplication {
+    param(        
+        [string]$ProjectName,
+        [string]$SolutionFolder
+    )
+
+    New-Project ConsoleApplication $ProjectName $SolutionFolder
+}
+
+function Old-New-ConsoleApplication {
     param(        
         [string]$ProjectName,
         [parameter(ValueFromPipeline = $true)]$SolutionFolder

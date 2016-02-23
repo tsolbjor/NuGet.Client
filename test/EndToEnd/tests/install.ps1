@@ -584,14 +584,13 @@ function Test-InstallPackageWorksWithProjectsHavingSameNames {
     #
 
     # Arrange
-    Write-Host -ForegroundColor Red 'This test will fail, blocked by support for piping multiple projects to Install-Package'
     $f = New-SolutionFolder 'Folder1'
-    $p1 = $f | New-ClassLibrary 'ProjectA'
-    $p2 = $f | New-ClassLibrary 'ProjectB'
+    $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
+    $p2 = New-ClassLibrary 'ProjectB'  'Folder1'
 
     $g = New-SolutionFolder 'Folder2'
-    $p3 = $g | New-ClassLibrary 'ProjectA'
-    $p4 = $g | New-ConsoleApplication 'ProjectC'
+    $p3 = New-ClassLibrary 'ProjectA' 'Folder2'
+    $p4 = New-ConsoleApplication 'ProjectC' 'Folder2'
 
     $p5 = New-ConsoleApplication 'ProjectA'
 
@@ -600,6 +599,7 @@ function Test-InstallPackageWorksWithProjectsHavingSameNames {
 
     # Assert
     $all = @( $p1, $p2, $p3, $p4, $p5 )
+
     $all | % { Assert-Package $_ elmah }
 }
 
