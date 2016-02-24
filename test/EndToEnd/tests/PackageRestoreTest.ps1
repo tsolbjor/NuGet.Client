@@ -168,7 +168,7 @@ function Test-PackageRestore-ErrorMessage {
     Assert-AreEqual 1 $errorlist.Count
 
     $error = $errorlist[$errorlist.Count-1]
-    Assert-True ($error.Description.Contains('NuGet Package restore failed for project'))
+    Assert-True ($error.Contains('NuGet Package restore failed for project'))
 
     $output = Get-BuildOutput
     Assert-True ($output.Contains('NuGet package restore failed.'))
@@ -227,10 +227,10 @@ function Test-PackageRestore-CheckForMissingPackages {
         Assert-AreEqual 1 $errorlist.Count
 
         $error = $errorlist[$errorlist.Count-1]
-        Assert-True ($error.Description.Contains('One or more NuGet packages need to be restored but couldn''t be because consent has not been granted.'))
-        Assert-True ($error.Description.Contains('Newtonsoft.Json 5.0.6'))
-        Assert-True ($error.Description.Contains('elmah 1.1'))
-        Assert-True ($error.Description.Contains('Ninject'))
+        Assert-True ($error.Contains('One or more NuGet packages need to be restored but couldn''t be because consent has not been granted.'))
+        Assert-True ($error.Contains('Newtonsoft.Json 5.0.6'))
+        Assert-True ($error.Contains('elmah 1.1'))
+        Assert-True ($error.Contains('Ninject'))
     }
     finally {
         [NuGet.PackageManagement.VisualStudio.SettingsHelper]::Set('PackageRestoreConsentGranted', 'true')

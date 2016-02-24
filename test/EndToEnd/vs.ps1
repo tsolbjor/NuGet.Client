@@ -7,12 +7,6 @@ param([parameter(Mandatory = $true)]
 $ErrorActionPreference = "Stop"
 $FileKind = "{6BB5F8EE-4483-11D3-8BCF-00C04F8EC28C}"
 
-function GetDTE
-{
-    Write-Host 'Getting dte...'
-    return $dte
-}
-
 function Get-DTEVersion
 {
     $version = [API.Test.VSHelper]::GetVSVersion()
@@ -63,14 +57,14 @@ function Get-SolutionDir {
 function Get-SolutionFullName {
     Write-Verbose "Get-SolutionFullName function"
 
-    return [API.Test.VSHelper]::GetSolutionFullName()
+    return [API.Test.VSSolutionHelper]::GetSolutionFullName()
 }
 
 function Close-Solution 
 {
     Write-Verbose "Close-Solution function"
 
-    [API.Test.VSHelper]::CloseSolution()
+    [API.Test.VSSolutionHelper]::CloseSolution()
 }
 
 function Open-Solution 
@@ -83,7 +77,7 @@ function Open-Solution
     )
     Write-Verbose "Open-Solution function"
     
-    [API.Test.VSHelper]::OpenSolution($Path)
+    [API.Test.VSSolutionHelper]::OpenSolution($Path)
 }
 
 function SaveAs-Solution
@@ -96,7 +90,7 @@ function SaveAs-Solution
     )
     Write-Verbose "SaveAs-Solution function"
     
-    [API.Test.VSHelper]::SaveAsSolution($Path)
+    [API.Test.VSSolutionHelper]::SaveAsSolution($Path)
 }
 
 function Ensure-Dir {
@@ -118,11 +112,11 @@ function New-Solution {
     Write-Host "New-Solution function"
     if ($solutionName)
     {
-        [API.Test.VSHelper]::CreateNewSolution($OutputPath, $solutionName)
+        [API.Test.VSSolutionHelper]::CreateNewSolution($OutputPath, $solutionName)
     }
     else
     {
-        [API.Test.VSHelper]::CreateNewSolution($OutputPath)
+        [API.Test.VSSolutionHelper]::CreateNewSolution($OutputPath)
     }
 
     Write-Host "New-Solution function: End"
@@ -137,7 +131,7 @@ function New-Project {
     )
 
     Write-Verbose "New-Project function"
-    $p = [API.Test.VSHelper]::NewProject($TemplatePath, $OutputPath, $TemplateName, $ProjectName, $SolutionFolder)
+    $p = [API.Test.VSProjectHelper]::NewProject($TemplatePath, $OutputPath, $TemplateName, $ProjectName, $SolutionFolder)
     Write-Verbose "New-Project function end"
 
     return $p
@@ -149,7 +143,7 @@ function New-SolutionFolder {
     )
 
     Write-Verbose "New-SolutionFolder function"
-    [API.Test.VSHelper]::NewSolutionFolder($OutputPath, $FolderPath)
+    [API.Test.VSSolutionHelper]::NewSolutionFolder($OutputPath, $FolderPath)
     Write-Verbose "New-SolutionFolder function: End"
 }
 
@@ -160,7 +154,7 @@ function Rename-SolutionFolder {
     )
 
     Write-Verbose "Rename-SolutionFolder function"
-    [API.Test.VSHelper]::RenameSolutionFolder($FolderPath, $NewName)
+    [API.Test.VSSolutionHelper]::RenameSolutionFolder($FolderPath, $NewName)
     Write-Verbose "Rename-SolutionFolder function: End"
 }
 
@@ -392,7 +386,15 @@ function New-SilverlightClassLibrary {
         [string]$SolutionFolder
     )
 
-    New-Project SilverlightClassLibrary $ProjectName $SolutionFolder
+    try
+    {
+        New-Project SilverlightClassLibrary $ProjectName $SolutionFolder
+    }
+    catch {
+        # If we're unable to create the project that means we probably don't have some SDK installed
+        # Signal to the runner that we want to skip this test
+        throw "SKIP: $($_)"
+    }
 }
 
 function New-SilverlightApplication {
@@ -401,7 +403,15 @@ function New-SilverlightApplication {
         [string]$SolutionFolder
     )
 
-    New-Project SilverlightProject $ProjectName $SolutionFolder
+    try
+    {
+        New-Project SilverlightProject $ProjectName $SolutionFolder
+    }
+    catch {
+        # If we're unable to create the project that means we probably don't have some SDK installed
+        # Signal to the runner that we want to skip this test
+        throw "SKIP: $($_)"
+    }
 }
 
 function New-WindowsPhoneClassLibrary {
@@ -462,8 +472,9 @@ function New-DNXConsoleApp
 }
 
 function New-TextFile {
-    (GetDTE).ItemOperations.NewFile('General\Text File')
-    (GetDTE).ActiveDocument.Object("TextDocument")
+    Write-Verbose "New-TextFile method"
+
+    [API.Test.VSHelper]::NewTextFile()
 }
 
 function Build-Project {
@@ -472,23 +483,21 @@ function Build-Project {
         $Project,
         [string]$Configuration
     )    
-    if(!$Configuration) {
-        # If no configuration was specified then use
-        $Configuration = (GetDTE).Solution.SolutionBuild.ActiveConfiguration.Name
-    }
-    
-    # Build the project and wait for it to complete
-    (GetDTE).Solution.SolutionBuild.BuildProject($Configuration, $Project.UniqueName, $true)
+    Write-Verbose "Build-Project and wait for it to complete"
+
+    [API.Test.VSProjectHelper]::BuildProject($Project, $Configuration)
 }
 
-function Clean-Project {
-    # Clean the project and wait for it to complete
-    (GetDTE).Solution.SolutionBuild.Clean($true)
+function Clean-Solution {
+    Write-Verbose "Clean the project and wait for it to complete"
+
+    [API.Test.VSSolutionHelper]::CleanSolution()
 }
 
 function Build-Solution {
-    # Build and wait for it to complete
-    (GetDTE).Solution.SolutionBuild.Build($true)
+    Write-Verbose "Build and wait for it to complete"
+
+    [API.Test.VSSolutionHelper]::BuildSolution()
 }
 
 function Get-AssemblyReference {
@@ -613,55 +622,17 @@ function Get-OutputPath {
     Join-Path (Get-ProjectDir) $outputPath
 }
 
-function Get-ErrorTasks {
-    param(
-        [parameter(Mandatory = $true)]
-        $vsBuildErrorLevel
-    )
-    (GetDTE).ExecuteCommand("View.ErrorList", " ")
-    
-    # Make sure there are no errors in the error list
-    $errorList = (GetDTE).Windows | ?{ $_.Caption -like 'Error List*' } | Select -First 1
-    
-    if(!$errorList) {
-        throw "Unable to locate the error list"
-    }
-
-    # Forcefully show all the error items so that they can be retrieved when they are present
-    $errorList.Object.ShowErrors = $True
-    $errorList.Object.ShowWarnings = $True
-    $errorList.Object.ShowMessages = $True
-    
-    # Get the list of errors from the error list window which contains errors, warnings and info
-    $allItemsInErrorListWindow = $errorList.Object.ErrorItems
-
-    $errorTasks = @()
-    for($i=0; $i -lt $allItemsInErrorListWindow.Count; $i++)
-    {
-        $currentErrorLevel = [EnvDTE80.vsBuildErrorLevel]($allItemsInErrorListWindow[$i].ErrorLevel)
-        if($currentErrorLevel -eq $vsBuildErrorLevel)
-        {
-            $errorTasks += $allItemsInErrorListWindow[$i]
-        }
-    }
-
-    # Force return array. Arrays are zero-based
-    return ,$errorTasks
-}
-
 function Get-Errors {
-    $vsBuildErrorLevelHigh = [EnvDTE80.vsBuildErrorLevel]::vsBuildErrorLevelHigh
-    $errors = Get-ErrorTasks $vsBuildErrorLevelHigh
+    Write-Verbose "Get-Errors method"
 
-    # Force return array. Arrays are zero-based
+    $errors = [API.Test.VSHelper]::GetErrors()
     return ,$errors
 }
 
 function Get-Warnings {
-    $vsBuildErrorLevelMedium = [EnvDTE80.vsBuildErrorLevel]::vsBuildErrorLevelMedium
-    $warnings = Get-ErrorTasks $vsBuildErrorLevelMedium
+    Write-Verbose "Get-Warnings method"
 
-    # Force return array. Arrays are zero-based
+    $warnings = [API.Test.VSHelper]::GetWarnings()
     return ,$warnings
 }
 
@@ -754,7 +725,7 @@ function Remove-Project {
 }
 
 function Enable-PackageRestore {
-    if (!([API.Test.VSHelper]::IsSolutionAvailable()))
+    if (!([API.Test.VSSolutionHelper]::IsSolutionAvailable()))
     {
         throw "No solution is available."
     }
