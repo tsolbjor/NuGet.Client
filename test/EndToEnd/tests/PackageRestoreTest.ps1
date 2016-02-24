@@ -9,11 +9,9 @@ function Test-PackageRestore-SimpleTest {
     $p2 = New-ClassLibrary
     $p2 | Install-Package elmah -Version 1.1
 
-    #$f = New-SolutionFolder 'Folder1'
     $p3 = New-ClassLibrary
     $p3 | Install-Package Newtonsoft.Json -Version 5.0.6
 
-    #$f2 = $f | New-SolutionFolder 'Folder2'
     $p4 = New-ClassLibrary
     $p4 | Install-Package Ninject
 
@@ -204,12 +202,12 @@ function Test-PackageRestore-CheckForMissingPackages {
     $p1 = New-ClassLibrary	
     $p1 | Install-Package Newtonsoft.Json -Version 5.0.6
     
-    $f = New-SolutionFolder 'Folder1'
-    $p2 = $f | New-ClassLibrary
+    New-SolutionFolder 'Folder1'
+    $p2 = New-ClassLibrary 'Folder1'
     $p2 | Install-Package elmah -Version 1.1
 
-    $f2 = $f | New-SolutionFolder 'Folder2'
-    $p3 = $f2 | New-ClassLibrary
+    New-SolutionFolder 'Folder1\Folder2'
+    $p3 = New-ClassLibrary 'Folder1\Folder2'
     $p3 | Install-Package Ninject
 
     # delete the packages folder
@@ -251,8 +249,8 @@ function Test-PackageRestore-IsAutomaticIsFalse {
     $p2 = New-ClassLibrary
     $p2 | Install-Package elmah -Version 1.1
 
-    $f = New-SolutionFolder 'Folder1'
-    $p3 = $f | New-ClassLibrary
+    New-SolutionFolder 'Folder1'
+    $p3 = New-ClassLibrary 'Folder1'
     $p3 | Install-Package Newtonsoft.Json -Version 5.0.6
 
     # delete the packages folder

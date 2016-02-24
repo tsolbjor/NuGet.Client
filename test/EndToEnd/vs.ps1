@@ -128,57 +128,32 @@ function New-Project {
          [string]$SolutionFolder
     )
 
-    Write-Host "New-Project function overload"
+    Write-Verbose "New-Project function"
     $p = [API.Test.VSHelper]::NewProject($TemplatePath, $OutputPath, $TemplateName, $ProjectName, $SolutionFolder)
-    Write-Host "New-Project function overload end"
+    Write-Verbose "New-Project function end"
+
     return $p
-}
-
-function Newer-Project {
-    param(
-         [parameter(Mandatory = $true)]
-         [string]$TemplateName,
-         [string]$ProjectName,
-         [parameter(ValueFromPipeline = $true)]$SolutionFolder
-    )
-
-    Write-Host "New-Project function"
-    $p = [API.Test.VSHelper]::NewProject($TemplatePath, $OutputPath, $TemplateName, $ProjectName, [string]$null)
-    Write-Host "New-Project function end"
-    return $p
-}
-
-function Get-SolutionFolderPathRecursive([parameter(mandatory=$true)]$solutionFolder) {
-    $path = ''
-    while ($solutionFolder -ne $null) {
-        $path = "$($solutionFolder.Name)\$path"
-        $solutionFolder = $solutionFolder.ParentProjectItem.ContainingProject
-    }
-    return $path
 }
 
 function New-SolutionFolder {
     param(
-        [string]$Name,
-        [parameter(ValueFromPipeline = $true)]$SolutionFolder
+        [string]$FolderPath
     )
-    
-    $id = New-Guid
-    if(!$Name) {
-        $Name = "SolutionFolder_$id"
-    }
-    
-    if(!$SolutionFolder) {
-        # Make sure there is a solution
-        Ensure-Solution
 
-        $solution = Get-Interface (GetDTE).Solution ([EnvDTE80.Solution2])
-    }
-    elseif($SolutionFolder.Object.AddSolutionFolder) {
-        $solution = $SolutionFolder.Object
-    }
+    Write-Verbose "New-SolutionFolder function"
+    [API.Test.VSHelper]::NewSolutionFolder($OutputPath, $FolderPath)
+    Write-Verbose "New-SolutionFolder function: End"
+}
 
-    $solution.AddSolutionFolder($Name)
+function Rename-SolutionFolder {
+    param(
+        [string]$FolderPath,
+        [string]$NewName
+    )
+
+    Write-Verbose "Rename-SolutionFolder function"
+    [API.Test.VSHelper]::RenameSolutionFolder($FolderPath, $NewName)
+    Write-Verbose "Rename-SolutionFolder function: End"
 }
 
 function New-ClassLibrary {
@@ -743,17 +718,6 @@ function Get-ProjectItem {
         # Force array
        return  ,$projectItems
     }
-}
-
-function Add-File {
-    param(
-        [parameter(Mandatory = $true)]
-        $Project,
-        [parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)]
-        [string]$FilePath
-    )
-    
-    $Project.ProjectItems.AddFromFileCopy($FilePath) | out-null
 }
 
 function Add-ProjectReference {

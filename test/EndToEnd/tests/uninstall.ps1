@@ -282,13 +282,13 @@ function Test-UninstallPackageWorksWithPackagesHavingSameNames {
     #
 
     # Arrange
-    $f = New-SolutionFolder 'Folder1'
-    $p1 = $f | New-ClassLibrary 'ProjectA'
-    $p2 = $f | New-ClassLibrary 'ProjectB'
+    New-SolutionFolder 'Folder1'
+    $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
+    $p2 = New-ClassLibrary 'ProjectB' 'Folder1'
 
-    $g = New-SolutionFolder 'Folder2'
-    $p3 = $g | New-ClassLibrary 'ProjectA'
-    $p4 = $g | New-ConsoleApplication 'ProjectC'
+    New-SolutionFolder 'Folder2'
+    $p3 = New-ClassLibrary 'ProjectA' 'Folder2'
+    $p4 = New-ConsoleApplication 'ProjectC' 'Folder2'
 
     $p5 = New-ConsoleApplication 'ProjectA'
 
@@ -331,10 +331,11 @@ function Test-UninstallPackageAfterRenaming {
         $context
     )
     # Arrange
-    $f = New-SolutionFolder 'Folder1' | New-SolutionFolder 'Folder2'
+    New-SolutionFolder 'Folder1'
+    New-SolutionFolder 'Folder1\Folder2'
     $p0 = New-ClassLibrary 'ProjectX'
-    $p1 = $f | New-ClassLibrary 'ProjectA'
-    $p2 = $f | New-ClassLibrary 'ProjectB'
+    $p1 = New-ClassLibrary 'ProjectA' 'Folder1\Folder2'
+    $p2 = New-ClassLibrary 'ProjectB' 'Folder1\Folder2'
 
     # Act
     $p1 | Install-Package NestedFolders -Source $context.RepositoryPath 
@@ -342,7 +343,7 @@ function Test-UninstallPackageAfterRenaming {
     Uninstall-Package NestedFolders -ProjectName Folder1\Folder2\ProjectX
 
     $p2 | Install-Package NestedFolders -Source $context.RepositoryPath 
-    $f.Name = "Folder3"
+    Rename-SolutionFolder "Folder1\Folder2" "Folder3"
     Uninstall-Package NestedFolders -ProjectName Folder1\Folder3\ProjectB
 
     Assert-Null (Get-ProjectItem $p1 scripts\jquery-1.5.js)

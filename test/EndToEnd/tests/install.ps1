@@ -584,11 +584,11 @@ function Test-InstallPackageWorksWithProjectsHavingSameNames {
     #
 
     # Arrange
-    $f = New-SolutionFolder 'Folder1'
+    New-SolutionFolder 'Folder1'
     $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
     $p2 = New-ClassLibrary 'ProjectB'  'Folder1'
 
-    $g = New-SolutionFolder 'Folder2'
+    New-SolutionFolder 'Folder2'
     $p3 = New-ClassLibrary 'ProjectA' 'Folder2'
     $p4 = New-ConsoleApplication 'ProjectC' 'Folder2'
 
@@ -1109,7 +1109,8 @@ function Test-InstallPackageAfterRenaming {
         $context
     )
     # Arrange
-    $f = New-SolutionFolder 'Folder1' | New-SolutionFolder 'Folder2'
+    New-SolutionFolder 'Folder1'
+    New-SolutionFolder 'Folder1\Folder2'
     $p1 = New-ClassLibrary 'ProjectA' 'Folder1\Folder2'
     $p2 = New-ClassLibrary 'ProjectB' 'Folder1\Folder2'
 
@@ -1117,7 +1118,7 @@ function Test-InstallPackageAfterRenaming {
     $p1.Name = "ProjectX"
     Install-Package jquery -Version 1.5 -Source $context.RepositoryPath -project "Folder1\Folder2\ProjectX"
 
-    $f.Name = "Folder3"
+    Rename-SolutionFolder "Folder1\Folder2" "Folder3"
     Install-Package jquery -Version 1.5 -Source $context.RepositoryPath -project "Folder1\Folder3\ProjectB"
 
     # Assert

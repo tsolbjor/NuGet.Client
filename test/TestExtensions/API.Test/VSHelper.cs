@@ -96,19 +96,34 @@ namespace API.Test
             }
         }
         
-        private static Project GetSolutionFolderProject(DTE2 dte2, string[] solutionFolderParts)
+        private static async Task<Project> GetSolutionFolderProjectAsync(Solution2 solution2, string solutionFolderName)
         {
-            var solution2 = (Solution2)dte2.Solution;
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            var solutionFolderProject = GetSolutionFolderProject(solution2.Projects, solutionFolderParts, 0);
+            var solutionFolderParts = solutionFolderName.Split('\\');
+            var solutionFolderProject = await GetSolutionFolderProjectAsync(solution2.Projects, solutionFolderParts, 0);
+
+            if (solutionFolderProject == null)
+            {
+                throw new ArgumentException("No corresponding solution folder exists", nameof(solutionFolderName));
+            }
+
+            var solutionFolder = solutionFolderProject.Object as SolutionFolder;
+            if (solutionFolder == null)
+            {
+                throw new ArgumentException("Not a valid solution folder", nameof(solutionFolderName));
+            }
+
             return solutionFolderProject;
         }
 
-        private static Project GetSolutionFolderProject(
+        private static async Task<Project> GetSolutionFolderProjectAsync(
             IEnumerable projectItems,
             string[] solutionFolderParts,
             int level)
         {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
             if (solutionFolderParts == null)
             {
                 throw new ArgumentNullException(nameof(solutionFolderParts));
@@ -153,7 +168,7 @@ namespace API.Test
                         else
                         {
                             solutionFolderProject
-                                = GetSolutionFolderProject(project.ProjectItems, solutionFolderParts, level + 1);
+                                = await GetSolutionFolderProjectAsync(project.ProjectItems, solutionFolderParts, level + 1);
                         }
                     }
                 }
@@ -250,11 +265,7 @@ namespace API.Test
             }
             else
             {
-                solutionFolderProject = GetSolutionFolderProject(dte2, solutionFolderName.Split('\\'));
-                if (solutionFolderProject == null)
-                {
-                    throw new ArgumentException("No corresponding solution folder exists", nameof(solutionFolderName));
-                }
+                solutionFolderProject = await GetSolutionFolderProjectAsync(solution2, solutionFolderName);
 
                 var solutionFolder = (SolutionFolder)solutionFolderProject.Object;
                 newProject = solutionFolder.AddFromTemplate(projectTemplateFilePath, destPath, projectName);
@@ -317,6 +328,67 @@ namespace API.Test
             }
 
             return newProject;
+        }
+
+        public static void NewSolutionFolder(string outputPath, string folderPath)
+        {
+            ThrowStringArgException(outputPath, nameof(outputPath));
+            ThrowStringArgException(folderPath, nameof(folderPath));
+
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                await NewSolutionFolderAsync(outputPath, folderPath);
+            });
+        }
+
+        private static async Task NewSolutionFolderAsync(string outputPath, string folderPath)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var dte2 = ServiceLocator.GetInstance<DTE>();
+            var solution2 = (Solution2)dte2.Solution;
+
+            var newSolutionFolderIndex = folderPath.LastIndexOf('\\');
+
+            if (newSolutionFolderIndex == -1)
+            {
+                // Create solution folder at solution level
+                await EnsureSolutionAsync(outputPath);
+                solution2.AddSolutionFolder(folderPath);
+                return;
+            }
+            else
+            {
+                // Get solution folder project object for parent
+                var parentName = folderPath.Substring(0, newSolutionFolderIndex);
+                var solutionFolderName = folderPath.Substring(newSolutionFolderIndex + 1);
+
+                var parentProject = await GetSolutionFolderProjectAsync(solution2, parentName);
+                var parentSolutionFolder = (SolutionFolder)parentProject.Object;
+                parentSolutionFolder.AddSolutionFolder(solutionFolderName);
+            }
+        }
+
+        public static void RenameSolutionFolder(string folderPath, string newName)
+        {
+            ThrowStringArgException(folderPath, nameof(folderPath));
+            ThrowStringArgException(newName, nameof(newName));
+
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                await RenameSolutionFolderAsync(folderPath, newName);
+            });
+        }
+
+        private static async Task RenameSolutionFolderAsync(string folderPath, string newName)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var dte2 = ServiceLocator.GetInstance<DTE>();
+            var solution2 = (Solution2)dte2.Solution;
+
+            var solutionFolderProject = await GetSolutionFolderProjectAsync(solution2, folderPath);
+            solutionFolderProject.Name = newName;
         }
     }
 }

@@ -1,6 +1,6 @@
 function Test-ProjectNameReturnsUniqueName {
      # Arrange
-     $f = New-SolutionFolder 'Folder1'
+     New-SolutionFolder 'Folder1'
      $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
      $p3 = New-WebApplication 'ProjectB' 'Folder1'
 
@@ -18,7 +18,7 @@ function Test-ProjectNameReturnsUniqueName {
 
 function Test-DefaultProjectIsCorrectWhenProjectsAreAdded {
     # Act
-    $f1 = New-SolutionFolder 'Folder1'
+    New-SolutionFolder 'Folder1'
     $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
 
     # Assert
@@ -37,15 +37,15 @@ function Test-DefaultProjectIsCorrectWhenProjectsAreAddedInReverseOrder {
     Assert-DefaultProject $p1
 
     # Act
-    $f1 = New-SolutionFolder 'Folder1'
+    New-SolutionFolder 'Folder1'
     $p2 = New-ClassLibrary 'ProjectA' 'Folder1'
     Assert-DefaultProject $p1
 }
 
 function Test-GetProjectThrowsIfProjectNameAmbiguous {
     # Act
-    $f1 = New-SolutionFolder 'foo'
-    $f2 = New-SolutionFolder 'bar'
+    New-SolutionFolder 'foo'
+    New-SolutionFolder 'bar'
     $p1 = New-ClassLibrary 'A' 'foo'
     $p2 = New-ClassLibrary 'A' 'bar'
 
@@ -67,11 +67,11 @@ function Test-GetProjectCommandWithWildCardsWorksWithProjectHavingTheSameName {
     #
 
     # Arrange
-    $f = New-SolutionFolder 'Folder1'
+    New-SolutionFolder 'Folder1'
     $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
     $p2 = New-ClassLibrary 'ProjectB' 'Folder1'
 
-    $g = New-SolutionFolder 'Folder2'
+    New-SolutionFolder 'Folder2'
     $p3 = New-ClassLibrary 'ProjectA' 'Folder2'
     $p4 = New-ConsoleApplication 'ProjectC' 'Folder2'
 
@@ -106,10 +106,10 @@ function Test-GetProjectCommandWithWildCardsWorksWithProjectHavingTheSameName {
 
 function Test-SimpleNameDoesNotWorkWhenAllProjectsAreNested {
     # Arrange
-    $f = New-SolutionFolder 'Folder1'
+    New-SolutionFolder 'Folder1'
     $p1 = New-ClassLibrary 'ProjectA' 'Folder1'
 
-    $g = New-SolutionFolder 'Folder2'
+    New-SolutionFolder 'Folder2'
     $p2 = New-ClassLibrary 'ProjectA' 'Folder2'
 
     # Assert
@@ -118,7 +118,7 @@ function Test-SimpleNameDoesNotWorkWhenAllProjectsAreNested {
 
 function Test-RemovingAmbiguousProjectAllowsSimpleNameToBeUsed {
     # Act
-    $f1 = New-SolutionFolder 'foo'
+    New-SolutionFolder 'foo'
     $p1 = New-ClassLibrary 'A'
     $p2 = New-ClassLibrary 'A' 'foo'
     
@@ -134,7 +134,7 @@ function Test-RemovingAmbiguousProjectAllowsSimpleNameToBeUsed {
 
 function Test-RenameCreatingAmbiguityFollowedByRemovalAllowsSimpleNameToBeUsed {
     # Act
-    $f1 = New-SolutionFolder 'foo'
+    New-SolutionFolder 'foo'
     $p1 = New-ClassLibrary 'A'
     $p2 = New-ClassLibrary 'B' 'foo'
     
@@ -155,7 +155,7 @@ function Test-RenameCreatingAmbiguityFollowedByRemovalAllowsSimpleNameToBeUsed {
 
 function Test-RenamingSolutionFolderDoesNotAffectGetProject {
     # Act
-    $f1 = New-SolutionFolder 'foo'
+    New-SolutionFolder 'foo'
     $p1 = New-ClassLibrary 'A'
     $p2 = New-ClassLibrary 'B' 'foo'
     
@@ -168,7 +168,7 @@ function Test-RenamingSolutionFolderDoesNotAffectGetProject {
     Assert-AreEqual $p2 (Get-Project -Name foo\A)
     Assert-AreEqual $p1 (Get-Project -Name A)
 
-    $f1.Name = 'bar'
+    Rename-SolutionFolder 'foo' 'bar'
     
     Assert-AreEqual $p2 (Get-Project -Name bar\A)
     Assert-AreEqual $p1 (Get-Project -Name A)
@@ -180,15 +180,12 @@ function Test-RenamingSolutionFolderDoesNotAffectGetProject {
 
 function Test-RenamingSolutionFolderWithDeeplyNestedProjectsDoesNotAffectGetProject {
     # Act
-    $f1 = New-SolutionFolder 'foo'
-    $f2 = $f1 | New-SolutionFolder 'bar'
-    $f3 = $f1 | New-SolutionFolder 'empty'
+    New-SolutionFolder 'foo'
+    New-SolutionFolder 'foo\bar'
+    New-SolutionFolder 'foo\empty'
     
     $p1 = New-ClassLibrary 'A'
-    $p2 = $f2 | New-ClassLibrary 'B'
-    
-    Add-File $f1 "$($context.RepositoryRoot)\coolpackage.nuspec"
-    Add-File $f2 "$($context.RepositoryRoot)\secondpackage.nuspec"
+    $p2 = New-ClassLibrary 'B' 'foo\bar'
     
     
     Assert-AreEqual $p2 (Get-Project -Name foo\bar\B)
@@ -198,8 +195,8 @@ function Test-RenamingSolutionFolderWithDeeplyNestedProjectsDoesNotAffectGetProj
     
     Assert-AreEqual $p2 (Get-Project -Name foo\bar\A)
     Assert-AreEqual $p1 (Get-Project -Name A)
-    
-    $f1.Name = 'bar'
+
+    Rename-SolutionFolder 'foo' 'bar'
     
     Assert-AreEqual $p2 (Get-Project -Name bar\bar\A)
     Assert-AreEqual $p1 (Get-Project -Name A)
@@ -211,7 +208,7 @@ function Test-RenamingSolutionFolderWithDeeplyNestedProjectsDoesNotAffectGetProj
 
 function Test-AmbiguousStartupProject {
     # Arrange
-    $f = New-SolutionFolder foo
+    New-SolutionFolder foo
     $p1 = New-ClassLibrary A foo
     $p2 = New-ClassLibrary A
 
