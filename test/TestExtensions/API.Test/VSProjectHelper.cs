@@ -108,30 +108,6 @@ namespace API.Test
             return newProject;
         }
 
-        public static void BuildProject(string projectUniqueName, string configuration)
-        {
-            Utils.ThrowStringArgException(projectUniqueName, nameof(projectUniqueName));
-
-            ThreadHelper.JoinableTaskFactory.Run(async delegate
-            {
-                await BuildProjectAsync(projectUniqueName, configuration);
-            });
-        }
-
-        private static async Task BuildProjectAsync(string projectUniqueName, string configuration)
-        {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-            var solutionBuild = await VSSolutionHelper.GetSolutionBuildAsync();
-
-            if (string.IsNullOrEmpty(configuration))
-            {
-                configuration = solutionBuild.ActiveConfiguration.Name;
-            }
-
-            solutionBuild.BuildProject(configuration, projectUniqueName, WaitForBuildToFinish: true);
-        }
-
         private static async Task<Project> CreateProjectFromTemplateAsync(
             Solution2 solution2,
             string solutionFolderName,

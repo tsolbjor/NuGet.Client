@@ -1004,7 +1004,7 @@ function UninstallPackageRemoveImportStatement
 
 function Test-UninstallPackageFromNativeWinStoreApplication
 {
-    if ((Get-DTEVersion) -eq "10.0")
+    if ((Get-VSVersion) -eq "10.0")
     {
         return
     }
@@ -1028,7 +1028,7 @@ function Test-UninstallPackageFromNativeWinStoreApplication
 
 function UninstallPackageFromJsWinStoreApplication
 {
-    if ((Get-DTEVersion) -eq "10.0")
+    if ((Get-VSVersion) -eq "10.0")
     {
         return
     }

@@ -92,7 +92,7 @@ function Test-PackageRestore-Website {
 function Test-PackageRestore-JavaScriptMetroProject {
     param($context)
 
-    if ((Get-DTEVersion) -eq '10.0') {
+    if ((Get-VSVersion) -eq '10.0') {
         return
     }
 

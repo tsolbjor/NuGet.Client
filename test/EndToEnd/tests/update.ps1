@@ -360,7 +360,7 @@ function Test-AddingBindingRedirectAfterUpdate {
     Assert-Package $p B 2.0
     Assert-Null (Get-SolutionPackage B 1.0)
 
-    Build-Project $p
+    Build-Solution
 
     Add-BindingRedirect
 

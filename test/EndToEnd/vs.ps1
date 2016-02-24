@@ -7,7 +7,7 @@ param([parameter(Mandatory = $true)]
 $ErrorActionPreference = "Stop"
 $FileKind = "{6BB5F8EE-4483-11D3-8BCF-00C04F8EC28C}"
 
-function Get-DTEVersion
+function Get-VSVersion
 {
     $version = [API.Test.VSHelper]::GetVSVersion()
     return $version
@@ -20,7 +20,7 @@ function New-BuildIntegratedProj
         [string]$SolutionFolder
     )
     
-    if ((Get-DTEVersion) -ge '14.0')
+    if ((Get-VSVersion) -ge '14.0')
     {
         New-Project BuildIntegratedProj $ProjectName $SolutionFolder
     }
@@ -214,11 +214,11 @@ function New-JavaScriptApplication
 
     try 
     {
-        if (Get-DTEVersion -eq '12.0')
+        if (Get-VSVersion -eq '12.0')
         {
             New-Project WinJSBlue $ProjectName $SolutionFolder
         }
-        elseif (Get-DTEVersion -eq '14.0')
+        elseif (Get-VSVersion -eq '14.0')
         {
             New-Project WinJS_Dev14 $ProjectName $SolutionFolder
         }
@@ -279,11 +279,11 @@ function New-NativeWinStoreApplication
 
     try
     {
-        if (Get-DTEVersion -eq '12.0' -or Get-DTEVersion -eq '14.0')
+        if (Get-VSVersion -eq '12.0' -or Get-VSVersion -eq '14.0')
         {
             New-Project CppWinStoreApplicationBlue $ProjectName $SolutionFolder
         }
-        elseif (Get-DTEVersion -eq '14.0')
+        elseif (Get-VSVersion -eq '14.0')
         {
             New-Project CppWinStoreApplication_Dev14 $ProjectName $SolutionFolder
         }
@@ -421,7 +421,7 @@ function New-WindowsPhoneClassLibrary {
     )
 
     try {
-        if (Get-DTEVersion -eq '14.0') {
+        if (Get-VSVersion -eq '14.0') {
             New-Project WindowsPhoneClassLibrary81 $ProjectName $SolutionFolder
         }
         else {
@@ -475,17 +475,6 @@ function New-TextFile {
     Write-Verbose "New-TextFile method"
 
     [API.Test.VSHelper]::NewTextFile()
-}
-
-function Build-Project {
-    param(
-        [parameter(Mandatory = $true)]
-        $Project,
-        [string]$Configuration
-    )    
-    Write-Verbose "Build-Project and wait for it to complete"
-
-    [API.Test.VSProjectHelper]::BuildProject($Project, $Configuration)
 }
 
 function Clean-Solution {
