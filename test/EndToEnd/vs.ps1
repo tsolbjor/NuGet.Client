@@ -13,14 +13,20 @@ function GetDTE
     return $dte
 }
 
+function Get-DTEVersion
+{
+    $version = [API.Test.VSHelper]::GetVSVersion()
+    return $version
+}
+
 function New-BuildIntegratedProj
 {
     param(
         [string]$ProjectName,
         [string]$SolutionFolder
     )
-
-    if ((GetDTE).Version -ge '14.0')
+    
+    if ((Get-DTEVersion) -ge '14.0')
     {
         New-Project BuildIntegratedProj $ProjectName $SolutionFolder
     }
@@ -37,7 +43,7 @@ function New-CpsApp
         [string]$SolutionFolder
     )
 
-    if ((GetDTE).Version -ge '14.0')
+    if ($version -ge '14.0')
     {
         New-Project CpsApp $ProjectName $SolutionFolder
     }
@@ -48,33 +54,23 @@ function New-CpsApp
 }
 
 function Get-SolutionDir {
-    Write-Host "Get-SolutionDir function"
+    Write-Verbose "Get-SolutionDir function"
 
-    if((GetDTE).Solution -and (GetDTE).Solution.IsOpen) {
-        return Split-Path (GetDTE).Solution.FullName
-    }
-    else {
-        throw "Solution not avaliable"
-    }
+    $solutionFullName = Get-SolutionFullName
+    return Split-Path $solutionFullName
 }
 
-function Ensure-Solution {
-    Write-Host "Ensure-Solution function"
+function Get-SolutionFullName {
+    Write-Verbose "Get-SolutionFullName function"
 
-    if(!(GetDTE).Solution -or !(GetDTE).Solution.IsOpen) {
-        New-Solution
-    }
+    return [API.Test.VSHelper]::GetSolutionFullName()
 }
 
 function Close-Solution 
 {
-    Write-Host "Close-Solution function"
+    Write-Verbose "Close-Solution function"
 
-    $dteLocal = GetDTE
-    if ($dteLocal.Solution -and $dteLocal.Solution.IsOpen) 
-    {
-        $dteLocal.Solution.Close()
-    }
+    [API.Test.VSHelper]::CloseSolution()
 }
 
 function Open-Solution 
@@ -85,10 +81,22 @@ function Open-Solution
         [parameter(Mandatory = $true)]
         $Path
     )
-
-    Write-Host "Open-Solution function"
+    Write-Verbose "Open-Solution function"
     
-    (GetDTE).Solution.Open($Path)
+    [API.Test.VSHelper]::OpenSolution($Path)
+}
+
+function SaveAs-Solution
+{
+    param
+    (
+        [string]
+        [parameter(Mandatory = $true)]
+        $Path
+    )
+    Write-Verbose "SaveAs-Solution function"
+    
+    [API.Test.VSHelper]::SaveAsSolution($Path)
 }
 
 function Ensure-Dir {
@@ -212,11 +220,11 @@ function New-JavaScriptApplication
 
     try 
     {
-        if ((GetDTE).Version -eq '12.0')
+        if (Get-DTEVersion -eq '12.0')
         {
             New-Project WinJSBlue $ProjectName $SolutionFolder
         }
-        elseif ((GetDTE).Version -eq '14.0')
+        elseif (Get-DTEVersion -eq '14.0')
         {
             New-Project WinJS_Dev14 $ProjectName $SolutionFolder
         }
@@ -277,11 +285,11 @@ function New-NativeWinStoreApplication
 
     try
     {
-        if ((GetDTE).Version -eq '12.0' -or (GetDTE).Version -eq '14.0')
+        if (Get-DTEVersion -eq '12.0' -or Get-DTEVersion -eq '14.0')
         {
             New-Project CppWinStoreApplicationBlue $ProjectName $SolutionFolder
         }
-        elseif ((GetDTE).Version -eq '14.0')
+        elseif (Get-DTEVersion -eq '14.0')
         {
             New-Project CppWinStoreApplication_Dev14 $ProjectName $SolutionFolder
         }
@@ -403,7 +411,7 @@ function New-WindowsPhoneClassLibrary {
     )
 
     try {
-        if ((GetDTE).Version -eq '14.0') {
+        if (Get-DTEVersion -eq '14.0') {
             New-Project WindowsPhoneClassLibrary81 $ProjectName $SolutionFolder
         }
         else {
@@ -745,19 +753,8 @@ function Remove-Project {
     [NuGetConsole.Host.PowerShell.Implementation.ProjectExtensions]::RemoveProject($ProjectName)
 }
 
-function Get-SolutionPath {
-    (GetDTE).Solution.Properties.Item("Path").Value
-}
-
-function Close-Solution {
-    $dteLocal = GetDTE
-    if ($dteLocal.Solution) {
-        $dteLocal.Solution.Close()
-    }
-}
-
 function Enable-PackageRestore {
-    if (!(GetDTE).Solution -or !(GetDTE).Solution.IsOpen) 
+    if (!([API.Test.VSHelper]::IsSolutionAvailable()))
     {
         throw "No solution is available."
     }
@@ -782,4 +779,8 @@ function Check-NuGetConfig {
         <configuration>
         </configuration>' > $newFile
     }
+}
+
+function Get-BuildOutput { 
+    return [API.Test.VSHelper]::GetBuildOutput()
 }

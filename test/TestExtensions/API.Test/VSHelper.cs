@@ -13,9 +13,9 @@ namespace API.Test
 {
     public static class VSHelper
     {
-        public static void ThrowStringArgException(string value, string paramName)
+        private static void ThrowStringArgException(string value, string paramName)
         {
-            if(string.IsNullOrEmpty(paramName))
+            if (string.IsNullOrEmpty(paramName))
             {
                 throw new ArgumentException("string cannot be null or empty", nameof(paramName));
             }
@@ -26,9 +26,57 @@ namespace API.Test
             }
         }
 
-        public static string GetNewGUID()
+        private static string GetNewGUID()
         {
             return Guid.NewGuid().ToString("d").Substring(0, 4).Replace("-", "");
+        }
+
+        private static async Task<Solution2> GetSolution2Async()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var dte = ServiceLocator.GetInstance<DTE>();
+            var dte2 = (DTE2)dte;
+            var solution2 = dte2.Solution as Solution2;
+
+            return solution2;
+        }
+
+        public static string GetVSVersion()
+        {
+            return ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                var version = await GetVSVersionAsync();
+                return version;
+            });
+        }
+
+        private static async Task<string> GetVSVersionAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var dte = ServiceLocator.GetInstance<DTE>();
+            var version = dte.Version;
+
+            return version;
+        }
+
+        public static string GetSolutionFullName()
+        {
+            return ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                var solutionFullName = await GetSolutionFullNameAsync();
+                return solutionFullName;
+            });
+        }
+
+        private static async Task<string> GetSolutionFullNameAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var solution2 = await GetSolution2Async();
+            var solutionFullName = solution2.FullName;
+            return solutionFullName;
         }
 
         public static void CreateSolution(string solutionDirectory, string name)
@@ -46,11 +94,11 @@ namespace API.Test
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            var dte = ServiceLocator.GetInstance<DTE>();
-            dte.Solution.Create(solutionDirectory, name);
+            var solution2 = await GetSolution2Async();
+            solution2.Create(solutionDirectory, name);
 
             var solutionPath = Path.Combine(solutionDirectory, name);
-            dte.Solution.SaveAs(solutionPath);
+            solution2.SaveAs(solutionPath);
         }
 
         private static string SolutionNameFormat = "Solution_{0}";
@@ -89,11 +137,115 @@ namespace API.Test
         private static async Task EnsureSolutionAsync(string outputPath)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-            var dte = ServiceLocator.GetInstance<DTE>();
-            if (dte.Solution == null || !dte.Solution.IsOpen)
+            var isSolutionAvailable = await IsSolutionAvailableAsync();
+            if (!isSolutionAvailable)
             {
                 CreateNewSolution(outputPath);
             }
+        }
+
+        public static bool IsSolutionAvailable()
+        {
+            return ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                var isSolutionAvailable = await IsSolutionAvailableAsync();
+                return isSolutionAvailable;
+            });
+        }
+
+        private static async Task<bool> IsSolutionAvailableAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var solution2 = await GetSolution2Async();
+            return await IsSolutionAvailableAsync(solution2);
+        }
+
+        private static async Task<bool> IsSolutionAvailableAsync(Solution2 solution2)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            return solution2 != null && solution2.IsOpen;
+        }
+        
+        public static void CloseSolution()
+        {
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                await CloseSolutionAsync();
+            });
+        }
+
+        private static async Task CloseSolutionAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var solution2 = await GetSolution2Async();
+            var isSolutionAvailable = await IsSolutionAvailableAsync(solution2);
+            if (isSolutionAvailable)
+            {
+                solution2.Close();
+            }
+        }
+
+        public static void OpenSolution(string solutionFile)
+        {
+            ThrowStringArgException(solutionFile, nameof(solutionFile));
+
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                await OpenSolutionAsync(solutionFile);
+            });
+        }
+
+        private static async Task OpenSolutionAsync(string solutionFile)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var solution2 = await GetSolution2Async();
+            solution2.Open(solutionFile);
+        }
+
+        public static void SaveAsSolution(string solutionFile)
+        {
+            ThrowStringArgException(solutionFile, nameof(solutionFile));
+
+            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                await SaveAsSolutionAsync(solutionFile);
+            });
+        }
+
+        private static async Task SaveAsSolutionAsync(string solutionFile)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var solution2 = await GetSolution2Async();
+            solution2.SaveAs(solutionFile);
+        }
+
+        public static string GetBuildOutput()
+        {
+            return ThreadHelper.JoinableTaskFactory.Run(async delegate
+            {
+                var text = await GetBuildOutputAsync();
+                return text;
+            });
+        }
+
+        private static string BuildOutputPaneName = "Build";
+        private static async Task<string> GetBuildOutputAsync()
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+            var dte = ServiceLocator.GetInstance<DTE>();
+            var dte2 = (DTE2)dte;
+            var buildPane = dte2.ToolWindows.OutputWindow.OutputWindowPanes.Item(BuildOutputPaneName);
+            var doc = buildPane.TextDocument;
+            var sel = doc.Selection;
+            sel.StartOfDocument(Extend: false);
+            sel.EndOfDocument(Extend: true);
+            var text = sel.Text;
+            return text;
         }
         
         private static async Task<Project> GetSolutionFolderProjectAsync(Solution2 solution2, string solutionFolderName)
@@ -345,8 +497,9 @@ namespace API.Test
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            var dte2 = ServiceLocator.GetInstance<DTE>();
-            var solution2 = (Solution2)dte2.Solution;
+            var solution2 = await GetSolution2Async();
+
+            
 
             var newSolutionFolderIndex = folderPath.LastIndexOf('\\');
 
@@ -380,15 +533,18 @@ namespace API.Test
             });
         }
 
+        #region Private Methods
+
         private static async Task RenameSolutionFolderAsync(string folderPath, string newName)
         {
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
-            var dte2 = ServiceLocator.GetInstance<DTE>();
-            var solution2 = (Solution2)dte2.Solution;
+            var solution2 = await GetSolution2Async();
 
             var solutionFolderProject = await GetSolutionFolderProjectAsync(solution2, folderPath);
             solutionFolderProject.Name = newName;
         }
+
+        #endregion Private Methods
     }
 }

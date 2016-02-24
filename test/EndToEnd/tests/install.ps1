@@ -209,7 +209,7 @@ function Test-InstallPackageInvokeInstallScriptAndInitScript {
 #    Install-Package PackageWithScripts -Source $context.RepositoryRoot
 #
 #    # Now close the solution and reopen it
-#    $solutionDir = $dte.Solution.FullName
+#    $solutionDir = Get-SolutionFullName
 #    Close-Solution
 #    Remove-Item function:\Get-World
 #    Assert-False (Test-Path function:\Get-World)
@@ -1134,19 +1134,19 @@ function Test-InstallPackageIntoSecondProjectWithIncompatibleAssembliesDoesNotRo
     # Act
     $p1 | Install-Package NuGet.Core
 
-    if ($dte.Version -eq "10.0")
+    if ((Get-DTEVersion) -eq "10.0")
     {
         $profile = "Silverlight,Version=v4.0,Profile=WindowsPhone"
     }
-    elseif ($dte.Version -eq "11.0")
+    elseif ((Get-DTEVersion) -eq "11.0")
     {
         $profile = "Silverlight,Version=v4.0,Profile=WindowsPhone71"
     }
-    elseif ($dte.Version -eq "12.0")
+    elseif ((Get-DTEVersion) -eq "12.0")
     {
         $profile = "WindowsPhone,Version=v8.0"
     }
-	elseif ($dte.Version -eq "14.0")
+	elseif ((Get-DTEVersion) -eq "14.0")
 	{
         $profile = "WindowsPhoneApp,Version=v8.1"
     }
@@ -1746,7 +1746,7 @@ function Test-InstallingPackageaAfterNuGetDirectoryIsRenamedContinuesUsingDirect
     $a | Install-Package SolutionLevelPkg -version 1.0.0 -source $context.RepositoryRoot
 
     # Assert
-    $solutionFile = Get-SolutionPath
+    $solutionFile = Get-SolutionFullName
     $solutionDir = Split-Path $solutionFile -Parent
 
     $configFile = "$solutionDir\.nuget\packages.config"
@@ -2372,7 +2372,7 @@ function Test-InstallMetadataPackageAddPackageToProject
 function Test-FrameworkAssemblyReferenceShouldNotHaveBindingRedirect
 {
     # This test uses a particular profile which is available only in VS 2012.
-    if ($dte.Version -ne "11.0")
+    if ((Get-DTEVersion) -ne "11.0")
     {
         return
     }
@@ -2407,7 +2407,7 @@ function Test-FrameworkAssemblyReferenceShouldNotHaveBindingRedirect
 function Test-NonFrameworkAssemblyReferenceShouldHaveABindingRedirect
 {
     # This test uses a particular profile which is available only in VS 2012.
-    if ($dte.Version -eq "10.0" -or $dte.Version -eq "12.0")
+    if ((Get-DTEVersion) -eq "10.0" -or (Get-DTEVersion) -eq "12.0")
     {
         return
     }
@@ -2436,7 +2436,7 @@ function Test-NonFrameworkAssemblyReferenceShouldHaveABindingRedirect
 # NuGet is not involved in that step. We may need to update the template.
 function InstallPackageIntoJavaScriptApplication
 {
-    if ($dte.Version -eq "10.0")
+    if ((Get-DTEVersion) -eq "10.0")
     {
         return
     }
@@ -2454,7 +2454,7 @@ function InstallPackageIntoJavaScriptApplication
 function Test-InstallPackageIntoJavaScriptWindowsPhoneApp
 {
     # this test is only applicable to VS 2013 on Windows 8.1
-    if ($dte.Version -eq "10.0" -or $dte.Version -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
+    if ((Get-DTEVersion) -eq "10.0" -or (Get-DTEVersion) -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
     {
         return;
     }
@@ -2471,7 +2471,7 @@ function Test-InstallPackageIntoJavaScriptWindowsPhoneApp
 
 function Test-InstallPackageIntoNativeWinStoreApplication
 {
-    if ($dte.Version -eq "10.0")
+    if ((Get-DTEVersion) -eq "10.0")
     {
         return
     }
@@ -2491,7 +2491,7 @@ function Test-InstallPackageIntoJSAppOnWin81UseTheCorrectFxFolder
     param($context)
 
     # this test is only applicable to VS 2013 on Windows 8.1
-    if ($dte.Version -eq "10.0" -or $dte.Version -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
+    if ((Get-DTEVersion) -eq "10.0" -or (Get-DTEVersion) -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
     {
         return
     }
@@ -2514,7 +2514,7 @@ function Test-InstallPackageIntoJSWindowsPhoneAppOnWin81UseTheCorrectFxFolder
     param($context)
 
     # this test is only applicable to VS 2013 on Windows 8.1
-    if ($dte.Version -eq "10.0" -or $dte.Version -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
+    if ((Get-DTEVersion) -eq "10.0" -or (Get-DTEVersion) -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
     {
         return
     }
@@ -2579,7 +2579,7 @@ function Test-InstallPackageIntoJSAppOnWin81AcceptWinmdFile
     param($context)
 
     # this test is only applicable to VS 2013 on Windows 8.1
-    if ($dte.Version -eq "10.0" -or $dte.Version -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
+    if ((Get-DTEVersion) -eq "10.0" -or (Get-DTEVersion) -eq "11.0" -or [System.Environment]::OSVersion.Version -lt 6.3)
     {
         return
     }
@@ -2598,7 +2598,7 @@ function Test-PackageWithConfigTransformInstallToWinJsProject
 {
     param($context)
 
-    if ($dte.Version -eq "10.0")
+    if ((Get-DTEVersion) -eq "10.0")
     {
         return
     }
@@ -2620,7 +2620,7 @@ function Test-InstallPackageIntoLightSwitchApplication
     param($context)
 
     # this test is only applicable to VS 2013 because it has the latest LightSwitch template
-    if ($dte.Version -ne "12.0")
+    if ((Get-DTEVersion) -ne "12.0")
     {
         return
     }
@@ -2719,7 +2719,7 @@ function Test-InstallPackageToWebsitePreservesProjectConfigFile
     # Arrange
     $p = New-Website "CoolProject"
     $packagesConfigFileName = "packages.CoolProject.config"
-    if ($dte.Version -gt '10.0')
+    if ((Get-DTEVersion) -gt '10.0')
     {
         # on dev 11.0 etc, the project name could be something lkie
         # "CoolProject(12)". So we need to get the project name

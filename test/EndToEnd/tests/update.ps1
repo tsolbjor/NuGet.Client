@@ -1473,7 +1473,7 @@ function Test-FinishFailedUpdateOnSolutionOpen
 
     # Act
     # After closing the file handle, we close the solution and reopen it
-    $solutionDir = $dte.Solution.FullName
+    $solutionDir = Get-SolutionFullName
     Close-Solution
     Open-Solution $solutionDir
 

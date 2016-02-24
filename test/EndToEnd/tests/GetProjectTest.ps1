@@ -215,14 +215,14 @@ function Test-AmbiguousStartupProject {
     # Make sure the default project is p1
     Assert-DefaultProject $p1
 
-    $path = Get-SolutionPath
+    $solutionFile = Get-SolutionFullName
     $p1.Save()
     $p2.Save()
-    $dte.Solution.SaveAs($path)
-    $dte.Solution.Close()
+    SaveAs-Solution($solutionFile)
+    Close-Solution
 
     # Re open the solution
-    $dte.Solution.Open($path)
+    Open-Solution($solutionFile)
     $p1 = Get-Project foo\A
     $p2 = Get-Project A
 
@@ -249,7 +249,7 @@ function Test-GetProjectForDNXClassLibrary
 {
 	param($context)
 
-	if ($dte.Version -eq '14.0') {
+	if ((Get-DTEVersion) -eq '14.0') {
 		# Arrange
 		$p1 = New-DNXClassLibrary
 

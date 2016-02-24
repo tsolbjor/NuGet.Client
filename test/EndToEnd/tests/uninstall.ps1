@@ -616,7 +616,7 @@ function UninstallPackageRemoveSolutionPackagesConfig
 
     $a | Install-Package SolutionOnlyPackage -version 1.0 -source $context.RepositoryRoot
     
-    $solutionFile = Get-SolutionPath
+    $solutionFile = Get-SolutionFullName
     $solutionDir = Split-Path $solutionFile -Parent
 
     $configFile = "$solutionDir\.nuget\packages.config"
@@ -649,7 +649,7 @@ function Test-UninstallSolutionPackageRemoveEntryFromProjectPackagesConfig
     $a | Install-Package SolutionLevelPkg -version 1.0.0 -source $context.RepositoryRoot
     $a | Install-Package RazorGenerator.MsBuild -version 1.3.2
     
-    $solutionFile = Get-SolutionPath
+    $solutionFile = Get-SolutionFullName
     $solutionDir = Split-Path $solutionFile -Parent
 
     $configFile = "$solutionDir\" + $a.Name + "\packages.config"
@@ -918,7 +918,7 @@ function Test-FinishFailedUninstallOnSolutionOpenOfProjectLevelPackage
 
     # Act
     # After closing the file handle, we close the solution and reopen it
-    $solutionDir = $dte.Solution.FullName
+    $solutionDir = Get-SolutionFullName
     Close-Solution
     Open-Solution $solutionDir
 
@@ -1004,7 +1004,7 @@ function UninstallPackageRemoveImportStatement
 
 function Test-UninstallPackageFromNativeWinStoreApplication
 {
-    if ($dte.Version -eq "10.0")
+    if ((Get-DTEVersion) -eq "10.0")
     {
         return
     }
@@ -1028,7 +1028,7 @@ function Test-UninstallPackageFromNativeWinStoreApplication
 
 function UninstallPackageFromJsWinStoreApplication
 {
-    if ($dte.Version -eq "10.0")
+    if ((Get-DTEVersion) -eq "10.0")
     {
         return
     }
