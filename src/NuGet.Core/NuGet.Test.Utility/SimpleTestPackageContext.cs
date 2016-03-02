@@ -38,7 +38,7 @@ namespace NuGet.Test.Utility
         /// </summary>
         public void AddFile(string path)
         {
-            AddFile(path, bytes: null);
+            AddFile(path, new byte[] { 0 });
         }
 
         public void AddFile(string path, string content)

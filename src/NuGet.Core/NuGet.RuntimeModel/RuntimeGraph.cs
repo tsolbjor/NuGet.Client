@@ -5,6 +5,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 
 namespace NuGet.RuntimeModel
@@ -157,6 +158,25 @@ namespace NuGet.RuntimeModel
                 }
             }
             return Enumerable.Empty<RuntimePackageDependency>();
+        }
+
+        /// <summary>
+        /// Get dependencies by RID.
+        /// </summary>
+        public IDictionary<string, IReadOnlyList<RuntimePackageDependency>> FindAllRuntimeDependencies(string packageId)
+        {
+            var results = new Dictionary<string, IReadOnlyList<RuntimePackageDependency>>(StringComparer.Ordinal);
+
+            foreach (var runtimeDescription in Runtimes.Values)
+            {
+                RuntimeDependencySet dependencySet;
+                if (runtimeDescription.RuntimeDependencySets.TryGetValue(packageId, out dependencySet))
+                {
+                    results.Add(runtimeDescription.RuntimeIdentifier, dependencySet.Dependencies.Values.ToList());
+                }
+            }
+
+            return results;
         }
 
         public bool Equals(RuntimeGraph other)

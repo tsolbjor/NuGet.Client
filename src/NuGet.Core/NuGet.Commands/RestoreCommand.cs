@@ -789,6 +789,8 @@ namespace NuGet.Commands
                             includeFlags = ~LibraryIncludeFlags.ContentFiles;
                         }
 
+                        var runtimeGraph = LoadRuntimeGraph(packageInfo);
+
                         var targetLibrary = LockFileUtils.CreateLockFileTargetLibrary(
                             libraries[Tuple.Create(library.Name, library.Version)],
                             packageInfo,
@@ -797,7 +799,8 @@ namespace NuGet.Commands
                             correctedPackageName: library.Name,
                             dependencyType: includeFlags,
                             targetFrameworkOverride: null,
-                            dependencies: graphItem.Data.Dependencies);
+                            dependencies: graphItem.Data.Dependencies,
+                            runtimeGraph: runtimeGraph);
 
                         target.Libraries.Add(targetLibrary);
 
@@ -814,7 +817,8 @@ namespace NuGet.Commands
                                 correctedPackageName: library.Name,
                                 targetFrameworkOverride: nonFallbackFramework,
                                 dependencyType: includeFlags,
-                                dependencies: graphItem.Data.Dependencies);
+                                dependencies: graphItem.Data.Dependencies,
+                                runtimeGraph: runtimeGraph);
 
                             if (!targetLibrary.Equals(targetLibraryWithoutFallback))
                             {

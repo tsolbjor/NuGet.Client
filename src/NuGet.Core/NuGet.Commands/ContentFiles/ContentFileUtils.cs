@@ -78,52 +78,6 @@ namespace NuGet.Commands
         }
 
         /// <summary>
-        /// Get all content groups that have the nearest TxM
-        /// </summary>
-        internal static List<ContentItemGroup> GetContentGroupsForFramework(
-            LockFileTargetLibrary lockFileLib,
-            NuGetFramework framework,
-            IEnumerable<ContentItemGroup> contentGroups)
-        {
-            var groups = new List<ContentItemGroup>();
-
-            // Group by content by code language and find the nearest TxM under each language.
-            var groupsByLanguage = new Dictionary<string, List<ContentItemGroup>>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (var group in contentGroups)
-            {
-                var codeLanguage = (string)group.Properties[ManagedCodeConventions.PropertyNames.CodeLanguage];
-
-                List<ContentItemGroup> index;
-                if (!groupsByLanguage.TryGetValue(codeLanguage, out index))
-                {
-                    index = new List<ContentItemGroup>(1);
-                    groupsByLanguage.Add(codeLanguage, index);
-                }
-
-                index.Add(group);
-            }
-
-            // Find the nearest TxM within each language
-            foreach (var codeLanguagePair in groupsByLanguage)
-            {
-                var languageGroups = codeLanguagePair.Value;
-
-                var nearestGroup = NuGetFrameworkUtility.GetNearest<ContentItemGroup>(languageGroups, framework, 
-                    group =>
-                       (NuGetFramework)group.Properties[ManagedCodeConventions.PropertyNames.TargetFrameworkMoniker]);
-
-                // If a compatible group exists within the code language add it to the results
-                if (nearestGroup != null)
-                {
-                    groups.Add(nearestGroup);
-                }
-            }
-
-            return groups;
-        }
-
-        /// <summary>
         /// Apply build actions from the nuspec to items from the contentFiles folder.
         /// </summary>
         internal static List<LockFileItem> GetContentFileGroup(

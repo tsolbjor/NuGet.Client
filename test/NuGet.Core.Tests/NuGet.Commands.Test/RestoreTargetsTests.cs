@@ -126,9 +126,9 @@ namespace NuGet.Commands.Test
                 packageA.AddFile("lib/netstandard1.5/a.dll");
                 packageA.AddFile("native/a.dll");
                 packageA.AddFile("runtimes/unix/native/a.dll");
-                packageA.AddFile("runtimes/unix/lib/a.dll");
-                packageA.AddFile("runtimes/win7/lib/a.dll");
-                packageA.AddFile("runtimes/win7-x86/lib/a.dll");
+                packageA.AddFile("runtimes/unix/lib/netstandard1.5/a.dll");
+                packageA.AddFile("runtimes/win7/lib/netstandard1.5/a.dll");
+                packageA.AddFile("runtimes/win7-x86/lib/netstandard1.5/a.dll");
 
                 SimpleTestPackageUtility.CreatePackages(packageA, packageSource.FullName);
 
@@ -138,9 +138,14 @@ namespace NuGet.Commands.Test
                 var lockFile = result.LockFile;
                 result.Commit(logger);
 
+                var targetLib = lockFile.Targets.Single().Libraries.Single();
+
                 // Assert
                 Assert.True(result.Success);
-                Assert.Equal(1, lockFile.Libraries.Count);
+                Assert.Equal(4, targetLib.RuntimeTargets.Count);
+                Assert.Equal("runtimes/unix/lib/netstandard1.5/a.dll", targetLib.RuntimeTargets[0].Path);
+                Assert.Equal("runtime", targetLib.RuntimeTargets[0].Properties["group"]);
+                Assert.Equal("unix", targetLib.RuntimeTargets[0].Properties["rid"]);
             }
         }
     }
