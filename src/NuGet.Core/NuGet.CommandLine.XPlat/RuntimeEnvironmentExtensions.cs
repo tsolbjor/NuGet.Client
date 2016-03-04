@@ -30,7 +30,7 @@ namespace NuGet.CommandLine.XPlat
         {
             string os = env.OperatingSystem ?? string.Empty;
             string ver = env.OperatingSystemVersion ?? string.Empty;
-            if (env.OperatingSystemPlatform == Platform.Windows)
+            if (string.Equals(env.OperatingSystem, "Windows", StringComparison.OrdinalIgnoreCase))
             {
                 os = "win";
 
@@ -53,7 +53,7 @@ namespace NuGet.CommandLine.XPlat
 
                 return os + ver;
             }
-            else if (env.OperatingSystemPlatform == Platform.Darwin)
+            else if (string.Equals(env.OperatingSystem, "Darwin", StringComparison.OrdinalIgnoreCase))
             {
                 os = "osx";
             }
