@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 using NuGet.Client;
 using NuGet.ContentModel;
 using NuGet.DependencyResolver;
@@ -82,10 +83,9 @@ namespace NuGet.Commands
                 _request.ExistingLockFile.IsLocked = false;
                 _logger.LogMinimal(Strings.Log_LockFileOutOfDate);
             }
-
-            var context = new RemoteWalkContext();
-
-            var graphs = await ExecuteRestoreAsync(localRepository, context, token);
+            
+            var contextForProject = CreateRemoteWalkContext(_request);
+            var graphs = await ExecuteRestoreAsync(localRepository, contextForProject, token);
 
             // Build the lock file
             LockFile lockFile;
@@ -96,37 +96,20 @@ namespace NuGet.Commands
             }
             else
             {
-                lockFile = CreateLockFile(_request.ExistingLockFile, _request.Project, graphs, localRepository, context);
+                lockFile = CreateLockFile(
+                    _request.ExistingLockFile,
+                    _request.Project,
+                    graphs,
+                    localRepository,
+                    contextForProject);
 
                 // If the lock file was locked originally but we are re-locking it, well... re-lock it :)
                 lockFile.IsLocked = relockFile;
             }
 
-            foreach (var g in graphs)
+            if(!ValidateRestoreGraphs(graphs, _logger))
             {
-                foreach (var cycle in g.AnalyzeResult.Cycles)
-                {
-                    _success = false;
-                    _logger.LogError(Strings.Log_CycleDetected + $" {Environment.NewLine}  {cycle.GetPath()}.");
-                }
-
-                foreach (var versionConflict in g.AnalyzeResult.VersionConflicts)
-                {
-                    _success = false;
-                    _logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Log_VersionConflict, versionConflict.Selected.Key.Name) + $" {Environment.NewLine} {versionConflict.Selected.GetPath()} {Environment.NewLine} {versionConflict.Conflicting.GetPath()}.");
-                }
-
-                foreach (var downgrade in g.AnalyzeResult.Downgrades)
-                {
-                    var downgraded = downgrade.DowngradedFrom;
-                    var downgradedBy = downgrade.DowngradedTo;
-
-                    // Not all dependencies have a min version, if one does not exist use 0.0.0
-                    var fromVersion = downgraded.Key.VersionRange.MinVersion ?? new NuGetVersion(0, 0, 0);
-                    var toVersion = downgradedBy.Key.VersionRange.MinVersion ?? new NuGetVersion(0, 0, 0);
-
-                    _logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.Log_DowngradeWarning, downgraded.Key.Name, fromVersion, toVersion) + $" {Environment.NewLine} {downgraded.GetPath()} {Environment.NewLine} {downgradedBy.GetPath()}");
-                }
+                _success = false;
             }
 
             // Scan every graph for compatibility, as long as there were no unresolved packages
@@ -154,8 +137,16 @@ namespace NuGet.Commands
                 }
             }
 
+            // Only execute tool restore if the request lock file version is 2 or greater.
+            // Tools did not exist prior to v2 lock files.
+            var toolRestoreResults = Enumerable.Empty<ToolRestoreResult>();
+            if (_request.LockFileVersion >= 2)
+            {
+                toolRestoreResults = await ExecuteToolRestoresAsync(localRepository, token);
+            }
+
             // Generate Targets/Props files
-            var msbuild = RestoreMSBuildFiles(_request.Project, graphs, localRepository, context);
+            var msbuild = RestoreMSBuildFiles(_request.Project, graphs, localRepository, contextForProject);
 
             // If the request is for a v1 lock file then downgrade it and remove all v2 properties
             if (_request.LockFileVersion == 1)
@@ -170,8 +161,146 @@ namespace NuGet.Commands
                 lockFile,
                 _request.ExistingLockFile,
                 projectLockFilePath,
-                relockFile,
-                msbuild);
+                msbuild,
+                toolRestoreResults);
+        }
+
+        private static bool ValidateRestoreGraphs(IEnumerable<RestoreTargetGraph> graphs, ILogger logger)
+        {
+            foreach (var g in graphs)
+            {
+                foreach (var cycle in g.AnalyzeResult.Cycles)
+                {
+                    logger.LogError(Strings.Log_CycleDetected + $" {Environment.NewLine}  {cycle.GetPath()}.");
+                    return false;
+                }
+
+                foreach (var versionConflict in g.AnalyzeResult.VersionConflicts)
+                {
+                    logger.LogError(
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            Strings.Log_VersionConflict,
+                            versionConflict.Selected.Key.Name)
+                        + $" {Environment.NewLine} {versionConflict.Selected.GetPath()} {Environment.NewLine} {versionConflict.Conflicting.GetPath()}.");
+                    return false;
+                }
+
+                foreach (var downgrade in g.AnalyzeResult.Downgrades)
+                {
+                    var downgraded = downgrade.DowngradedFrom;
+                    var downgradedBy = downgrade.DowngradedTo;
+
+                    // Not all dependencies have a min version, if one does not exist use 0.0.0
+                    var fromVersion = downgraded.Key.VersionRange.MinVersion ?? new NuGetVersion(0, 0, 0);
+                    var toVersion = downgradedBy.Key.VersionRange.MinVersion ?? new NuGetVersion(0, 0, 0);
+
+                    logger.LogWarning(
+                        string.Format(
+                            CultureInfo.CurrentCulture,
+                            Strings.Log_DowngradeWarning,
+                            downgraded.Key.Name,
+                            fromVersion,
+                            toVersion)
+                        + $" {Environment.NewLine} {downgraded.GetPath()} {Environment.NewLine} {downgradedBy.GetPath()}");
+                }
+            }
+
+            return true;
+        }
+
+        private async Task<IEnumerable<ToolRestoreResult>> ExecuteToolRestoresAsync(
+            NuGetv3LocalRepository localRepository,
+            CancellationToken token)
+        {
+            var toolPathResolver = new ToolPathResolver(_request.PackagesDirectory);
+            var results = new List<ToolRestoreResult>();
+
+            foreach (var tool in _request.Project.Tools)
+            {
+                _logger.LogMinimal(string.Format(
+                    CultureInfo.CurrentCulture,
+                    Strings.Log_RestoringToolPackages,
+                    tool.LibraryRange.Name,
+                    _request.Project.FilePath));
+
+                // Build a package spec in memory to execute the tool restore as if it were
+                // its own project. For now, we always restore for a null runtime and a single
+                // constant framework.
+                var toolPackageSpec = new PackageSpec(new JObject())
+                {
+                    Name = string.Empty,
+                    Dependencies = new List<LibraryDependency>(),
+                    TargetFrameworks =
+                    {
+                         new TargetFrameworkInformation
+                        {
+                            FrameworkName = FrameworkConstants.CommonFrameworks.NetStandardApp15,
+                            Dependencies = new List<LibraryDependency>
+                            {
+                                new LibraryDependency
+                                {
+                                    LibraryRange = tool.LibraryRange
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // Execute the restore.
+                var runtimeIds = new HashSet<string>();
+                var projectFrameworkRuntimePairs = CreateFrameworkRuntimePairs(toolPackageSpec, runtimeIds);
+                var allInstalledPackages = new HashSet<LibraryIdentity>();
+                var contextForTool = CreateRemoteWalkContext(_request);
+                var walker = new RemoteDependencyWalker(contextForTool);
+                var result = await TryRestore(tool.LibraryRange,
+                                              projectFrameworkRuntimePairs,
+                                              allInstalledPackages,
+                                              localRepository,
+                                              walker,
+                                              contextForTool,
+                                              writeToLockFile: true,
+                                              token: token);
+
+                var graphs = result.Item2;
+                if (!result.Item1)
+                {
+                    _success = false;
+                }
+
+                // Create the lock file (in memory).
+                var lockFile = CreateLockFile(
+                    previousLockFile: null,
+                    project: toolPackageSpec,
+                    targetGraphs: graphs,
+                    repository: localRepository,
+                    context: contextForTool);
+
+                // Build the path based off of the resolved tool. For now, we assume there is only
+                // ever one target.
+                var target = lockFile.Targets.FirstOrDefault();
+                var fileTargetLibrary = target?
+                    .Libraries
+                    .FirstOrDefault(l => StringComparer.OrdinalIgnoreCase.Equals(tool.LibraryRange.Name, l.Name));
+                var lockFilePath = (string)null;
+                if (fileTargetLibrary != null)
+                {
+                    lockFilePath = toolPathResolver.GetLockFilePath(
+                        fileTargetLibrary.Name,
+                        fileTargetLibrary.Version,
+                        target.TargetFramework);
+                }
+
+                // Validate the results.
+                if (!ValidateRestoreGraphs(graphs, _logger))
+                {
+                    _success = false;
+                }
+
+                results.Add(new ToolRestoreResult(graphs, lockFilePath, lockFile));
+            }
+
+            return results;
         }
 
         private async Task<IEnumerable<RestoreTargetGraph>> ExecuteRestoreAsync(NuGetv3LocalRepository localRepository,
@@ -240,17 +369,6 @@ namespace NuGet.Commands
             context.ProjectLibraryProviders.Add(
                     new PackageSpecReferenceDependencyProvider(projectResolver, updatedExternalProjects));
 
-            // providers must be given by the request so that they can be shared
-            foreach (var provider in _request.DependencyProviders.LocalProviders)
-            {
-                context.LocalLibraryProviders.Add(provider);
-            }
-
-            foreach (var provider in _request.DependencyProviders.RemoteProviders)
-            {
-                context.RemoteLibraryProviders.Add(provider);
-            }
-
             var remoteWalker = new RemoteDependencyWalker(context);
 
             var projectRange = new LibraryRange()
@@ -261,26 +379,10 @@ namespace NuGet.Commands
             };
 
             // Resolve dependency graphs
-            var projectFrameworkRuntimePairs = new List<FrameworkRuntimePair>();
             var allInstalledPackages = new HashSet<LibraryIdentity>();
             var allGraphs = new List<RestoreTargetGraph>();
-
-            // Compute the project framework + runtime id pairs based on project information
-            foreach (var framework in _request.Project.TargetFrameworks)
-            {
-                // We care about TFM only and null RID for compilation purposes
-                projectFrameworkRuntimePairs.Add(new FrameworkRuntimePair(framework.FrameworkName, null));
-
-                if (!framework.FrameworkName.IsCompileOnly)
-                {
-                    var runtimeIds = RequestRuntimeUtility.GetRestoreRuntimes(_request);
-
-                    foreach (var runtimeId in runtimeIds)
-                    {
-                        projectFrameworkRuntimePairs.Add(new FrameworkRuntimePair(framework.FrameworkName, runtimeId));
-                    }
-                }
-            }
+            var runtimeIds = RequestRuntimeUtility.GetRestoreRuntimes(_request);
+            var projectFrameworkRuntimePairs = CreateFrameworkRuntimePairs(_request.Project, runtimeIds);
 
             var result = await TryRestore(projectRange,
                                           projectFrameworkRuntimePairs,
@@ -357,6 +459,45 @@ namespace NuGet.Commands
             }
 
             return allGraphs;
+        }
+
+        private static IEnumerable<FrameworkRuntimePair> CreateFrameworkRuntimePairs(
+            PackageSpec packageSpec,
+            ISet<string> runtimeIds)
+        {
+            var projectFrameworkRuntimePairs = new List<FrameworkRuntimePair>();
+            foreach (var framework in packageSpec.TargetFrameworks)
+            {
+                // We care about TFM only and null RID for compilation purposes
+                projectFrameworkRuntimePairs.Add(new FrameworkRuntimePair(framework.FrameworkName, null));
+
+                if (!framework.FrameworkName.IsCompileOnly)
+                {
+                    foreach (var runtimeId in runtimeIds)
+                    {
+                        projectFrameworkRuntimePairs.Add(new FrameworkRuntimePair(framework.FrameworkName, runtimeId));
+                    }
+                }
+            }
+
+            return projectFrameworkRuntimePairs;
+        }
+
+        private static RemoteWalkContext CreateRemoteWalkContext(RestoreRequest request)
+        {
+            var context = new RemoteWalkContext();
+            
+            foreach (var provider in request.DependencyProviders.LocalProviders)
+            {
+                context.LocalLibraryProviders.Add(provider);
+            }
+
+            foreach (var provider in request.DependencyProviders.RemoteProviders)
+            {
+                context.RemoteLibraryProviders.Add(provider);
+            }
+
+            return context;
         }
 
         private async Task<Tuple<bool, List<RestoreTargetGraph>, RuntimeGraph>> TryRestore(LibraryRange projectRange,
