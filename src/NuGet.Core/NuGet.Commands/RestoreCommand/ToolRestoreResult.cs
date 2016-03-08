@@ -8,11 +8,16 @@ namespace NuGet.Commands
 {
     public class ToolRestoreResult
     {
-        public ToolRestoreResult(IEnumerable<RestoreTargetGraph> restoreGraphs, string lockFilePath, LockFile lockFile)
+        public ToolRestoreResult(
+            IEnumerable<RestoreTargetGraph> restoreGraphs,
+            string lockFilePath,
+            LockFile lockFile,
+            IEnumerable<CompatibilityCheckResult> checkResults)
         {
             RestoreGraphs = restoreGraphs;
             LockFilePath = lockFilePath;
             LockFile = lockFile;
+            CheckResults = checkResults;
         }
 
         public IEnumerable<RestoreTargetGraph> RestoreGraphs { get; }
@@ -20,5 +25,7 @@ namespace NuGet.Commands
         public string LockFilePath { get; }
 
         public LockFile LockFile { get; }
+
+        public IEnumerable<CompatibilityCheckResult> CheckResults { get; }
     }
 }

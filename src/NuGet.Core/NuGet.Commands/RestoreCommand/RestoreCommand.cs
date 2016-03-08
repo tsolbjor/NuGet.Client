@@ -107,35 +107,10 @@ namespace NuGet.Commands
                 lockFile.IsLocked = relockFile;
             }
 
-            if(!ValidateRestoreGraphs(graphs, _logger))
-            {
-                _success = false;
-            }
+            _success &= ValidateRestoreGraphs(graphs, _logger);
 
             // Scan every graph for compatibility, as long as there were no unresolved packages
-            var checkResults = new List<CompatibilityCheckResult>();
-            if (graphs.All(g => !g.Unresolved.Any()))
-            {
-                var checker = new CompatibilityChecker(localRepository, lockFile, _logger);
-                foreach (var graph in graphs)
-                {
-                    _logger.LogVerbose(string.Format(CultureInfo.CurrentCulture, Strings.Log_CheckingCompatibility, graph.Name));
-
-                    var includeFlags = GetIncludeFlags(_request.Project, graph);
-
-                    var res = checker.Check(graph, includeFlags);
-                    _success &= res.Success;
-                    checkResults.Add(res);
-                    if (res.Success)
-                    {
-                        _logger.LogVerbose(string.Format(CultureInfo.CurrentCulture, Strings.Log_PackagesAreCompatible, graph.Name));
-                    }
-                    else
-                    {
-                        _logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Log_PackagesIncompatible, graph.Name));
-                    }
-                }
-            }
+            var checkResults = GetCompatibilityCheckResults(localRepository, lockFile, graphs);
 
             // Only execute tool restore if the request lock file version is 2 or greater.
             // Tools did not exist prior to v2 lock files.
@@ -163,6 +138,35 @@ namespace NuGet.Commands
                 projectLockFilePath,
                 msbuild,
                 toolRestoreResults);
+        }
+
+        private List<CompatibilityCheckResult> GetCompatibilityCheckResults(NuGetv3LocalRepository localRepository, LockFile lockFile, IEnumerable<RestoreTargetGraph> graphs)
+        {
+            var checkResults = new List<CompatibilityCheckResult>();
+            if (graphs.All(g => !g.Unresolved.Any()))
+            {
+                var checker = new CompatibilityChecker(localRepository, lockFile, _logger);
+                foreach (var graph in graphs)
+                {
+                    _logger.LogVerbose(string.Format(CultureInfo.CurrentCulture, Strings.Log_CheckingCompatibility, graph.Name));
+
+                    var includeFlags = GetIncludeFlags(_request.Project, graph);
+
+                    var res = checker.Check(graph, includeFlags);
+                    _success &= res.Success;
+                    checkResults.Add(res);
+                    if (res.Success)
+                    {
+                        _logger.LogVerbose(string.Format(CultureInfo.CurrentCulture, Strings.Log_PackagesAreCompatible, graph.Name));
+                    }
+                    else
+                    {
+                        _logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Log_PackagesIncompatible, graph.Name));
+                    }
+                }
+            }
+
+            return checkResults;
         }
 
         private static bool ValidateRestoreGraphs(IEnumerable<RestoreTargetGraph> graphs, ILogger logger)
@@ -262,11 +266,9 @@ namespace NuGet.Commands
                                               writeToLockFile: true,
                                               token: token);
 
+                _success &= result.Item1;
                 var graphs = result.Item2;
-                if (!result.Item1)
-                {
-                    _success = false;
-                }
+                
 
                 // Create the lock file (in memory).
                 var lockFile = CreateLockFile(
@@ -292,12 +294,11 @@ namespace NuGet.Commands
                 }
 
                 // Validate the results.
-                if (!ValidateRestoreGraphs(graphs, _logger))
-                {
-                    _success = false;
-                }
+                _success &= ValidateRestoreGraphs(graphs, _logger);
+                var checkResults = GetCompatibilityCheckResults(localRepository, lockFile, graphs);
 
-                results.Add(new ToolRestoreResult(graphs, lockFilePath, lockFile));
+                // Accumulate the results.
+                results.Add(new ToolRestoreResult(graphs, lockFilePath, lockFile, checkResults));
             }
 
             return results;

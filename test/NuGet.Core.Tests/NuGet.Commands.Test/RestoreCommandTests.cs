@@ -263,5 +263,79 @@ namespace NuGet.Commands.Test
                 Assert.Equal(0, target.Libraries.Count);
             }
         }
+
+        [Fact]
+        public async Task RestoreCommand_FailsWithIncompatiblePackage()
+        {
+            // Arrange
+            var sources = new List<PackageSource>();
+            var project1Json = @"
+            {
+              ""frameworks"": {
+                ""net45"": { }
+              },
+              ""tools"": {
+                ""packageA"": ""*""
+              }
+            }";
+
+            using (var workingDir = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                var packagesDir = new DirectoryInfo(Path.Combine(workingDir, "globalPackages"));
+                var packageSource = new DirectoryInfo(Path.Combine(workingDir, "packageSource"));
+                var project1 = new DirectoryInfo(Path.Combine(workingDir, "projects", "project1"));
+                packagesDir.Create();
+                packageSource.Create();
+                project1.Create();
+                sources.Add(new PackageSource(packageSource.FullName));
+
+                File.WriteAllText(Path.Combine(project1.FullName, "project.json"), project1Json);
+
+                var specPath1 = Path.Combine(project1.FullName, "project.json");
+                var spec1 = JsonPackageSpecReader.GetPackageSpec(project1Json, "project1", specPath1);
+
+                var logger = new TestLogger();
+                var request = new RestoreRequest(spec1, sources, packagesDir.FullName, logger);
+
+                request.LockFilePath = Path.Combine(project1.FullName, "project.lock.json");
+
+                var packageA = new SimpleTestPackageContext("packageA");
+                packageA.AddFile("lib/net45/a.dll");
+
+                SimpleTestPackageUtility.CreatePackages(packageSource.FullName, packageA);
+
+                // Act
+                var command = new RestoreCommand(request);
+                var result = await command.ExecuteAsync();
+                result.Commit(logger);
+
+                // Assert
+                Assert.False(
+                    result.Success,
+                    "The command should not have succeeded. Messages: "
+                    + Environment.NewLine + logger.ShowMessages());
+                Assert.Contains(
+                    "packageA 1.0.0 is not compatible with .NETStandardApp,Version=v1.5.",
+                    logger.ShowErrors());
+                Assert.Equal(1, result.ToolRestoreResults.Count());
+
+                var toolResult = result.ToolRestoreResults.First();
+                Assert.NotNull(toolResult.LockFilePath);
+                Assert.True(
+                    File.Exists(toolResult.LockFilePath),
+                    $"The tool lock file at {toolResult.LockFilePath} does not exist.");
+                Assert.NotNull(toolResult.LockFile);
+                Assert.Equal(1, toolResult.LockFile.Targets.Count);
+
+                var target = toolResult.LockFile.Targets[0];
+                Assert.Null(target.RuntimeIdentifier);
+                Assert.Equal(FrameworkConstants.CommonFrameworks.NetStandardApp15, target.TargetFramework);
+                Assert.Equal(1, target.Libraries.Count);
+
+                var library = target.Libraries.First(l => l.Name == "packageA");
+                Assert.NotNull(library);
+                Assert.Equal(0, library.RuntimeAssemblies.Count);
+            }
+        }
     }
 }
