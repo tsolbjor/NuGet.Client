@@ -8,10 +8,12 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using NuGet.Client;
+using NuGet.Common;
 using NuGet.ContentModel;
 using NuGet.DependencyResolver;
 using NuGet.Frameworks;
@@ -64,6 +66,14 @@ namespace NuGet.Commands
 
         public async Task<RestoreResult> ExecuteAsync(CancellationToken token)
         {
+            var log = Path.Combine(NuGetEnvironment.GetFolderPath(NuGetFolderPath.NuGetHome), $"debug-{Guid.NewGuid().ToString()}.log");
+
+            StringBuilder writer = new StringBuilder();
+            writer.AppendLine($"Restore hit: {DateTimeOffset.Now}");
+            writer.AppendLine(Environment.StackTrace);
+
+            File.WriteAllText(log, writer.ToString());
+
             // Use the shared cache if one was provided, otherwise create a new one.
             var localRepository = _request.DependencyProviders.GlobalPackages;
 
@@ -81,7 +91,7 @@ namespace NuGet.Commands
                 _request.ExistingLockFile.IsLocked = false;
                 _logger.LogMinimal(Strings.Log_LockFileOutOfDate);
             }
-            
+
             var contextForProject = CreateRemoteWalkContext(_request);
             var graphs = await ExecuteRestoreAsync(localRepository, contextForProject, token);
 
@@ -106,7 +116,7 @@ namespace NuGet.Commands
                 lockFile.IsLocked = relockFile;
             }
 
-            if(!ValidateRestoreGraphs(graphs, _logger))
+            if (!ValidateRestoreGraphs(graphs, _logger))
             {
                 _success = false;
             }
@@ -489,7 +499,7 @@ namespace NuGet.Commands
         private static RemoteWalkContext CreateRemoteWalkContext(RestoreRequest request)
         {
             var context = new RemoteWalkContext();
-            
+
             foreach (var provider in request.DependencyProviders.LocalProviders)
             {
                 context.LocalLibraryProviders.Add(provider);
@@ -609,7 +619,7 @@ namespace NuGet.Commands
                     _logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Log_FailedToResolveConflicts, graph.Name));
                     foreach (var conflict in graph.Conflicts)
                     {
-                        _logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Log_ResolverConflict, 
+                        _logger.LogError(string.Format(CultureInfo.CurrentCulture, Strings.Log_ResolverConflict,
                             conflict.Name,
                             string.Join(", ", conflict.Requests)));
                     }
@@ -751,7 +761,7 @@ namespace NuGet.Commands
                 library.Type = null;
             }
         }
-        
+
 
         private Task<RestoreTargetGraph> WalkDependenciesAsync(LibraryRange projectRange,
             NuGetFramework framework,
@@ -796,7 +806,7 @@ namespace NuGet.Commands
                         var library = _request.ExistingLockFile.GetLibrary(targetLibrary.Name, targetLibrary.Version);
                         if (library == null)
                         {
-                            _logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.Log_LockFileMissingLibraryForTargetLibrary, 
+                            _logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.Log_LockFileMissingLibraryForTargetLibrary,
                                 targetLibrary.Name,
                                 targetLibrary.Version,
                                 target.Name));
@@ -865,11 +875,11 @@ namespace NuGet.Commands
                     && dependency.LibraryRange.VersionRange != null && !dependency.LibraryRange.VersionRange.IsFloating)
                 {
                     var match = result.Flattened.FirstOrDefault(g => g.Key.Name.Equals(dependency.LibraryRange.Name));
-                    if (match != null 
+                    if (match != null
                         && LibraryTypes.Package == match.Key.Type
                         && match.Key.Version > dependency.LibraryRange.VersionRange.MinVersion)
                     {
-                        _logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.Log_DependencyBumpedUp, 
+                        _logger.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.Log_DependencyBumpedUp,
                             dependency.LibraryRange.Name,
                             dependency.LibraryRange.VersionRange.PrettyPrint(),
                             match.Key.Name,
