@@ -20,6 +20,9 @@ using NuGet.Resolver;
 using NuGet.Versioning;
 using NuGet.VisualStudio.Implementation.Resources;
 using Task = System.Threading.Tasks.Task;
+using NuGet.Common;
+using System.IO;
+using System.Text;
 
 namespace NuGet.VisualStudio
 {
@@ -60,6 +63,8 @@ namespace NuGet.VisualStudio
             bool includePrerelease,
             bool ignoreDependencies)
         {
+            DropTrace($"{packageId} {source}");
+
             PumpingJTF.Run(() => InstallPackageAsync(
                 source,
                 project,
@@ -78,6 +83,8 @@ namespace NuGet.VisualStudio
                 semVer = new NuGetVersion(version);
             }
 
+            DropTrace($"{packageId} {semVer} {source}");
+
             PumpingJTF.Run(() => InstallPackageAsync(
                 source,
                 project,
@@ -95,6 +102,8 @@ namespace NuGet.VisualStudio
             {
                 NuGetVersion.TryParse(version, out semVer);
             }
+
+            DropTrace($"{packageId} {version} {source}");
 
             PumpingJTF.Run(() => InstallPackageAsync(
                 source,
@@ -159,6 +168,11 @@ namespace NuGet.VisualStudio
                 throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(packageVersions));
             }
 
+            foreach (var pair in packageVersions)
+            {
+                DropTrace($"reg {keyName} {pair.Key} {pair.Value}");
+            }
+
             PumpingJTF.Run(() =>
                 {
                     // create a repository provider with only the registry repository
@@ -209,6 +223,11 @@ namespace NuGet.VisualStudio
             if (!packageVersions.Any())
             {
                 throw new ArgumentException(CommonResources.Argument_Cannot_Be_Null_Or_Empty, nameof(packageVersions));
+            }
+
+            foreach (var pair in packageVersions)
+            {
+                DropTrace($"extension {extensionId} {pair.Key} {pair.Value}");
             }
 
             PumpingJTF.Run(() =>
@@ -452,6 +471,8 @@ namespace NuGet.VisualStudio
                 // install the package
                 foreach (PackageIdentity package in packages)
                 {
+                    DropTrace($"InstallInternalAsync {package.Id} {package.Version}");
+
                     if (package.Version == null)
                     {
                         if (!_packageServices.IsPackageInstalled(project, package.Id))
@@ -473,6 +494,25 @@ namespace NuGet.VisualStudio
                 // collapse nodes
                 await VsHierarchyUtility.CollapseAllNodesAsync(_solutionManager, expandedNodes);
             }
+        }
+
+        private static void DropTrace(string message)
+        {
+            var tempPath = NuGetEnvironment.GetFolderPath(NuGetFolderPath.Temp);
+
+            if (!Directory.Exists(tempPath))
+            {
+                Directory.CreateDirectory(tempPath);
+            }
+
+            var log = Path.Combine(tempPath, $"debug-install-{Guid.NewGuid().ToString()}.log");
+
+            StringBuilder writer = new StringBuilder();
+            writer.AppendLine($"Install hit: {DateTimeOffset.Now}");
+            writer.AppendLine(message);
+            writer.AppendLine(Environment.StackTrace);
+
+            File.WriteAllText(log, writer.ToString());
         }
     }
 }

@@ -66,7 +66,14 @@ namespace NuGet.Commands
 
         public async Task<RestoreResult> ExecuteAsync(CancellationToken token)
         {
-            var log = Path.Combine(NuGetEnvironment.GetFolderPath(NuGetFolderPath.NuGetHome), $"debug-{Guid.NewGuid().ToString()}.log");
+            var tempPath = NuGetEnvironment.GetFolderPath(NuGetFolderPath.Temp);
+
+            if (!Directory.Exists(tempPath))
+            {
+                Directory.CreateDirectory(tempPath);
+            }
+
+            var log = Path.Combine(tempPath, $"debug-restore-{Guid.NewGuid().ToString()}.log");
 
             StringBuilder writer = new StringBuilder();
             writer.AppendLine($"Restore hit: {DateTimeOffset.Now}");
