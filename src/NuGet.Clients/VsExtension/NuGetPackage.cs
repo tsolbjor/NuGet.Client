@@ -39,7 +39,9 @@ namespace NuGetVSExtension
     /// This is the class that implements the package exposed by this assembly.
     /// </summary>
     [PackageRegistration(UseManagedResourcesOnly = true)]
-    [InstalledProductRegistration("#110", "#112", ProductVersion, IconResourceID = 400)]
+    // Check VSPackage.resx file for the actual values used in InstalledProductRegistration.
+    // Note that productId parameter is the product version shown in Help->About. This may be replaced on the CI.
+    [InstalledProductRegistration(productName:"#110", productDetails: "#112", productId: "#116", IconResourceID = 400)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideToolWindow(typeof(PowerConsoleToolWindow),
         Style = VsDockStyle.Tabbed,
@@ -64,8 +66,6 @@ namespace NuGetVSExtension
     [Guid(GuidList.guidNuGetPkgString)]
     public sealed class NuGetPackage : Package, IVsPackageExtensionProvider, IVsPersistSolutionOpts
     {
-        // It is displayed in the Help - About box of Visual Studio
-        public const string ProductVersion = "3.4.0";
         private static readonly object _credentialsPromptLock = new object();
 
         private static readonly string[] _visualizerSupportedSKUs = { "Premium", "Ultimate" };
