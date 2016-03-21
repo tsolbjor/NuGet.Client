@@ -42,10 +42,7 @@
     <Reference Include="Microsoft.Build">
       <HintPath>$(ProgramFiles)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\Microsoft.Build.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.ProjectSystem.V14Only">
-      <HintPath>..\..\..\lib\VS14\Microsoft.VisualStudio.ProjectSystem.V14Only.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
+    <Reference Include="Microsoft.VisualStudio.ProjectSystem" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.Composition" />
   </ItemGroup>
