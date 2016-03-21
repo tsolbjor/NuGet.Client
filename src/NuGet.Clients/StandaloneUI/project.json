@@ -1,5 +1,6 @@
 ﻿{
   "dependencies": {
+    "Microsoft.VisualStudio.Threading": "15.0.51109-pre-g14c6037658",
     "Microsoft.Web.Xdt": "2.1.1",
     "Newtonsoft.Json": "6.0.4",
     "NuGet.Protocol.VisualStudio": "3.4.0-*",
@@ -8,7 +9,7 @@
     "Test.Utility": "3.4.0-*"
   },
   "frameworks": {
-    "net451": {}
+    "net46": {}
   },
   "runtimes": {
     "win-anycpu": {},

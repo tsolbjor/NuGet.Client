@@ -1,9 +1,10 @@
 ﻿{
   "dependencies": {
+    "Microsoft.VisualStudio.Threading": "15.0.51109-pre-g14c6037658",
     "NuGet.Protocol.VisualStudio": "3.4.0-*"
   },
   "frameworks": {
-    "net45": {}
+    "net46": {}
   },
   "runtimes": {
     "win-anycpu": {},

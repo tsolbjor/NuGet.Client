@@ -1,11 +1,11 @@
 ﻿{
   "dependencies": {
-    "Microsoft.VisualStudio.Shell.14.0": "14.0.23107",    
+    "Microsoft.VisualStudio.Shell.15.0": "15.0.25102-Dev15Preview",
     "Microsoft.VisualStudio.Shell.Interop": "7.10.6071",
-    "Microsoft.VisualStudio.Threading": "14.0.50702"
+    "Microsoft.VisualStudio.Threading": "15.0.51109-pre-g14c6037658"
   },
   "frameworks": {
-    "net45": {}
+    "net46": {}
   },
   "runtimes": {
     "win-anycpu": {},
