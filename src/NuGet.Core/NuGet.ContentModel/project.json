@@ -7,11 +7,11 @@
     "../NuGet.Shared/*.cs"
   ],
   "frameworks": {
-    "net45": { },
+    "net45": {},
     "netstandard1.5": {
       "dependencies": {
-        "NETStandard.Library": "1.5.0-rc2-23911",
-        "System.ObjectModel": "4.0.12-rc2-23911"
+        "NETStandard.Library": "1.5.0-rc2-23921",
+        "System.ObjectModel": "4.0.12-rc2-23921"
       },
       "imports": [
         "dotnet5.6",
