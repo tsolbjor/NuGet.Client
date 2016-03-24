@@ -1,6 +1,6 @@
 ﻿{
   "dependencies": {
-    "Microsoft.VisualStudio.Shell.15.0": "15.0.25102-Dev15Preview",
+    "Microsoft.VisualStudio.Shell.15.0": "15.0.25123-Dev15Preview",
     "Microsoft.VisualStudio.Threading": "15.0.51109-pre-g14c6037658"
   },
   "frameworks": {
