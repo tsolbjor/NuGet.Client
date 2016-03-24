@@ -1,29 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageManagement.VisualStudio", "src\NuGet.Clients\PackageManagement.VisualStudio\PackageManagement.VisualStudio.csproj", "{306CDDFA-FF0B-4299-930C-9EC6C9308160}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VsExtension", "src\NuGet.Clients\VsExtension\VsExtension.csproj", "{D0F9864B-D782-4471-81A2-29555E5DC0D7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio.Interop", "src\NuGet.Clients\VisualStudio.Interop\VisualStudio.Interop.csproj", "{7DB43FE1-75E1-49F9-B2C8-06A552BA2144}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio14", "src\NuGet.Clients\VisualStudio14\VisualStudio14.csproj", "{EEA49A74-6EFC-410E-9745-BAD367AC151D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "src\NuGet.Clients\VsConsole\Console\Console.csproj", "{50E33DA2-AF14-486D-81B8-BD8409744A38}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console.Types", "src\NuGet.Clients\VsConsole\Console.Types\Console.Types.csproj", "{6FD11460-39A3-4A10-BA63-7541B0A7D053}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerShellHost", "src\NuGet.Clients\VsConsole\PowerShellHost\PowerShellHost.csproj", "{5A79EEF3-51C0-4A14-8D37-50EF38AD835D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerShellHostProvider", "src\NuGet.Clients\VsConsole\PowerShellHostProvider\PowerShellHostProvider.csproj", "{A5E7AEB3-738F-4C39-A459-00F90483B2FE}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{3EF356B5-E2D3-45E3-B515-99F4611ACBDA}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Options", "src\NuGet.Clients\Options\Options.csproj", "{53AB7187-CDF3-48B5-B90E-8919D3CB904D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio", "src\NuGet.Clients\VisualStudio\VisualStudio.csproj", "{E5556BC6-A7FD-4D8E-8A7D-7648DF1D7471}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "functional", "functional", "{72887A16-F39B-4B21-9B76-33AE5004DE0B}"
 EndProject
@@ -57,6 +37,32 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{83AEE32C
 		test\EndToEnd\tests\update.ps1 = test\EndToEnd\tests\update.ps1
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{25E91311-400E-47A6-A844-733D604E662A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestExtensions", "TestExtensions", "{6F6D0E69-329D-4D0E-9795-A253FB2CA0CD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Standalone", "Standalone", "{390F8FBC-5FFC-4E61-B5D2-6EB39E66E2D2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageManagement.VisualStudio", "src\NuGet.Clients\PackageManagement.VisualStudio\PackageManagement.VisualStudio.csproj", "{306CDDFA-FF0B-4299-930C-9EC6C9308160}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VsExtension", "src\NuGet.Clients\VsExtension\VsExtension.csproj", "{D0F9864B-D782-4471-81A2-29555E5DC0D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio.Interop", "src\NuGet.Clients\VisualStudio.Interop\VisualStudio.Interop.csproj", "{7DB43FE1-75E1-49F9-B2C8-06A552BA2144}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio14", "src\NuGet.Clients\VisualStudio14\VisualStudio14.csproj", "{EEA49A74-6EFC-410E-9745-BAD367AC151D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "src\NuGet.Clients\VsConsole\Console\Console.csproj", "{50E33DA2-AF14-486D-81B8-BD8409744A38}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console.Types", "src\NuGet.Clients\VsConsole\Console.Types\Console.Types.csproj", "{6FD11460-39A3-4A10-BA63-7541B0A7D053}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerShellHost", "src\NuGet.Clients\VsConsole\PowerShellHost\PowerShellHost.csproj", "{5A79EEF3-51C0-4A14-8D37-50EF38AD835D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PowerShellHostProvider", "src\NuGet.Clients\VsConsole\PowerShellHostProvider\PowerShellHostProvider.csproj", "{A5E7AEB3-738F-4C39-A459-00F90483B2FE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Options", "src\NuGet.Clients\Options\Options.csproj", "{53AB7187-CDF3-48B5-B90E-8919D3CB904D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio", "src\NuGet.Clients\VisualStudio\VisualStudio.csproj", "{E5556BC6-A7FD-4D8E-8A7D-7648DF1D7471}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeamFoundationServer14", "src\NuGet.Clients\TeamFoundationServer14\TeamFoundationServer14.csproj", "{E961D080-F10B-4F11-BEA0-056509C086CC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageManagement.PowerShellCmdlets", "src\NuGet.Clients\PackageManagement.PowerShellCmdlets\PackageManagement.PowerShellCmdlets.csproj", "{26DC17AC-A390-4515-A2C0-07A0950036C5}"
@@ -67,8 +73,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageManagement.UI", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.CommandLine", "src\NuGet.Clients\NuGet.CommandLine\NuGet.CommandLine.csproj", "{957C4E99-3644-47DD-8F9A-AE36F41EBE4A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnitTests", "UnitTests", "{25E91311-400E-47A6-A844-733D604E662A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.CommandLine.Test", "test\NuGet.Clients.Tests\NuGet.CommandLine.Test\NuGet.CommandLine.Test.csproj", "{33294BB8-5144-4363-B02C-332F6D94C1C1}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E901BDC7-CB84-40FA-A2C0-03DB4F9AEA3C} = {E901BDC7-CB84-40FA-A2C0-03DB4F9AEA3C}
@@ -77,8 +81,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Credentials", "src\NuGet.Clients\NuGet.Credentials\NuGet.Credentials.csproj", "{32A23995-14C7-483B-98C3-0AE4185373EA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Credentials.Test", "test\NuGet.Clients.Tests\NuGet.Credentials.Test\NuGet.Credentials.Test.csproj", "{E2853887-4959-4356-A379-50960060A78F}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestExtensions", "TestExtensions", "{6F6D0E69-329D-4D0E-9795-A253FB2CA0CD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API.Test", "test\TestExtensions\API.Test\API.Test.csproj", "{45A5F9FF-2C27-4C62-9B53-C0E8E99A18B1}"
 EndProject
@@ -91,8 +93,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenerateTestPackages", "test\TestExtensions\GenerateTestPackages\GenerateTestPackages.csproj", "{61EC099A-8AC0-4CCC-AFA8-DF9806CBAFD1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.VisualStudio.Implementation.Test", "test\NuGet.Clients.Tests\NuGet.VisualStudio.Implementation.Test\NuGet.VisualStudio.Implementation.Test.csproj", "{30D3D653-C936-40DD-B044-329980E156ED}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Standalone", "Standalone", "{390F8FBC-5FFC-4E61-B5D2-6EB39E66E2D2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandaloneUI", "src\NuGet.Clients\StandaloneUI\StandaloneUI.csproj", "{114FD278-477D-4292-82AA-7F8A5FC0BA08}"
 EndProject
@@ -387,9 +387,9 @@ Global
 		{CB95A418-1524-48D7-96F5-3A3E733E41CC} = {72887A16-F39B-4B21-9B76-33AE5004DE0B}
 		{83AEE32C-FFCC-43A6-898B-D7DF81774C25} = {72887A16-F39B-4B21-9B76-33AE5004DE0B}
 		{25E91311-400E-47A6-A844-733D604E662A} = {3EF356B5-E2D3-45E3-B515-99F4611ACBDA}
+		{6F6D0E69-329D-4D0E-9795-A253FB2CA0CD} = {3EF356B5-E2D3-45E3-B515-99F4611ACBDA}
 		{33294BB8-5144-4363-B02C-332F6D94C1C1} = {25E91311-400E-47A6-A844-733D604E662A}
 		{E2853887-4959-4356-A379-50960060A78F} = {25E91311-400E-47A6-A844-733D604E662A}
-		{6F6D0E69-329D-4D0E-9795-A253FB2CA0CD} = {3EF356B5-E2D3-45E3-B515-99F4611ACBDA}
 		{45A5F9FF-2C27-4C62-9B53-C0E8E99A18B1} = {6F6D0E69-329D-4D0E-9795-A253FB2CA0CD}
 		{E901BDC7-CB84-40FA-A2C0-03DB4F9AEA3C} = {6F6D0E69-329D-4D0E-9795-A253FB2CA0CD}
 		{5E2D927E-87E3-431A-A062-16DF6EC98BFB} = {25E91311-400E-47A6-A844-733D604E662A}

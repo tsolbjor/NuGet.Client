@@ -1,7 +1,9 @@
 ﻿{
-  "dependencies": {},
+  "dependencies": {
+    "Microsoft.VisualStudio.Shell.15.0": "15.0.25022-*"
+  },
   "frameworks": {
-    "net45": {}
+    "net46": {}
   },
   "runtimes": {
     "win-anycpu": {},

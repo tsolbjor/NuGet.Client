@@ -7,7 +7,7 @@ $DefaultReleaseLabel = 'local'
 $DefaultDnxVersion = '1.0.0-rc1-update1'
 $DefaultDnxArch = 'x86'
 $NuGetClientRoot = Split-Path -Path $PSScriptRoot -Parent
-$MSBuildExe = Join-Path ${env:ProgramFiles(x86)} 'MSBuild\14.0\Bin\msbuild.exe'
+$MSBuildExe = Join-Path ${env:ProgramFiles(x86)} 'MSBuild\15.0\Bin\msbuild.exe'
 $NuGetExe = Join-Path $NuGetClientRoot '.nuget\nuget.exe'
 $ILMerge = Join-Path $NuGetClientRoot 'packages\ILMerge.2.14.1208\tools\ILMerge.exe'
 $DnvmCmd = Join-Path $env:USERPROFILE '.dnx\bin\dnvm.cmd'
@@ -270,7 +270,7 @@ Function Restore-SolutionPackages{
     param(
         [Alias('path')]
         [string]$SolutionPath,
-        [ValidateSet(4, 12, 14)]
+        [ValidateSet(4, 12, 14, 15)]
         [int]$MSBuildVersion
     )
     $opts = , 'restore'
@@ -518,7 +518,7 @@ Function Build-ClientsProjects {
     $solutionPath = Join-Path $NuGetClientRoot NuGet.Clients.sln
     if (-not $SkipRestore) {
         # Restore packages for NuGet.Tooling solution
-        Restore-SolutionPackages -path $solutionPath -MSBuildVersion 14
+        Restore-SolutionPackages -path $solutionPath -MSBuildVersion 15
     }
 
     # Build the solution
