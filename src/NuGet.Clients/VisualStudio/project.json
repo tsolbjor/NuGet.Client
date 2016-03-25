@@ -1,5 +1,6 @@
 ﻿{
   "dependencies": {
+    "Microsoft.VisualStudio.Threading": "15.0.51109-*",
     "NuGet.Protocol.VisualStudio": "3.4.0-*"
   },
   "frameworks": {
