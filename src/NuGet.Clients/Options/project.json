@@ -1,5 +1,9 @@
 ﻿{
-  "dependencies": {},
+  "dependencies": {
+    "Microsoft.VisualStudio.Shell.Interop": "7.10.6071",
+    "Microsoft.VisualStudio.Shell.Interop.8.0": "8.0.50727",
+    "Microsoft.VisualStudio.Shell.15.0": "15.0.25123-*"
+  },
   "frameworks": {
     "net45": {}
   },

@@ -56,7 +56,7 @@ Write-Host -ForegroundColor Cyan 'Before running all the functional tests, ' `
 Write-Host
 Write-Host 'Trying to set some registry keys to avoid dialog boxes popping during the functional test run...'
 
-$VSVersion = '14.0'
+$VSVersion = '15.0'
 DisableTextTemplateSecurityWarning $VSVersion
 
 $net35x86 = "C:\windows\Microsoft.NET\Framework\v3.5\msbuild.exe"

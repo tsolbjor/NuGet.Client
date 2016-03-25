@@ -20,7 +20,7 @@ function New-BuildIntegratedProj
         [string]$SolutionFolder
     )
     
-    if ((Get-VSVersion) -ge '14.0')
+    if ((Get-VSVersion) -ge '15.0')
     {
         New-Project BuildIntegratedProj $ProjectName $SolutionFolder
     }
