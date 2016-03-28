@@ -3,10 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Resources;
+using System.Runtime.CompilerServices;
 using System.Text;
 using NuGet.Common;
 using NuGet.Protocol;
@@ -46,6 +49,13 @@ namespace NuGet.CommandLine
 
         public static int MainCore(string workingDirectory, string[] args)
         {
+            // First, optionally disable localization in resources.
+            var invariantResources = new List<Type>();
+            if (args.Any(arg => string.Equals(arg, "-forceInvariant", StringComparison.OrdinalIgnoreCase)))
+            {
+                invariantResources.AddRange(StringResource.DisableLocalizationInNuGetResources());
+            }
+
             // This is to avoid applying weak event pattern usage, which breaks under Mono or restricted environments, e.g. Windows Azure Web Sites.
             EnvironmentUtility.SetRunningFromCommandLine();
 
@@ -95,7 +105,7 @@ namespace NuGet.CommandLine
                 // Parse the command
                 ICommand command = parser.ParseCommandLine(args) ?? p.HelpCommand;
                 command.CurrentDirectory = workingDirectory;
-
+                
                 // Fallback on the help command if we failed to parse a valid command
                 if (!ArgumentCountValid(command))
                 {
@@ -119,6 +129,20 @@ namespace NuGet.CommandLine
                     }
 
                     command.Execute();
+
+                    if (command == p.HelpCommand)
+                    {
+                        // Report disabled localization.
+                        if (invariantResources.Any())
+                        {
+                            console.LogDebug(Environment.NewLine + "Localization was disabled on the following types:");
+
+                            foreach (var invariantResource in invariantResources)
+                            {
+                                console.LogDebug($" - {invariantResource.FullName}");
+                            }
+                        }
+                    }
                 }
             }
             catch (AggregateException exception)

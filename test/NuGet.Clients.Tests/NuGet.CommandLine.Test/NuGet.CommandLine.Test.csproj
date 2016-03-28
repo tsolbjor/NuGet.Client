@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="ConsoleTest.cs" />
     <Compile Include="DefaultConfigurationFilePreserver.cs" />
+    <Compile Include="ForceInvariantTests.cs" />
     <Compile Include="LocalResourceUtilsTest.cs" />
     <Compile Include="MockServer.cs" />
     <Compile Include="MockServerResource.Designer.cs">

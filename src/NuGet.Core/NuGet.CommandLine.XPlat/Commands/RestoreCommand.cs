@@ -23,6 +23,11 @@ namespace NuGet.CommandLine.XPlat
                 restore.Description = Strings.Restore_Description;
                 restore.HelpOption(XPlatUtility.HelpOption);
 
+                restore.Option(
+                    "--force-invariant",
+                    Strings.ForceInvariant_Description,
+                    CommandOptionType.NoValue);
+
                 var sources = restore.Option(
                     "-s|--source <source>",
                     Strings.Restore_Switch_Source_Description,

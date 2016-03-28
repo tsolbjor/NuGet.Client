@@ -16,6 +16,11 @@ namespace NuGet.CommandLine.XPlat
             {
                 pack.Description = Strings.PackCommand_Description;
 
+                pack.Option(
+                    "--force-invariant",
+                    Strings.ForceInvariant_Description,
+                    CommandOptionType.NoValue);
+
                 var basePath = pack.Option(
                     "-b|--base-path <basePath>",
                     Strings.BasePath_Description,

@@ -51,6 +51,9 @@ namespace NuGet.CommandLine
         [Option(typeof(NuGetCommand), "Option_ConfigFile")]
         public string ConfigFile { get; set; }
 
+        [Option(typeof(NuGetCommand), "Option_ForceInvariant")]
+        public bool ForceInvariant { get; set; }
+
         // Used to check if credential has been requested for a uri. 
         private readonly HashSet<Uri> _credentialRequested;
 

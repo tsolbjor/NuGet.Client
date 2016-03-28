@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -32,6 +33,13 @@ namespace NuGet.CommandLine.XPlat
                 Debugger.Break();
             }
 #endif
+
+            // First, optionally disable localization in resources.
+            var invariantResources = new List<Type>();
+            if (args.Any(arg => string.Equals(arg, "--force-invariant", StringComparison.OrdinalIgnoreCase)))
+            {
+                invariantResources.AddRange(StringResource.DisableLocalizationInNuGetResources());
+            }
 
             var app = new CommandLineApplication();
             app.Name = "nuget3";
@@ -65,6 +73,18 @@ namespace NuGet.CommandLine.XPlat
             app.OnExecute(() =>
             {
                 app.ShowHelp();
+
+                // Report disabled localization.
+                if (invariantResources.Any())
+                {
+                    Log.LogDebug(Environment.NewLine + "Localization was disabled on the following types:");
+
+                    foreach (var invariantResource in invariantResources)
+                    {
+                        Log.LogDebug($" - {invariantResource.FullName}");
+                    }
+                }
+
                 return 0;
             });
 
