@@ -1,7 +1,7 @@
 ﻿{
   "dependencies": {
     "NuGet.Protocol.VisualStudio": "3.4.0-*",
-    "Microsoft.VisualStudio.Shell.15.0": "15.0.25022-*"
+    "Microsoft.VisualStudio.Shell.15.0": "15.0.25123-*"
   },
   "frameworks": {
     "net46": {}

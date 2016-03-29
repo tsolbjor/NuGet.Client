@@ -1,6 +1,6 @@
 ﻿{
   "dependencies": {
-	"Microsoft.VisualStudio.CoreUtility": "15.0.25022-*",
+	"Microsoft.VisualStudio.CoreUtility": "15.0.25123-*",
     "Moq": "4.2.1507.118",
     "Test.Utility": "3.4.0-*",
     "xunit": "2.1.0",

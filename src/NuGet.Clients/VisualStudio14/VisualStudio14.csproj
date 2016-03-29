@@ -17,7 +17,7 @@
     <RootNamespace>NuGet.VisualStudio14</RootNamespace>
     <AssemblyName>NuGet.VisualStudio14</AssemblyName>
     <CodeAnalysisRuleSet>..\..\..\NuGet.ruleset</CodeAnalysisRuleSet>
-    <DefineConstants Condition="$(VisualStudioVersion) == '14'">$(DefineConstants);VS14</DefineConstants>
+    <DefineConstants Condition="$(VisualStudioVersion) >= '14'">$(DefineConstants);VS14</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' Or '$(Configuration)' == 'Coverage' Or '$(Configuration)' == 'Mono Debug'">
     <DebugSymbols>true</DebugSymbols>
@@ -42,8 +42,8 @@
     <Reference Include="Microsoft.Build">
       <HintPath>$(ProgramFiles)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\Microsoft.Build.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.ProjectSystem.V14Only">
-      <HintPath>..\..\..\lib\VS14\Microsoft.VisualStudio.ProjectSystem.V14Only.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.ProjectSystem">
+      <HintPath>..\..\..\lib\VS15\Microsoft.VisualStudio.ProjectSystem.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
