@@ -175,16 +175,24 @@ namespace NuGet.Common
                 {
                     assembly = LoadAssemblyFromPath(path);
                 }
-                catch
+                catch (Exception e)
                 {
+
+                    Console.WriteLine("Error to load: " + path);
                     // Ignore assemblies that cannot be loaded.
                 }
 
                 if (assembly != null &&
-                    HasValidPublicKey(assembly) &&
                     assemblies.Add(assembly))
                 {
-                    yield return assembly;
+                    if (HasValidPublicKey(assembly))
+                    {
+                        yield return assembly;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Not matching PK: " + path);
+                    }
                 }
             }
         }
