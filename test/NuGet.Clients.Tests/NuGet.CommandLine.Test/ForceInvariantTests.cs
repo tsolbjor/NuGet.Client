@@ -22,7 +22,6 @@ namespace NuGet.CommandLine.Test
             {
                 "NuGet.CommandLine.NuGetCommand",
                 "NuGet.CommandLine.NuGetResources",
-                "NuGet.CommandLine.Test.MockServerResource",
                 "NuGet.Commands.Rules.AnalysisResources",
                 "NuGet.Commands.Strings",
                 "NuGet.Common.Strings",
@@ -44,6 +43,10 @@ namespace NuGet.CommandLine.Test
                 "NuGet.Resources.AnalysisResources",
                 "NuGet.Resources.NuGetResources",
                 "NuGet.Versioning.Resources"
+            });
+            var ignored = new HashSet<string>(new[]
+            {
+                "NuGet.CommandLine.Test.MockServerResource"
             });
 
             // Act
@@ -71,6 +74,9 @@ namespace NuGet.CommandLine.Test
                     }
                 }
             }
+
+            // Remove ignored resources.
+            actual.ExceptWith(ignored);
 
             // Find types that should have been localized but were not.
             var missing = expected.Except(actual);
