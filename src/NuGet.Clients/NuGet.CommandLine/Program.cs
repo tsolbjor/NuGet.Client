@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.ComponentModel.Composition.Hosting;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
-using System.Resources;
-using System.Runtime.CompilerServices;
 using System.Text;
 using NuGet.Common;
-using NuGet.Protocol;
 
 namespace NuGet.CommandLine
 {
     public class Program
     {
+        private const string Utf8Option = "-utf8";
+        private const string ForceEnglishOutputOption = "-forceEnglishOutput";
+        private const string DebugOption = "--debug";
+
         private static readonly string ThisExecutableName = typeof(Program).Assembly.GetName().Name;
 
         [Import]
@@ -37,9 +37,9 @@ namespace NuGet.CommandLine
         public static int Main(string[] args)
         {
 #if DEBUG
-            if (args.Contains("--debug", StringComparer.OrdinalIgnoreCase))
+            if (args.Contains(DebugOption, StringComparer.OrdinalIgnoreCase))
             {
-                args = args.Where(arg => !string.Equals(arg, "--debug", StringComparison.OrdinalIgnoreCase)).ToArray();
+                args = args.Where(arg => !string.Equals(arg, DebugOption, StringComparison.OrdinalIgnoreCase)).ToArray();
                 System.Diagnostics.Debugger.Launch();
             }
 #endif
@@ -51,7 +51,7 @@ namespace NuGet.CommandLine
         {
             // First, optionally disable localization in resources.
             var invariantResources = new List<Type>();
-            if (args.Any(arg => string.Equals(arg, "-forceInvariant", StringComparison.OrdinalIgnoreCase)))
+            if (args.Any(arg => string.Equals(arg, ForceEnglishOutputOption, StringComparison.OrdinalIgnoreCase)))
             {
                 invariantResources.AddRange(StringResource.DisableLocalizationInNuGetResources());
             }
@@ -61,10 +61,10 @@ namespace NuGet.CommandLine
 
             // set output encoding to UTF8 if -utf8 is specified
             var oldOutputEncoding = System.Console.OutputEncoding;
-            if (args.Any(arg => String.Equals(arg, "-utf8", StringComparison.OrdinalIgnoreCase)))
+            if (args.Any(arg => string.Equals(arg, Utf8Option, StringComparison.OrdinalIgnoreCase)))
             {
-                args = args.Where(arg => !String.Equals(arg, "-utf8", StringComparison.OrdinalIgnoreCase)).ToArray();
-                SetConsoleOutputEncoding(System.Text.Encoding.UTF8);
+                args = args.Where(arg => !string.Equals(arg, Utf8Option, StringComparison.OrdinalIgnoreCase)).ToArray();
+                SetConsoleOutputEncoding(Encoding.UTF8);
             }
 
             // Increase the maximum number of connections per server.

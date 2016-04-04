@@ -6,24 +6,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
 using NuGet.Common;
-using NuGet.Logging;
-using NuGet.Protocol;
 
 namespace NuGet.CommandLine.XPlat
 {
     public class Program
     {
+        private const string DebugOption = "--debug";
         public static CommandOutputLogger Log { get; set; }
 
         public static int Main(string[] args)
         {
 #if DEBUG
-            if (args.Contains("--debug"))
+            if (args.Contains(DebugOption))
             {
-                args = args.Where(arg => arg != "--debug").ToArray();
+                args = args.Where(arg => !StringComparer.OrdinalIgnoreCase.Equals(arg, DebugOption)).ToArray();
 
                 while (!Debugger.IsAttached)
                 {
@@ -36,7 +34,7 @@ namespace NuGet.CommandLine.XPlat
 
             // First, optionally disable localization in resources.
             var invariantResources = new List<Type>();
-            if (args.Any(arg => string.Equals(arg, "--force-invariant", StringComparison.OrdinalIgnoreCase)))
+            if (args.Any(arg => string.Equals(arg, CommandConstants.ForceEnglishOutputOption, StringComparison.OrdinalIgnoreCase)))
             {
                 invariantResources.AddRange(StringResource.DisableLocalizationInNuGetResources());
             }

@@ -60,7 +60,7 @@
     <Compile Include="ConsoleCredentialProviderTest.cs" />
     <Compile Include="ConsoleTest.cs" />
     <Compile Include="DefaultConfigurationFilePreserver.cs" />
-    <Compile Include="ForceInvariantTests.cs" />
+    <Compile Include="ForceEnglishOutputTests.cs" />
     <Compile Include="LocalResourceUtilsTest.cs" />
     <Compile Include="MockServer.cs" />
     <Compile Include="MockServerResource.Designer.cs">

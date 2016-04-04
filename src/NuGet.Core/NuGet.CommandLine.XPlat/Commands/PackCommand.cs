@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using Microsoft.Dnx.Runtime.Common.CommandLine;
@@ -17,8 +16,8 @@ namespace NuGet.CommandLine.XPlat
                 pack.Description = Strings.PackCommand_Description;
 
                 pack.Option(
-                    "--force-invariant",
-                    Strings.ForceInvariant_Description,
+                    CommandConstants.ForceEnglishOutputOption,
+                    Strings.ForceEnglishOutput_Description,
                     CommandOptionType.NoValue);
 
                 var basePath = pack.Option(
@@ -89,7 +88,7 @@ namespace NuGet.CommandLine.XPlat
                     packArgs.Arguments = arguments.Values;
                     packArgs.Path = PackCommandRunner.GetInputFile(packArgs);
 
-                    logger.LogInformation(String.Format(CultureInfo.CurrentCulture, Strings.PackageCommandAttemptingToBuildPackage, Path.GetFileName(packArgs.Path)));
+                    logger.LogInformation(string.Format(CultureInfo.CurrentCulture, Strings.PackageCommandAttemptingToBuildPackage, Path.GetFileName(packArgs.Path)));
 
                     // If the BasePath is not specified, use the directory of the input file (nuspec / proj) file
                     packArgs.BasePath = !basePath.HasValue() ? Path.GetDirectoryName(Path.GetFullPath(packArgs.Path)) : basePath.Value();
@@ -100,7 +99,7 @@ namespace NuGet.CommandLine.XPlat
                     if (minClientVersion.HasValue())
                     {
                         Version version;
-                        if (!System.Version.TryParse(minClientVersion.Value(), out version))
+                        if (!Version.TryParse(minClientVersion.Value(), out version))
                         {
                             throw new ArgumentException(Strings.PackageCommandInvalidMinClientVersion);
                         }
@@ -117,7 +116,7 @@ namespace NuGet.CommandLine.XPlat
                     if (versionOption.HasValue())
                     {
                         Version version;
-                        if (!System.Version.TryParse(versionOption.Value(), out version))
+                        if (!Version.TryParse(versionOption.Value(), out version))
                         {
                             throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, Strings.PackageVersionInvalid, versionOption.Value()));
                         }

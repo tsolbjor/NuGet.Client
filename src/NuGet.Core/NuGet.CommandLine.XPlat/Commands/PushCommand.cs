@@ -17,8 +17,8 @@ namespace NuGet.CommandLine.XPlat
                 push.Description = Strings.Push_Description;
 
                 push.Option(
-                    "--force-invariant",
-                    Strings.ForceInvariant_Description,
+                    CommandConstants.ForceEnglishOutputOption,
+                    Strings.ForceEnglishOutput_Description,
                     CommandOptionType.NoValue);
 
                 var source = push.Option(

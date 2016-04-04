@@ -6088,9 +6088,9 @@ namespace NuGet.CommandLine {
         /// <summary>
         ///   Looks up a localized string similar to Forces the application to run using an invariant, English-based culture..
         /// </summary>
-        internal static string Option_ForceInvariant {
+        internal static string Option_ForceEnglishOutput {
             get {
-                return ResourceManager.GetString("Option_ForceInvariant", resourceCulture);
+                return ResourceManager.GetString("Option_ForceEnglishOutput", resourceCulture);
             }
         }
         

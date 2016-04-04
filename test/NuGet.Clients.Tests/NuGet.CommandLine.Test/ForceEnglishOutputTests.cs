@@ -1,20 +1,21 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NuGet.Test.Utility;
 using Xunit;
-using System;
+using Console = NuGet.Common.Console;
 
 namespace NuGet.CommandLine.Test
 {
-    public class ForceInvariantTests
+    public class ForceEnglishOutputTests
     {
         [Fact]
-        public void ForceInvariant_DetectsAllResources()
+        public void ForceEnglishOutput_DetectsAllResources()
         {
             // Arrange
             var nugetExe = Util.GetNuGetExePath();
-            var args = new[] { "help", "-forceInvariant", "-verbosity", "detailed" };
+            var args = new[] { "help", "-forceEnglishOutput", "-verbosity", "detailed" };
             var listStart = "Localization was disabled on the following types:";
 
             // NOTE: This list must be modified as more resources are added to the codebase.
@@ -44,10 +45,18 @@ namespace NuGet.CommandLine.Test
                 "NuGet.Resources.NuGetResources",
                 "NuGet.Versioning.Resources"
             });
+
+            // A couple work-arounds are necessary for differences between the test environment and a user really
+            // using the product.
+
+            // 1) Exclude test resources.
             var ignored = new HashSet<string>(new[]
             {
                 "NuGet.CommandLine.Test.MockServerResource"
             });
+
+            // 2) Force NuGet.Credentials to be placed in the test directory.
+            new ConsoleCredentialProvider(new Console());
 
             // Act
             var result = CommandRunner.Run(
@@ -57,7 +66,15 @@ namespace NuGet.CommandLine.Test
                 waitForExit: true);
 
             // Assert
-            Assert.Equal(0, result.Item1);
+            Assert.True(
+                result.Item1 == 0,
+                "The command failed. STDOUT:" +
+                Environment.NewLine +
+                result.Item2 +
+                Environment.NewLine +
+                "STDERR:" +
+                Environment.NewLine +
+                result.Item3); 
             Assert.Contains(listStart, result.Item2);
 
             // Collect the list of types that actually had their localization disabled.
