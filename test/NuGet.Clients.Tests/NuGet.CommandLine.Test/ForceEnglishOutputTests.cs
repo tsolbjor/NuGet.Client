@@ -5,6 +5,7 @@ using System.Linq;
 using NuGet.Test.Utility;
 using Xunit;
 using Console = NuGet.Common.Console;
+using NuGet.Credentials;
 
 namespace NuGet.CommandLine.Test
 {
@@ -56,7 +57,7 @@ namespace NuGet.CommandLine.Test
             });
 
             // 2) Force NuGet.Credentials to be placed in the test directory.
-            new ConsoleCredentialProvider(new Console());
+            var credentials = CredentialsConstants.ProviderTimeoutSecondsEnvar;
 
             // Act
             var result = CommandRunner.Run(
@@ -76,6 +77,9 @@ namespace NuGet.CommandLine.Test
                 Environment.NewLine +
                 result.Item3); 
             Assert.Contains(listStart, result.Item2);
+
+            System.Console.WriteLine("STDOUT:");
+            System.Console.WriteLine(result.Item2);
 
             // Collect the list of types that actually had their localization disabled.
             var index = result.Item2.LastIndexOf(listStart);

@@ -158,10 +158,17 @@ namespace NuGet.Common
 
             foreach (var path in Directory.EnumerateFiles(directory, searchPattern, SearchOption.TopDirectoryOnly))
             {
+                Console.WriteLine("All: " + path);
+            }
+
+            foreach (var path in Directory.EnumerateFiles(directory, searchPattern, SearchOption.TopDirectoryOnly))
+            {
                 if (!AssemblyExtensions.Contains(Path.GetExtension(path)))
                 {
                     continue;
                 }
+
+                Console.WriteLine("Looking at: " + path);
 
                 Assembly assembly = null;
                 try
