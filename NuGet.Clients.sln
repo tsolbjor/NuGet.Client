@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VsExtension", "src\NuGet.Cl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio.Interop", "src\NuGet.Clients\VisualStudio.Interop\VisualStudio.Interop.csproj", "{7DB43FE1-75E1-49F9-B2C8-06A552BA2144}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio14", "src\NuGet.Clients\VisualStudio14\VisualStudio14.csproj", "{EEA49A74-6EFC-410E-9745-BAD367AC151D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio.Proxy", "src\NuGet.Clients\VisualStudio.Proxy\VisualStudio.Proxy.csproj", "{EEA49A74-6EFC-410E-9745-BAD367AC151D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "src\NuGet.Clients\VsConsole\Console\Console.csproj", "{50E33DA2-AF14-486D-81B8-BD8409744A38}"
 EndProject
