@@ -92,9 +92,9 @@
     <Compile Include="VsTemplateWizard.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\VisualStudio14\VisualStudio14.csproj">
+    <ProjectReference Include="..\VisualStudio.Adapters\VisualStudio.Adapters.csproj">
       <Project>{eea49a74-6efc-410e-9745-bad367ac151d}</Project>
-      <Name>VisualStudio14</Name>
+      <Name>VisualStudio.Adapters</Name>
     </ProjectReference>
     <ProjectReference Include="..\PackageManagement.VisualStudio\PackageManagement.VisualStudio.csproj">
       <Project>{306cddfa-ff0b-4299-930c-9ec6c9308160}</Project>
