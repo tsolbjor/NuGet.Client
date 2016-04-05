@@ -32,11 +32,10 @@ namespace NuGet.CommandLine.XPlat
             }
 #endif
 
-            // First, optionally disable localization in resources.
-            var invariantResources = new List<Type>();
+            // First, optionally disable localization.
             if (args.Any(arg => string.Equals(arg, CommandConstants.ForceEnglishOutputOption, StringComparison.OrdinalIgnoreCase)))
             {
-                invariantResources.AddRange(StringResource.DisableLocalizationInNuGetResources());
+                CultureUtility.DisableLocalization();
             }
 
             var app = new CommandLineApplication();
@@ -71,17 +70,6 @@ namespace NuGet.CommandLine.XPlat
             app.OnExecute(() =>
             {
                 app.ShowHelp();
-
-                // Report disabled localization.
-                if (invariantResources.Any())
-                {
-                    Log.LogDebug(Environment.NewLine + "Localization was disabled on the following types:");
-
-                    foreach (var invariantResource in invariantResources)
-                    {
-                        Log.LogDebug($" - {invariantResource.FullName}");
-                    }
-                }
 
                 return 0;
             });

@@ -50,10 +50,9 @@ namespace NuGet.CommandLine
         public static int MainCore(string workingDirectory, string[] args)
         {
             // First, optionally disable localization in resources.
-            var invariantResources = new List<Type>();
             if (args.Any(arg => string.Equals(arg, ForceEnglishOutputOption, StringComparison.OrdinalIgnoreCase)))
             {
-                invariantResources.AddRange(StringResource.DisableLocalizationInNuGetResources());
+                CultureUtility.DisableLocalization();
             }
 
             // This is to avoid applying weak event pattern usage, which breaks under Mono or restricted environments, e.g. Windows Azure Web Sites.
@@ -129,20 +128,6 @@ namespace NuGet.CommandLine
                     }
 
                     command.Execute();
-
-                    if (command == p.HelpCommand)
-                    {
-                        // Report disabled localization.
-                        if (invariantResources.Any())
-                        {
-                            console.LogDebug(Environment.NewLine + "Localization was disabled on the following types:");
-
-                            foreach (var invariantResource in invariantResources)
-                            {
-                                console.LogDebug($" - {invariantResource.FullName}");
-                            }
-                        }
-                    }
                 }
             }
             catch (AggregateException exception)
