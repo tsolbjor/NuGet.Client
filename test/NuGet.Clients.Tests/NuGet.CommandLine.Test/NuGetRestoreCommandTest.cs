@@ -390,7 +390,7 @@ EndProject");
             }
         }
 
-        [Theory]
+        [Theory(Skip = "Dev15 build - temporary skip")]
         [InlineData("packages.config")]
         [InlineData("packages.proj2.config")]
         public void RestoreCommand_FromSolutionFileWithMsbuild12(string configFileName)
@@ -470,7 +470,7 @@ EndProject");
             }
         }
 
-        [Theory]
+        [Theory(Skip = "Dev15 build - temporary skip")]
         [InlineData("packages.config")]
         [InlineData("packages.proj2.config")]
         public void RestoreCommand_FromSolutionFileWithMsbuild14(string configFileName)

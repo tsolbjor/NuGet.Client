@@ -20,7 +20,8 @@ namespace NuGet.CommandLine.Test
             public TestInfo(string projectFileContent, string projectName = "proj1")
             {
                 ProjectDirectory = TestFileSystemUtility.CreateRandomTestFolder();
-                MSBuildDirectory = MsBuildUtility.GetMsbuildDirectory("14.0", null);
+//                MSBuildDirectory = MsBuildUtility.GetMsbuildDirectory("14.0", null);
+                MSBuildDirectory = MsBuildUtility.GetMsbuildDirectory("15.0", null);
                 NuGetProjectContext = new TestNuGetProjectContext();
 
                 var projectFilePath = Path.Combine(ProjectDirectory, projectName + ".csproj");
