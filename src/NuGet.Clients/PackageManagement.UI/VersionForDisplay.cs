@@ -16,19 +16,23 @@ namespace NuGet.PackageManagement.UI
 
         public DisplayVersion(
             NuGetVersion version,
-            string additionalInfo)
-            : this(GetRange(version), additionalInfo)
+            string additionalInfo,
+            bool isCurrentInstalled = false)
+            : this(GetRange(version), additionalInfo, isCurrentInstalled)
         {
+            
         }
 
         public DisplayVersion(
             VersionRange range,
-            string additionalInfo)
+            string additionalInfo,
+            bool isCurrentInstalled = false)
         {
             Range = range;
             _additionalInfo = additionalInfo;
 
             Version = range.MinVersion;
+            IsCurrentInstalled = isCurrentInstalled;
 
             // Display a single version if the range is locked
             if (range.HasLowerAndUpperBounds && range.MinVersion == range.MaxVersion)
@@ -44,6 +48,11 @@ namespace NuGet.PackageManagement.UI
                     Range.OriginalString :
                     _additionalInfo + " " + Range.OriginalString;
             }
+        }
+
+        public bool IsCurrentInstalled
+        {
+            get; set;
         }
 
         public NuGetVersion Version { get; }

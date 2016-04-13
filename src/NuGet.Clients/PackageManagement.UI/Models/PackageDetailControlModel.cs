@@ -104,10 +104,7 @@ namespace NuGet.PackageManagement.UI
 
             foreach (var version in allVersions)
             {
-                if (!version.Equals(installedVersion))
-                {
-                    _versions.Add(new DisplayVersion(version, string.Empty));
-                }
+                _versions.Add(new DisplayVersion(version, string.Empty, isCurrentInstalled: version.Equals(installedVersion)));
             }
 
             SelectVersion();

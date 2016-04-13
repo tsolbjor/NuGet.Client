@@ -15,12 +15,19 @@
       </ResourceDictionary.MergedDictionaries>
       <local:NotNullToBooleanConverter
         x:Key="NotNullToBooleanConverter" />
+      <local:BooleanToFontWeightConverter
+        x:Key="BooleanToFontWeightConverter" />
+      <local:NotNullOrTrueToBooleanConverter
+        x:Key="NotNullOrTrueToBooleanConverter" />
       <ControlTemplate
         x:Key="SeparatorControlTemplate">
         <Separator
           HorizontalAlignment="Stretch"
           IsEnabled="False" />
       </ControlTemplate>
+      <DataTemplate DataType="{x:Type local:DisplayVersion}">
+        <TextBlock FontWeight="{Binding Path=IsCurrentInstalled,Converter={StaticResource BooleanToFontWeightConverter}}" Text="{Binding Path=.}" />
+      </DataTemplate>
     </ResourceDictionary>
   </UserControl.Resources>
   <Grid>
@@ -113,7 +120,7 @@
       AutomationProperties.AutomationId="Project_Button_Update"
       Click="InstallButton_Clicked"
       Visibility="{Binding InstalledVersion, Converter={StaticResource NullToVisibilityConverter}}"
-      IsEnabled="{Binding SelectedVersion,Converter={StaticResource NotNullToBooleanConverter}}"
+      IsEnabled="{Binding SelectedVersion.IsCurrentInstalled,Converter={StaticResource NotNullOrTrueToBooleanConverter}}"
       Content="{x:Static local:Resources.Button_Update}" />
   </Grid>
 </UserControl>
