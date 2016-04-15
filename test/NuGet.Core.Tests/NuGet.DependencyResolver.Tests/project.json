@@ -31,6 +31,11 @@
       },
       "dependencies": {
         "Moq": "4.2.1510.2205"
+      },
+      "compilationOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
       }
     }
   },

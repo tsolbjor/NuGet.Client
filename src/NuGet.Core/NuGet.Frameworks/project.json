@@ -25,7 +25,13 @@
     }
   },
   "frameworks": {
-    "net45": {},
+    "net45": {
+      "compilationOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
+      }
+    },
     "netstandard1.5": {
       "dependencies": {
         "NETStandard.Library": "1.5.0-rc2-24008"
@@ -34,7 +40,12 @@
         "dotnet5.6",
         "dnxcore50",
         "portable-net45+win8"
-      ]
+      ],
+      "compilationOptions": {
+        "define": [
+          "IS_CORECLR"
+        ]
+      }
     }
   }
 }

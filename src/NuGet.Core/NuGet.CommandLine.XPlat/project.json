@@ -33,6 +33,11 @@
     "net46": {
       "frameworkAssemblies": {
         "System.Collections": ""
+      },
+      "compilationOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
       }
     },
     "netcoreapp1.0": {

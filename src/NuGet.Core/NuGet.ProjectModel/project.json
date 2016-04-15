@@ -21,7 +21,13 @@
     ]
   },
   "frameworks": {
-    "net45": {},
+    "net45": {
+      "compilationOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
+      }
+    },
     "netstandard1.5": {
       "imports": [
         "dotnet5.6",
@@ -32,6 +38,11 @@
         "NETStandard.Library": "1.5.0-rc2-24008",
         "System.Dynamic.Runtime": "4.0.11-rc2-24008",
         "System.Threading.Thread": "4.0.0-rc2-24008"
+      },
+      "compilationOptions": {
+        "define": [
+          "IS_CORECLR"
+        ]
       }
     }
   }

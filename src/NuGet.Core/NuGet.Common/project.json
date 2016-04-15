@@ -22,6 +22,11 @@
         "System.Core": "",
         "System.Runtime": "",
         "System.IO.Compression": ""
+      },
+      "compilationOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
       }
     },
     "netstandard1.5": {
@@ -34,7 +39,12 @@
         "dotnet5.6",
         "dnxcore50",
         "portable-net45+win8"
-      ]
+      ],
+      "compilationOptions": {
+        "define": [
+          "IS_CORECLR"
+        ]
+      }
     }
   }
 }

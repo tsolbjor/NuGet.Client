@@ -44,6 +44,12 @@
         "portable-net45+win8"
       ]
     },
-    "net46": { }
+    "net46": {
+      "compilationOptions": {
+        "define": [
+          "IS_DESKTOP"
+        ]
+      }
+    }
   }
 }
