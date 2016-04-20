@@ -1824,10 +1824,7 @@ namespace NuGet.PackageManagement
                     {
                         // Create a download result using the already installed package
                         var nupkgStream = File.OpenRead(installPath);
-
-                        // Create a folder reader to allow directly reading the extracted nuspec file
-                        var packageDir = Path.GetDirectoryName(installPath);
-                        var packageReader = new PackageFolderReader(packageDir);
+                        var packageReader = new PackageArchiveReader(installPath);
 
                         var downloadResult = new DownloadResourceResult(nupkgStream, packageReader);
 
