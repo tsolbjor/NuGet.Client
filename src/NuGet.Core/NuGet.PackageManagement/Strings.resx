@@ -288,7 +288,13 @@
   <data name="GatherTotalTime" xml:space="preserve">
     <value>Gathering dependency information took {0}</value>
   </data>
+  <data name="DownloadPackagesEnd" xml:space="preserve">
+    <value>Package acquisition complete.</value>
+  </data>
   <data name="NugetActionsTotalTime" xml:space="preserve">
     <value>Executing nuget actions took {0}</value>
+  </data>
+  <data name="DownloadPackagesStart" xml:space="preserve">
+    <value>Acquiring new packages if needed.</value>
   </data>
 </root>
