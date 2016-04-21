@@ -85,6 +85,8 @@ namespace NuGet.PackageManagement
             Action<SourceCacheContext> cacheContextModifier,
             CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "BuildIntegratedRestoreUtility.RestoreAsync start " + packageSpec.FilePath);
+
             // Restoring packages
             logger.LogInformation(string.Format(CultureInfo.CurrentCulture,
                 Strings.BuildIntegratedPackageRestoreStarted,
@@ -131,6 +133,8 @@ namespace NuGet.PackageManagement
                         Strings.BuildIntegratedPackageRestoreFailed,
                         project.ProjectName));
                 }
+
+                NuGetEventSource.Log.Load(10, "BuildIntegratedRestoreUtility.RestoreAsync end " + packageSpec.FilePath);
 
                 return result;
             }

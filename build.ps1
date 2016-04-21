@@ -13,6 +13,8 @@ param (
     [switch]$SkipSubModules
 )
 
+$SkipTests = $true
+
 ###Functions###
 
 function RestoreXProj($file)

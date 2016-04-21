@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
+using NuGet.Common;
 using NuGet.PackageManagement;
 using NuGet.PackageManagement.VisualStudio;
 using NuGet.Packaging.Core;
@@ -348,6 +349,8 @@ namespace NuGet.VisualStudio
             // So, go off the UI thread explicitly to improve responsiveness
             await TaskScheduler.Default;
 
+            NuGetEventSource.Log.Load(10, "VsPackageInstaller.InstallInternalAsync start");
+
             // store expanded node state
             IDictionary<string, ISet<VsHierarchyItem>> expandedNodes = await VsHierarchyUtility.GetAllExpandedNodesAsync(_solutionManager);
 
@@ -372,6 +375,8 @@ namespace NuGet.VisualStudio
                 // install the package
                 foreach (PackageIdentity package in packages)
                 {
+                    NuGetEventSource.Log.Load(10, "VsPackageInstaller.InstallInternalAsync start " + package.ToString());
+
                     if (package.Version == null)
                     {
                         if (!_packageServices.IsPackageInstalled(project, package.Id))
@@ -386,6 +391,8 @@ namespace NuGet.VisualStudio
                             await packageManager.InstallPackageAsync(nuGetProject, package, resolution, projectContext, repoProvider.GetRepositories(), Enumerable.Empty<SourceRepository>(), token);
                         }
                     }
+
+                    NuGetEventSource.Log.Load(10, "VsPackageInstaller.InstallInternalAsync end " + package.ToString());
                 }
             }
             finally
@@ -393,6 +400,8 @@ namespace NuGet.VisualStudio
                 // collapse nodes
                 await VsHierarchyUtility.CollapseAllNodesAsync(_solutionManager, expandedNodes);
             }
+
+            NuGetEventSource.Log.Load(10, "VsPackageInstaller.InstallInternalAsync end");
         }
     }
 }

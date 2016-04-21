@@ -22,6 +22,7 @@ using Constants = NuGet.ProjectManagement.Constants;
 using MicrosoftBuildEvaluationProject = Microsoft.Build.Evaluation.Project;
 using MicrosoftBuildEvaluationProjectItem = Microsoft.Build.Evaluation.ProjectItem;
 using ThreadHelper = Microsoft.VisualStudio.Shell.ThreadHelper;
+using NuGet.Common;
 
 namespace NuGet.PackageManagement.VisualStudio
 {
@@ -342,6 +343,8 @@ namespace NuGet.PackageManagement.VisualStudio
                 throw new ArgumentNullException("referencePath");
             }
 
+            NuGetEventSource.Log.Load(10, "AddReference start" + referencePath);
+
             string name = Path.GetFileNameWithoutExtension(referencePath);
 
             ThreadHelper.JoinableTaskFactory.Run(async delegate
@@ -375,6 +378,8 @@ namespace NuGet.PackageManagement.VisualStudio
 
                             if (buildProject != null)
                             {
+                                NuGetEventSource.Log.Load(10, "AddReference falling back to project file edit " + fullPath);
+
                                 // Get the assembly name of the reference we are trying to add
                                 AssemblyName assemblyName = AssemblyName.GetAssemblyName(fullPath);
 
@@ -414,6 +419,8 @@ namespace NuGet.PackageManagement.VisualStudio
                     throw new InvalidOperationException(String.Format(CultureInfo.CurrentCulture, Strings.FailedToAddReference, name), e);
                 }
             });
+
+            NuGetEventSource.Log.Load(10, "AddReference end " + referencePath);
         }
 
         private static bool AssemblyNamesMatch(AssemblyName name1, AssemblyName name2)
