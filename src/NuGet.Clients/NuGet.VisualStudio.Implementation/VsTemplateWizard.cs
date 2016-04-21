@@ -14,6 +14,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TemplateWizard;
 using Microsoft.VisualStudio.Threading;
+using NuGet.Common;
 using NuGet.PackageManagement;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
@@ -253,6 +254,8 @@ namespace NuGet.VisualStudio
 
         private async Task TemplateFinishedGeneratingAsync(Project project)
         {
+            NuGetEventSource.Log.Load(10, "TemplateFinishedGeneratingAsync start");
+
             await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
             var forceDesignTimeBuild = false;
@@ -277,6 +280,8 @@ namespace NuGet.VisualStudio
             {
                 RunDesignTimeBuild(project);
             }
+
+            NuGetEventSource.Log.Load(10, "TemplateFinishedGeneratingAsync end");
         }
 
         private void RunDesignTimeBuild(Project project)

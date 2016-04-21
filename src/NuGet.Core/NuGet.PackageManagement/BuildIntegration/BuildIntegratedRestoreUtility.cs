@@ -92,6 +92,8 @@ namespace NuGet.PackageManagement
             RestoreCommandProviders providers,
             CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "BuildIntegratedRestoreUtility.RestoreAsync start " + packageSpec.FilePath);
+
             // Restoring packages
             var logger = context.Logger;
             logger.LogMinimal(string.Format(CultureInfo.CurrentCulture,
@@ -132,6 +134,8 @@ namespace NuGet.PackageManagement
                         Strings.BuildIntegratedPackageRestoreFailed,
                         project.ProjectName));
                 }
+
+                NuGetEventSource.Log.Load(10, "BuildIntegratedRestoreUtility.RestoreAsync end " + packageSpec.FilePath);
 
                 return result;
             }

@@ -36,7 +36,7 @@ $env:DOTNET_INSTALL_DIR=$CLIRoot
 . "$PSScriptRoot\build\common.ps1"
 
 
-$RunTests = (-not $SkipTests) -and (-not $Fast)
+$RunTests = $false
 
 Write-Host ("`r`n" * 3)
 Trace-Log ('=' * 60)

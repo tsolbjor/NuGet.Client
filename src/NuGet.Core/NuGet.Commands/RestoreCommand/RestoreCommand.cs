@@ -64,6 +64,8 @@ namespace NuGet.Commands
 
         public async Task<RestoreResult> ExecuteAsync(CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "RestoreCommand.ExecuteAsync start " + _request.Project.FilePath);
+
             // Use the shared cache if one was provided, otherwise create a new one.
             var localRepository = _request.DependencyProviders.GlobalPackages;
 
@@ -75,7 +77,13 @@ namespace NuGet.Commands
 
             var contextForProject = CreateRemoteWalkContext(_request);
 
+            NuGetEventSource.Log.Load(10, "RestoreCommand ExecuteRestoreAsync start " + _request.Project.FilePath);
+
             var graphs = await ExecuteRestoreAsync(localRepository, contextForProject, token);
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand ExecuteRestoreAsync end " + _request.Project.FilePath);
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand Tool restore start " + _request.Project.FilePath);
 
             // Only execute tool restore if the request lock file version is 2 or greater.
             // Tools did not exist prior to v2 lock files.
@@ -85,6 +93,10 @@ namespace NuGet.Commands
                 toolRestoreResults = await ExecuteToolRestoresAsync(localRepository, token);
             }
 
+            NuGetEventSource.Log.Load(10, "RestoreCommand Tool restore end " + _request.Project.FilePath);
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand lock file " + _request.Project.FilePath);
+
             var lockFile = BuildLockFile(
                 _request.ExistingLockFile,
                 _request.Project,
@@ -93,6 +105,10 @@ namespace NuGet.Commands
                 contextForProject,
                 toolRestoreResults,
                 relockFile);
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand lock file end " + _request.Project.FilePath);
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand remaining start " + _request.Project.FilePath);
 
             if (!ValidateRestoreGraphs(graphs, _logger))
             {
@@ -120,6 +136,10 @@ namespace NuGet.Commands
             {
                 DowngradeLockFileToV1(lockFile);
             }
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand remaining end" + _request.Project.FilePath);
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand.ExecuteAsync end" + _request.Project.FilePath);
 
             return new RestoreResult(
                 _success,

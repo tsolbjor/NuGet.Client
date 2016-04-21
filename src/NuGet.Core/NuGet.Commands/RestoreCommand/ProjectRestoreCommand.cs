@@ -43,6 +43,8 @@ namespace NuGet.Commands
             bool writeToLockFile,
             CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.TryRestore start");
+
             var allRuntimes = RuntimeGraph.Empty;
             var frameworkTasks = new List<Task<RestoreTargetGraph>>();
             var graphs = new List<RestoreTargetGraph>();
@@ -126,6 +128,8 @@ namespace NuGet.Commands
                 localRepository.ClearCacheForIds(allInstalledPackages.Select(package => package.Name));
             }
 
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.TryRestore end");
+
             return Tuple.Create(true, graphs, allRuntimes);
         }
 
@@ -155,6 +159,8 @@ namespace NuGet.Commands
             bool writeToLockFile,
             CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.WalkDependenciesAsync start");
+
             var name = FrameworkRuntimePair.GetName(framework, runtimeIdentifier);
             var graphs = new List<GraphNode<RemoteResolveResult>>();
             if (_request.ExistingLockFile != null && _request.ExistingLockFile.IsLocked)
@@ -228,6 +234,8 @@ namespace NuGet.Commands
                 }
             }
 
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.WalkDependenciesAsync end");
+
             return result;
         }
 
@@ -284,6 +292,8 @@ namespace NuGet.Commands
             int maxDegreeOfConcurrency,
             CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.InstallPackagesAsync start");
+
             var packagesToInstall = graphs.SelectMany(g => g.Install.Where(match => allInstalledPackages.Add(match.Library)));
             if (maxDegreeOfConcurrency <= 1)
             {
@@ -306,10 +316,14 @@ namespace NuGet.Commands
                     });
                 await Task.WhenAll(tasks);
             }
+
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.InstallPackagesAsync end " + _request.Project.FilePath);
         }
 
         private async Task InstallPackageAsync(RemoteMatch installItem, string packagesDirectory, CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.InstallPackageAsync" + installItem.Library.ToString());
+
             var packageIdentity = new PackageIdentity(installItem.Library.Name, installItem.Library.Version);
 
             var versionFolderPathContext = new VersionFolderPathContext(
@@ -325,6 +339,8 @@ namespace NuGet.Commands
                 stream => installItem.Provider.CopyToAsync(installItem.Library, stream, token),
                 versionFolderPathContext,
                 token);
+
+            NuGetEventSource.Log.Load(10, "ProjectRestoreCommand.InstallPackageAsync end " + installItem.Library.ToString());
         }
 
         private void CheckDependencies(RestoreTargetGraph result, IEnumerable<LibraryDependency> dependencies)

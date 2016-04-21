@@ -18,6 +18,8 @@ namespace NuGet.Commands
     {
         public static async Task<IReadOnlyList<RestoreSummary>> Run(RestoreArgs restoreContext)
         {
+            NuGetEventSource.Log.Load(10, "RestoreRunner.Run start");
+
             var maxTasks = 1;
 
             if (!restoreContext.DisableParallel && !RuntimeEnvironmentHelper.IsMono)
@@ -109,6 +111,8 @@ namespace NuGet.Commands
                 var restoreSummary = await CompleteTaskAsync(restoreTasks);
                 restoreSummaries.Add(restoreSummary);
             }
+
+            NuGetEventSource.Log.Load(10, "RestoreRunner.Run end");
 
             // Summary
             return restoreSummaries;
