@@ -49,6 +49,8 @@ namespace NuGet.Commands
 
         public async Task<RestoreResult> ExecuteAsync(CancellationToken token)
         {
+            NuGetEventSource.Log.Load(10, "RestoreCommand.ExecuteAsync start " + _request.Project.FilePath);
+
             var localRepository = new NuGetv3LocalRepository(_request.PackagesDirectory, checkPackageIdCase: false);
             var projectLockFilePath = string.IsNullOrEmpty(_request.LockFilePath) ?
                 Path.Combine(_request.Project.BaseDirectory, LockFileFormat.LockFileName) :
@@ -131,6 +133,8 @@ namespace NuGet.Commands
 
             // Generate Targets/Props files
             var msbuild = RestoreMSBuildFiles(_request.Project, graphs, localRepository, context);
+
+            NuGetEventSource.Log.Load(10, "RestoreCommand.ExecuteAsync end " + _request.Project.FilePath);
 
             return new RestoreResult(
                 _success,
