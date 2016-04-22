@@ -183,6 +183,10 @@
       <Project>{020f4c88-3a5c-4b89-9868-089e867cc223}</Project>
       <Name>NuGet.Protocol.Core.v3</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\src\NuGet.Core\NuGet.Protocol.VisualStudio\NuGet.Protocol.VisualStudio.xproj">
+      <Project>{de390d30-b8ff-44d7-8411-a4553b38a0b1}</Project>
+      <Name>NuGet.Protocol.VisualStudio</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\NuGet.Core\NuGet.Repositories\NuGet.Repositories.xproj">
       <Project>{24de9e2c-4adc-48e6-adf0-1e2b00596ecd}</Project>
       <Name>NuGet.Repositories</Name>
@@ -195,9 +199,17 @@
       <Project>{79fa1e82-c09b-4f6e-b4e0-cf0f8ae5d365}</Project>
       <Name>NuGet.RuntimeModel</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\src\NuGet.Core\NuGet.Test.Utility\NuGet.Test.Utility.xproj">
+      <Project>{daa50e3a-79b8-42b7-81d8-eeb0fa41f0db}</Project>
+      <Name>NuGet.Test.Utility</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\src\NuGet.Core\NuGet.Versioning\NuGet.Versioning.xproj">
       <Project>{24e62ab7-64e4-4975-9417-883559d1bc19}</Project>
       <Name>NuGet.Versioning</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\..\src\NuGet.Core\Test.Utility\Test.Utility.xproj">
+      <Project>{ca285053-f013-45cc-a2ea-7581a37585d4}</Project>
+      <Name>Test.Utility</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

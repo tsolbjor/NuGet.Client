@@ -20,8 +20,6 @@ $DotNetExe = Join-Path $CLIRoot 'dotnet.exe'
 $Nupkgs = Join-Path $NuGetClientRoot nupkgs
 $Artifacts = Join-Path $NuGetClientRoot artifacts
 $Intermediate = Join-Path $Artifacts obj
-$NuGetCoreSln = Join-Path $NuGetClientRoot 'NuGet.Core.sln'
-$NuGetClientSln = Join-Path $NuGetClientRoot 'NuGet.Client.sln'
 
 Function Read-PackageSources {
     param($NuGetConfig)
@@ -264,12 +262,12 @@ Function Restore-SolutionPackages{
     }
 }
 
-# Restore nuget.core.sln projects
-Function Restore-XProjects {
+# Restore project.json projects
+Function Restore-Projects {
 
-    $opts = 'restore', "src\NuGet.Core", "test\NuGet.Core.Tests", "test\NuGet.Core.FuncTests", "--verbosity", "minimal", "--infer-runtimes"
+    $opts = 'restore', "src", "test", "--verbosity", "minimal", "--infer-runtimes"
 
-    Trace-Log "Restoring packages for xprojs"
+    Trace-Log "Restoring packages for project.jsons"
     Verbose-Log "$dotnetExe $opts"
     & $dotnetExe $opts
     if (-not $?) {
@@ -327,7 +325,7 @@ Function Invoke-DotnetPack {
     End { }
 }
 
-Function Build-CoreProjects {
+Function Build-Projects {
     [CmdletBinding()]
     param(
         [string]$Configuration = $DefaultConfiguration,
@@ -336,18 +334,35 @@ Function Build-CoreProjects {
         [switch]$SkipRestore,
         [switch]$Fast
     )
-    $XProjectsLocation = Join-Path $NuGetClientRoot src\NuGet.Core
+
+    $solutionPath = Join-Path $NuGetClientRoot NuGet.sln
 
     if (-not $SkipRestore) {
-        Restore-XProjects $XProjectsLocation -Fast:$Fast
+        # Restore packages for NuGet.Tooling solution
+        Restore-SolutionPackages -path $solutionPath -MSBuildVersion 14
+        Restore-Projects -Fast:$Fast
     }
 
     # NuGet.Shared is a source package and fails when built as part of other projects.
+    $XProjectsLocation = Join-Path $NuGetClientRoot src\NuGet.Core
     $sharedPath = Join-Path $XProjectsLocation "NuGet.Shared"
     Invoke-DotnetPack $sharedPath -config $Configuration -label $ReleaseLabel -build $BuildNumber -out $Artifacts
-
+    
     $xprojects = Find-XProjects $XProjectsLocation
     $xprojects | Invoke-DotnetPack -config $Configuration -label $ReleaseLabel -build $BuildNumber -out $Artifacts
+    
+    # Build the solution
+    $opts = , $solutionPath
+    $opts += "/p:Configuration=$Configuration;ReleaseLabel=$ReleaseLabel;BuildNumber=$(Format-BuildNumber $BuildNumber)"
+    if (-not $VerbosePreference) {
+        $opts += '/verbosity:minimal'
+    }
+
+    Trace-Log "$MSBuildExe $opts"
+    & $MSBuildExe $opts
+    if (-not $?) {
+        Error-Log "Build of NuGet.sln failed. Code: $LASTEXITCODE"
+    }
 
     ## Moving nupkgs
     Trace-Log "Moving the packages to $Nupkgs"
@@ -440,36 +455,6 @@ Function Test-CoreProjects {
 
     $xtests = Find-XProjects $XProjectsLocation
     $xtests | Test-XProject -Configuration $Configuration
-}
-
-Function Build-ClientsProjects {
-    [CmdletBinding()]
-    param(
-        [string]$Configuration = $DefaultConfiguration,
-        [string]$ReleaseLabel = $DefaultReleaseLabel,
-        [int]$BuildNumber = (Get-BuildNumber),
-        [switch]$SkipRestore,
-        [switch]$Fast
-    )
-
-    $solutionPath = Join-Path $NuGetClientRoot NuGet.Clients.sln
-    if (-not $SkipRestore) {
-        # Restore packages for NuGet.Tooling solution
-        Restore-SolutionPackages -path $solutionPath -MSBuildVersion 14
-    }
-
-    # Build the solution
-    $opts = , $solutionPath
-    $opts += "/p:Configuration=$Configuration;ReleaseLabel=$ReleaseLabel;BuildNumber=$(Format-BuildNumber $BuildNumber)"
-    if (-not $VerbosePreference) {
-        $opts += '/verbosity:minimal'
-    }
-
-    Trace-Log "$MSBuildExe $opts"
-    & $MSBuildExe $opts
-    if (-not $?) {
-        Error-Log "Build of NuGet.Clients.sln failed. Code: $LASTEXITCODE"
-    }
 }
 
 Function Test-ClientsProjects {

@@ -9,8 +9,6 @@ param (
     [switch]$CleanCache,
     [string]$MSPFXPath,
     [string]$NuGetPFXPath,
-    [switch]$SkipXProj,
-    [switch]$SkipCSProj,
     [Parameter(ParameterSetName='RegularBuild')]
     [switch]$SkipSubModules,
     [Parameter(ParameterSetName='RegularBuild')]
@@ -56,11 +54,9 @@ Invoke-BuildStep 'Updating sub-modules' { Update-SubModules } `
     -ev +BuildErrors
 
 Invoke-BuildStep 'Cleaning artifacts' { Clear-Artifacts } `
-    -skip:$SkipXProj `
     -ev +BuildErrors
 
 Invoke-BuildStep 'Cleaning nupkgs' { Clear-Nupkgs } `
-    -skip:$SkipXProj `
     -ev +BuildErrors
 
 Invoke-BuildStep 'Cleaning package cache' { Clear-PackageCache } `
@@ -85,21 +81,11 @@ Invoke-BuildStep 'Enabling delayed signing' {
     -skip:((-not $MSPFXPath) -and (-not $NuGetPFXPath)) `
     -ev +BuildErrors
 
-Invoke-BuildStep 'Building NuGet.Core projects' {
+Invoke-BuildStep 'Building NuGet projects' {
         param($Configuration, $ReleaseLabel, $BuildNumber, $SkipRestore, $Fast)
-        Build-CoreProjects $Configuration $ReleaseLabel $BuildNumber -SkipRestore:$SkipRestore -Fast:$Fast
+        Build-Projects $Configuration $ReleaseLabel $BuildNumber -SkipRestore:$SkipRestore -Fast:$Fast
     } `
     -args $Configuration, $ReleaseLabel, $BuildNumber, $SkipRestore, $Fast `
-    -skip:$SkipXProj `
-    -ev +BuildErrors
-
-## Building the Tooling solution
-Invoke-BuildStep 'Building NuGet.Clients projects' {
-        param($Configuration, $ReleaseLabel, $BuildNumber, $SkipRestore, $Fast)
-        Build-ClientsProjects $Configuration $ReleaseLabel $BuildNumber -SkipRestore:$SkipRestore -Fast:$Fast
-    } `
-    -args $Configuration, $ReleaseLabel, $BuildNumber, $SkipRestore, $Fast `
-    -skip:$SkipCSproj `
     -ev +BuildErrors
 
 Invoke-BuildStep 'Running NuGet.Core tests' {
@@ -121,7 +107,7 @@ Invoke-BuildStep 'Merging NuGet.exe' {
         param($Configuration) Invoke-ILMerge $Configuration
     } `
     -args $Configuration `
-    -skip:($SkipILMerge -or $SkipCSProj -or $Fast) `
+    -skip:($SkipILMerge -or $Fast) `
     -ev +BuildErrors
 
 popd

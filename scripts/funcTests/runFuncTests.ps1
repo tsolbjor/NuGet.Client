@@ -48,7 +48,7 @@ Invoke-BuildStep 'Restoring solution packages' { Restore-SolutionPackages } `
 Invoke-BuildStep 'Installing dotnet CLI' { Install-DotnetCLI } `
     -ev +BuildErrors
 
-Invoke-BuildStep 'Restoring projects' { Restore-XProjects } `
+Invoke-BuildStep 'Restoring projects' { Restore-Projects } `
     -ev +BuildErrors
 
 # Run tests
