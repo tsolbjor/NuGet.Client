@@ -10,6 +10,8 @@
     <ProjectGuid>98bee375-a5a0-4fc2-9b7a-25db41c8045d</ProjectGuid>
     <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)'=='' ">..\..\..\artifacts\obj\$(MSBuildProjectName)</BaseIntermediateOutputPath>
     <OutputPath Condition="'$(OutputPath)'=='' ">..\..\..\artifacts\</OutputPath>
+    <!-- Workaround for DevDiv bug 217654 -->
+    <IntermediateOutputPath>$(OutputPath)$(MSBuildProjectName)\bin\$(Configuration)\net45\</IntermediateOutputPath>
   </PropertyGroup>
 
   <PropertyGroup>
