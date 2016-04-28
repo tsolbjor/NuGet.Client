@@ -5,7 +5,7 @@
     "xunit.runner.visualstudio": "2.1.0"
   },
   "frameworks": {
-    "net451": {
+    "net45": {
       "frameworkAssemblies": {
         "System.ComponentModel.DataAnnotations": "4.0.0.0"
       }

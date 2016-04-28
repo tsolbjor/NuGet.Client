@@ -1,7 +1,8 @@
 ﻿{
-  "dependencies": {},
+  "dependencies": {
+  },
   "frameworks": {
-    "net451": {}
+    "net45": {}
   },
   "runtimes": {
     "win-anycpu": {},

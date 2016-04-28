@@ -15,7 +15,7 @@
     "Microsoft.VisualStudio.Threading": "14.0.50702"
   },
   "frameworks": {
-    "net451": {}
+    "net45": {}
   },
   "runtimes": {
     "win-anycpu": {},

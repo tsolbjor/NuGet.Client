@@ -3,7 +3,7 @@
     "System.Management.Automation_PowerShell_3.0": "6.3.9600.17400"
   },
   "frameworks": {
-    "net451": {}
+    "net45": {}
   },
   "runtimes": {
     "win-anycpu": {},
