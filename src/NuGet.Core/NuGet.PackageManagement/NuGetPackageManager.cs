@@ -1658,18 +1658,19 @@ namespace NuGet.PackageManagement
                             // Retrieve the downloaded package
                             // This will wait on the package if it is still downloading
                             var preFetchResult = downloadTasks[nuGetProjectAction.PackageIdentity];
-                            var downloadPackageResult = await preFetchResult.GetResultAsync();
+                            using (var downloadPackageResult = await preFetchResult.GetResultAsync())
+                            {
+                                // use the version exactly as specified in the nuspec file
+                                var packageIdentity = downloadPackageResult.PackageReader.GetIdentity();
 
-                            // use the version exactly as specified in the nuspec file
-                            var packageIdentity = downloadPackageResult.PackageReader.GetIdentity();
-
-                            await ExecuteInstallAsync(
-                                nuGetProject,
-                                packageIdentity,
-                                downloadPackageResult,
-                                packageWithDirectoriesToBeDeleted,
-                                nuGetProjectContext,
-                                token);
+                                await ExecuteInstallAsync(
+                                    nuGetProject,
+                                    packageIdentity,
+                                    downloadPackageResult,
+                                    packageWithDirectoriesToBeDeleted,
+                                    nuGetProjectContext,
+                                    token);
+                            }
                         }
 
                         if (nuGetProjectAction.NuGetProjectActionType == NuGetProjectActionType.Install)

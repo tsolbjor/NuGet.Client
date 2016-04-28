@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
@@ -11,13 +14,14 @@ namespace NuGet.PackageManagement
     public class PackagePreFetcherResult : IDisposable
     {
         private readonly Task<DownloadResourceResult> _downloadTask;
+        private readonly string _nupkgPath;
         private DownloadResourceResult _result;
         private ExceptionDispatchInfo _exception;
 
         /// <summary>
         /// True if the result came from the packages folder.
         /// </summary>
-        /// <remarks>Not thread safe</remarks>
+        /// <remarks>Not thread safe.</remarks>
         public bool InPackagesFolder { get; }
 
         /// <summary>
@@ -82,11 +86,9 @@ namespace NuGet.PackageManagement
             }
 
             InPackagesFolder = true;
-
-            // Create a download result for the package that already exists
-            _result = new DownloadResourceResult(
-                File.OpenRead(nupkgPath),
-                new PackageArchiveReader(nupkgPath));
+            IsComplete = true;
+            Package = package;
+            _nupkgPath = nupkgPath;
         }
 
         /// <summary>
@@ -94,7 +96,8 @@ namespace NuGet.PackageManagement
         /// </summary>
         public async Task EnsureResultAsync()
         {
-            if (_result == null)
+            // This is a noop if this has been called before, or if the result is in the packages folder.
+            if (!InPackagesFolder && _result == null)
             {
                 try
                 {
@@ -114,15 +117,29 @@ namespace NuGet.PackageManagement
         /// </summary>
         public async Task<DownloadResourceResult> GetResultAsync()
         {
-            await EnsureResultAsync();
+            DownloadResourceResult result = null;
 
-            if (_exception != null)
+            if (InPackagesFolder)
             {
-                // Rethrow the exception if the download failed
-                _exception.Throw();
+                // Results from the packages folder are created on demand
+                result = GetPackagesFolderResult(_nupkgPath);
+            }
+            else
+            {
+                // Wait for the download to finish
+                await EnsureResultAsync();
+
+                if (_exception != null)
+                {
+                    // Rethrow the exception if the download failed
+                    _exception.Throw();
+                }
+
+                // Use the downloadTask result
+                result = _result;
             }
 
-            return _result;
+            return result;
         }
 
         public void Dispose()
@@ -132,6 +149,14 @@ namespace NuGet.PackageManagement
             {
                 _result.Dispose();
             }
+        }
+
+        private static DownloadResourceResult GetPackagesFolderResult(string nupkgPath)
+        {
+            // Create a download result for the package that already exists
+            return new DownloadResourceResult(
+                File.OpenRead(nupkgPath),
+                new PackageArchiveReader(nupkgPath));
         }
     }
 }

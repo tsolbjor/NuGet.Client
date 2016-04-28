@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) .NET Foundation. All rights reserved.
+// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
+
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -21,6 +25,31 @@ namespace NuGet.PackageManagement
             Common.ILogger logger,
             CancellationToken token)
         {
+            if (token == null)
+            {
+                throw new ArgumentNullException(nameof(token));
+            }
+
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
+            if (packagesFolder == null)
+            {
+                throw new ArgumentNullException(nameof(packagesFolder));
+            }
+
+            if (actions == null)
+            {
+                throw new ArgumentNullException(nameof(actions));
+            }
+
             var result = new Dictionary<PackageIdentity, PackagePreFetcherResult>();
             var maxParallelTasks = PackageManagementConstants.DefaultMaxDegreeOfParallelism;
             var toDownload = new Queue<NuGetProjectAction>();
@@ -125,6 +154,21 @@ namespace NuGet.PackageManagement
             string packagesFolderRoot,
             Common.ILogger logger)
         {
+            if (fetchResults == null)
+            {
+                throw new ArgumentNullException(nameof(fetchResults));
+            }
+
+            if (packagesFolderRoot == null)
+            {
+                throw new ArgumentNullException(nameof(packagesFolderRoot));
+            }
+
+            if (logger == null)
+            {
+                throw new ArgumentNullException(nameof(logger));
+            }
+
             // Order by package identity
             var preFetchTasks = fetchResults.OrderBy(
                 result => result.Package,
