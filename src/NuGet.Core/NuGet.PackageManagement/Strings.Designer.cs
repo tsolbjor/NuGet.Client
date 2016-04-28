@@ -168,6 +168,15 @@ namespace NuGet.PackageManagement {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to Gathering dependency information took {0}.
+        /// </summary>
+        public static string GatherTotalTime {
+            get {
+                return ResourceManager.GetString("GatherTotalTime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to Installed package &apos;{0}&apos; to project.
         /// </summary>
         public static string InstalledPackage {
@@ -245,6 +254,15 @@ namespace NuGet.PackageManagement {
         public static string NoUpdatesAvailable {
             get {
                 return ResourceManager.GetString("NoUpdatesAvailable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Executing nuget actions took {0}.
+        /// </summary>
+        public static string NugetActionsTotalTime {
+            get {
+                return ResourceManager.GetString("NugetActionsTotalTime", resourceCulture);
             }
         }
         
