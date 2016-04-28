@@ -132,24 +132,6 @@ namespace NuGet.PackageManagement {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to Package acquisition complete..
-        /// </summary>
-        internal static string DownloadPackagesEnd {
-            get {
-                return ResourceManager.GetString("DownloadPackagesEnd", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to Acquiring new packages if needed..
-        /// </summary>
-        internal static string DownloadPackagesStart {
-            get {
-                return ResourceManager.GetString("DownloadPackagesStart", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///    Looks up a localized string similar to Cannot download packages from &apos;{0}&apos;..
         /// </summary>
         public static string DownloadResourceNotFound {
@@ -177,11 +159,11 @@ namespace NuGet.PackageManagement {
         }
         
         /// <summary>
-        ///    Looks up a localized string similar to Gathering dependency information took {0}.
+        ///    Looks up a localized string similar to Found package &apos;{0} {1}&apos; in &apos;{2}&apos;..
         /// </summary>
-        public static string GatherTotalTime {
+        public static string FoundPackageInPackagesFolder {
             get {
-                return ResourceManager.GetString("GatherTotalTime", resourceCulture);
+                return ResourceManager.GetString("FoundPackageInPackagesFolder", resourceCulture);
             }
         }
         
@@ -263,15 +245,6 @@ namespace NuGet.PackageManagement {
         public static string NoUpdatesAvailable {
             get {
                 return ResourceManager.GetString("NoUpdatesAvailable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///    Looks up a localized string similar to Executing nuget actions took {0}.
-        /// </summary>
-        public static string NugetActionsTotalTime {
-            get {
-                return ResourceManager.GetString("NugetActionsTotalTime", resourceCulture);
             }
         }
         
@@ -470,6 +443,15 @@ namespace NuGet.PackageManagement {
         public static string RestoringPackage {
             get {
                 return ResourceManager.GetString("RestoringPackage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to Retrieving package &apos;{0} {1}&apos; from &apos;{2}&apos;..
+        /// </summary>
+        public static string RetrievingPackageStart {
+            get {
+                return ResourceManager.GetString("RetrievingPackageStart", resourceCulture);
             }
         }
         

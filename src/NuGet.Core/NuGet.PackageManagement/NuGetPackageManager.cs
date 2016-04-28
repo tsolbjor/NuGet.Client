@@ -265,12 +265,12 @@ namespace NuGet.PackageManagement
         /// and <paramref name="nuGetProjectContext" /> are used in the process.
         /// </summary>
         public async Task<IEnumerable<NuGetProjectAction>> PreviewInstallPackageAsync(
-            NuGetProject nuGetProject, 
+            NuGetProject nuGetProject,
             string packageId,
-            ResolutionContext resolutionContext, 
+            ResolutionContext resolutionContext,
             INuGetProjectContext nuGetProjectContext,
-            IEnumerable<SourceRepository> primarySources, 
-            IEnumerable<SourceRepository> secondarySources, 
+            IEnumerable<SourceRepository> primarySources,
+            IEnumerable<SourceRepository> secondarySources,
             CancellationToken token)
         {
             if (nuGetProject == null)
@@ -1619,15 +1619,11 @@ namespace NuGet.PackageManagement
 
                     var actionsList = nuGetProjectActions.ToList();
 
-                    var hasInstalls = actionsList.Any(action => 
+                    var hasInstalls = actionsList.Any(action =>
                         action.NuGetProjectActionType == NuGetProjectActionType.Install);
 
                     if (hasInstalls)
                     {
-                        nuGetProjectContext.Log(
-                            ProjectManagement.MessageLevel.Info,
-                            Strings.DownloadPackagesStart);
-
                         // Make this independently cancelable.
                         downloadTokenSource = CancellationTokenSource.CreateLinkedTokenSource(token);
 
@@ -1636,10 +1632,6 @@ namespace NuGet.PackageManagement
                             actionsList,
                             nuGetProjectContext,
                             downloadTokenSource.Token);
-
-                        nuGetProjectContext.Log(
-                            ProjectManagement.MessageLevel.Info,
-                            Strings.DownloadPackagesEnd);
                     }
 
                     foreach (var nuGetProjectAction in actionsList)
@@ -1791,33 +1783,26 @@ namespace NuGet.PackageManagement
             INuGetProjectContext nuGetProjectContext,
             CancellationToken token)
         {
-            var maxParallelTasks = PackageManagementConstants.DefaultMaxDegreeOfParallelism;
-
             var result = new Dictionary<PackageIdentity, Task<DownloadResourceResult>>();
-
-            var toDownload = new Queue<NuGetProjectAction>(actions.Where(action => 
-                action.NuGetProjectActionType == NuGetProjectActionType.Install));
-
+            var maxParallelTasks = PackageManagementConstants.DefaultMaxDegreeOfParallelism;
             var tasks = new List<Task<DownloadResourceResult>>(maxParallelTasks);
-
             var logger = new ProjectContextLogger(nuGetProjectContext);
+            var toDownload = new Queue<NuGetProjectAction>();
+            var seen = new HashSet<PackageIdentity>();
 
-            // Throttle tasks
-            while (toDownload.Count > 0)
+            // Check the packages folder for each package
+            // If the package is not found mark it for download
+            // These actions need to stay in order!
+            foreach (var action in actions)
             {
-                if (tasks.Count == maxParallelTasks)
+                // Ignore uninstalls here
+                if (action.NuGetProjectActionType == NuGetProjectActionType.Install
+                    && !seen.Contains(action.PackageIdentity))
                 {
-                    var completedTask = await Task.WhenAny(tasks);
-                    tasks.Remove(completedTask);
-                }
+                    // Avoid duplicate downloads
+                    seen.Add(action.PackageIdentity);
 
-                var action = toDownload.Dequeue();
-
-                if (!result.ContainsKey(action.PackageIdentity))
-                {
-                    Task<DownloadResourceResult> task = null;
-
-                    // Skip download for packages that already exist in the packages folder
+                    // Check the packages folder for the id and version
                     var installPath = PackagesFolderNuGetProject.GetInstalledPackageFilePath(action.PackageIdentity);
 
                     if (File.Exists(installPath))
@@ -1828,27 +1813,69 @@ namespace NuGet.PackageManagement
 
                         var downloadResult = new DownloadResourceResult(nupkgStream, packageReader);
 
-                        task = Task.FromResult<DownloadResourceResult>(downloadResult);
+                        var task = Task.FromResult(downloadResult);
+                        result.Add(action.PackageIdentity, task);
+
+                        // Found package .. in packages folder
+                        var message = string.Format(
+                            CultureInfo.CurrentCulture,
+                            Strings.FoundPackageInPackagesFolder,
+                            action.PackageIdentity.Id,
+                            action.PackageIdentity.Version.ToNormalizedString(),
+                            PackagesFolderNuGetProject.Root);
+
+                        logger.LogInformation(message);
                     }
                     else
                     {
-                        // Download the package if it does not exist in the packages folder already
-                        task = Task.Run(async () => await PackageDownloader.GetDownloadResourceResultAsync(action.SourceRepository,
-                                            action.PackageIdentity,
-                                            Settings,
-                                            logger,
-                                            token));
+                        // Download this package
+                        toDownload.Enqueue(action);
+                    }
+                }
+            }
 
-                        tasks.Add(task);
+            // Check if any packages are not already in the packages folder
+            if (toDownload.Count > 0)
+            {
+                // Throttle tasks
+                while (toDownload.Count > 0)
+                {
+                    if (tasks.Count == maxParallelTasks)
+                    {
+                        var completedTask = await Task.WhenAny(tasks);
+                        tasks.Remove(completedTask);
                     }
 
+                    var action = toDownload.Dequeue();
+
+                    // Retrieving package .. from source ..
+                    var message = string.Format(
+                        CultureInfo.CurrentCulture,
+                        Strings.RetrievingPackageStart,
+                        action.PackageIdentity.Id,
+                        action.PackageIdentity.Version.ToNormalizedString(),
+                        action.SourceRepository.PackageSource.Name);
+
+                    nuGetProjectContext.Log(
+                        ProjectManagement.MessageLevel.Info,
+                        message);
+
+                    // Download the package if it does not exist in the packages folder already
+                    // Start the download task
+                    var task = Task.Run(async () => await PackageDownloader.GetDownloadResourceResultAsync(
+                                        action.SourceRepository,
+                                        action.PackageIdentity,
+                                        Settings,
+                                        logger,
+                                        token));
+
+                    tasks.Add(task);
                     result.Add(action.PackageIdentity, task);
                 }
             }
 
-            // Wait for all remaining tasks in order
-            await Task.WhenAll(tasks);
-
+            // Do not wait for the remaining tasks to finish, these will download
+            // in the background while other operations such as uninstall run first.
             return result;
         }
 
