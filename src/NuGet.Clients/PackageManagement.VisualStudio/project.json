@@ -1,5 +1,8 @@
 {
   "dependencies": {
+    "NuGet.PackageManagement": "3.5.0-*",
+    "NuGet.Protocol.VisualStudio": "3.5.0-*",
+    "NuGet.Common": "3.5.0-*",
     "System.Collections.Concurrent": "4.0.11-*",
     "System.Diagnostics.Tracing": "4.0.21-*",
     "System.Dynamic.Runtime": "4.0.11-*",
@@ -16,10 +19,7 @@
     "Microsoft.VisualStudio.Shell.Interop.8.0": "8.0.50727",
     "Microsoft.VisualStudio.Shell.Interop.9.0": "9.0.30729",
     "Microsoft.VisualStudio.Threading": "15.0.20-*",
-    "Microsoft.VisualStudio.OLE.Interop": "7.10.6070",
-    "NuGet.PackageManagement": "3.5.0-*",
-    "NuGet.Protocol.VisualStudio": "3.5.0-*",
-    "NuGet.Common": "3.5.0-*"
+    "Microsoft.VisualStudio.OLE.Interop": "7.10.6070"
   },
   "frameworks": {
     "net46": {}
