@@ -20,6 +20,7 @@ $DotNetExe = Join-Path $CLIRoot 'dotnet.exe'
 $Nupkgs = Join-Path $NuGetClientRoot nupkgs
 $Artifacts = Join-Path $NuGetClientRoot artifacts
 $Intermediate = Join-Path $Artifacts obj
+$NuGetExeOutDev14 = Join-Path $Artifacts dev14
 $NuGetCoreSln = Join-Path $NuGetClientRoot 'NuGet.Core.sln'
 $NuGetClientSln = Join-Path $NuGetClientRoot 'NuGet.Client.sln'
 
@@ -529,10 +530,11 @@ Function Invoke-ILMerge {
         Error-Log "Missing build artifacts listed in include list: $($notFound -join ', ')"
     }
 
+	# Note that the Dev14 path will become conditional on which target we're building against (TODO)
     Trace-Log 'Creating the ilmerged nuget.exe'
     $opts = , 'NuGet.exe'
     $opts += $buildArtifacts
-    $opts += "/out:$Artifacts\NuGet.exe"
+    $opts += "/out:$NuGetExeOutDev14\NuGet.exe"
     if ($VerbosePreference) {
         $opts += '/log'
     }
