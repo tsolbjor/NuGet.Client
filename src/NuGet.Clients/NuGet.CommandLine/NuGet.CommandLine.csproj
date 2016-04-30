@@ -151,7 +151,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="project.json" />
+    <None Include="project.dev14.json" />
+    <None Include="project.dev15.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NuGet.Credentials\NuGet.Credentials.csproj">

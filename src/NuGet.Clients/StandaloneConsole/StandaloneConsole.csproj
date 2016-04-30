@@ -69,7 +69,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="project.json" />
+    <None Include="project.dev14.json" />
+    <None Include="project.dev15.json" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PackageManagement.PowerShellCmdlets\PackageManagement.PowerShellCmdlets.csproj">
