@@ -556,6 +556,15 @@ namespace NuGet.PackageManagement.UI {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Id:.
+        /// </summary>
+        public static string Label_Id {
+            get {
+                return ResourceManager.GetString("Label_Id", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Installed.
         /// </summary>
         public static string Label_Installed {
@@ -628,7 +637,7 @@ namespace NuGet.PackageManagement.UI {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Owner(s): .
+        ///   Looks up a localized string similar to Owner(s):.
         /// </summary>
         public static string Label_Owners {
             get {
@@ -678,6 +687,15 @@ namespace NuGet.PackageManagement.UI {
         public static string Label_Publishers {
             get {
                 return ResourceManager.GetString("Label_Publishers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Release Notes:.
+        /// </summary>
+        public static string Label_ReleaseNotes {
+            get {
+                return ResourceManager.GetString("Label_ReleaseNotes", resourceCulture);
             }
         }
         

@@ -36,6 +36,10 @@ namespace NuGet.Protocol.Core.v2
 
         public PackageIdentity Identity => new PackageIdentity(_package.Id, V2Utilities.SafeToNuGetVer(_package.Version));
 
+        // This is not used, as the DetailedPackageMetadata Model uses PackageSearchMetadataV2Feed to get the metadata. We still need to implement
+        // this as part of the interface.
+        public Uri GalleryDetailsUrl { get; set; }
+
         public Uri LicenseUrl => _package.LicenseUrl;
 
         public string Owners => string.Join(", ", _package.Owners);
@@ -49,6 +53,8 @@ namespace NuGet.Protocol.Core.v2
         public bool RequireLicenseAcceptance => _package.RequireLicenseAcceptance;
 
         public string Summary => !string.IsNullOrEmpty(_package.Summary) ? _package.Summary : Description;
+
+        public string ReleaseNotes => _package.ReleaseNotes;
 
         public string Tags
         {
