@@ -3,7 +3,7 @@
     "System.Collections": "4.0.11-*",
     "System.Collections.Concurrent": "4.0.11-*",
     "System.Globalization": "4.0.11-*",
-    "Microsoft.VisualStudio.Shell.14.0": "14.0.23107",
+    "Microsoft.VisualStudio.Shell.15.0": "15.0.25123-*",
     "Microsoft.VisualStudio.Shell.Interop": "7.10.6071",
     "Microsoft.VisualStudio.Shell.Interop.10.0": "10.0.30319",
     "Microsoft.VisualStudio.Shell.Interop.11.0": "11.0.61030",

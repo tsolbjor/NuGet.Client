@@ -47,8 +47,8 @@
     </When>
     <When Condition="$(VisualStudioVersion)=='15.0'">
       <ItemGroup>
-        <Reference Include="Microsoft.VisualStudio.ComponentModelHost, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-          <HintPath>..\..\..\lib\VS15\Microsoft.VisualStudio.ComponentModelHost.dll</HintPath>
+        <Reference Include="Microsoft.VisualStudio.ComponentModelHost">
+          <HintPath>$(ProgramFiles)\Microsoft Visual Studio $(VisualStudioVersion)\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.ComponentModelHost.dll</HintPath>
         </Reference>
         <ProjectReference Include="..\VisualStudio14\VisualStudio14.csproj">
           <Project>{eea49a74-6efc-410e-9745-bad367ac151d}</Project>
