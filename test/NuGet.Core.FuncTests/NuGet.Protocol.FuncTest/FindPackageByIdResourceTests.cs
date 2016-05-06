@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using NuGet.Configuration;
@@ -13,11 +11,11 @@ namespace NuGet.Protocol.FuncTest
     public class FindPackageByIdResourceTests
     {
         [Theory]
-        [InlineData(@"http://nexusservertest:8081/nexus/service/local/nuget/NuGet/")]
-        [InlineData(@"http://progetserver:8081/nuget/nuget")]
-        [InlineData(@"http://klondikeserver:8081/api/odata/")]
-        [InlineData(@"http://artifactory:8081/artifactory/api/nuget/nuget")]
-        [InlineData(@"https://www.myget.org/F/myget-server-test/api/v2")]
+        [InlineData(TestServers.NuGetServer)]
+        [InlineData(TestServers.ProGet)]
+        [InlineData(TestServers.Klondike)]
+        [InlineData(TestServers.Artifactory)]
+        [InlineData(TestServers.MyGet)]
         public async Task FindPackageByIdResource_NormalizedVersion(string packageSource)
         {
             // Arrange
@@ -36,11 +34,11 @@ namespace NuGet.Protocol.FuncTest
         }
 
         [Theory]
-        [InlineData(@"http://nexusservertest:8081/nexus/service/local/nuget/NuGet/")]
-        [InlineData(@"http://progetserver:8081/nuget/nuget")]
-        [InlineData(@"http://klondikeserver:8081/api/odata/")]
-        [InlineData(@"http://artifactory:8081/artifactory/api/nuget/nuget")]
-        [InlineData(@"https://www.myget.org/F/myget-server-test/api/v2")]
+        [InlineData(TestServers.NuGetServer)]
+        [InlineData(TestServers.ProGet)]
+        [InlineData(TestServers.Klondike)]
+        [InlineData(TestServers.Artifactory)]
+        [InlineData(TestServers.MyGet)]
         public async Task FindPackageByIdResource_NoDependencyVersion(string packageSource)
         {
             // Arrange
@@ -59,11 +57,11 @@ namespace NuGet.Protocol.FuncTest
         }
 
         [Theory]
-        [InlineData(@"http://nexusservertest:8081/nexus/service/local/nuget/NuGet/")]
-        [InlineData(@"http://progetserver:8081/nuget/nuget")]
-        [InlineData(@"http://klondikeserver:8081/api/odata/")]
-        [InlineData(@"http://artifactory:8081/artifactory/api/nuget/nuget")]
-        [InlineData(@"https://www.myget.org/F/myget-server-test/api/v2")]
+        [InlineData(TestServers.NuGetServer)]
+        [InlineData(TestServers.ProGet)]
+        [InlineData(TestServers.Klondike)]
+        [InlineData(TestServers.Artifactory)]
+        [InlineData(TestServers.MyGet)]
         public async Task FindPackageByIdResource_Basic(string packageSource)
         {
             // Arrange
@@ -82,8 +80,8 @@ namespace NuGet.Protocol.FuncTest
         }
 
         [Theory]
-        [InlineData(@"http://nugetserverendpoint.azurewebsites.net/nuget", "NuGetServer")]
-        [InlineData(@"https://vstsnugettest.pkgs.visualstudio.com/DefaultCollection/_packaging/VstsTestFeed/nuget/v2","Vsts")]
+        [InlineData(TestServers.NuGetServer, "NuGetServer")]
+        [InlineData(TestServers.Vsts,"Vsts")]
         public async Task FindPackageByIdResource_Credential(string packageSource, string feedName)
         {
             // Arrange
@@ -106,8 +104,8 @@ namespace NuGet.Protocol.FuncTest
         }
 
         [Theory]
-        [InlineData(@"http://nugetserverendpoint.azurewebsites.net/nuget", "NuGetServer")]
-        [InlineData(@"https://vstsnugettest.pkgs.visualstudio.com/DefaultCollection/_packaging/VstsTestFeed/nuget/v2", "Vsts")]
+        [InlineData(TestServers.NuGetServer, "NuGetServer")]
+        [InlineData(TestServers.Vsts, "Vsts")]
         public async Task FindPackageByIdResource_CredentialNoDependencyVersion(string packageSource, string feedName)
         {
             // Arrange
@@ -130,8 +128,8 @@ namespace NuGet.Protocol.FuncTest
         }
 
         [Theory]
-        [InlineData(@"http://nugetserverendpoint.azurewebsites.net/nuget", "NuGetServer")]
-        [InlineData(@"https://vstsnugettest.pkgs.visualstudio.com/DefaultCollection/_packaging/VstsTestFeed/nuget/v2", "Vsts")]
+        [InlineData(TestServers.NuGetServer, "NuGetServer")]
+        [InlineData(TestServers.Vsts, "Vsts")]
         public async Task FindPackageByIdResource_CredentialNormalizedVersion(string packageSource, string feedName)
         {
             // Arrange
