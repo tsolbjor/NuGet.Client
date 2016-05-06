@@ -34,6 +34,7 @@
             this.packageRestoreConsentCheckBox = new System.Windows.Forms.CheckBox();
             this.packageRestoreAutomaticCheckBox = new System.Windows.Forms.CheckBox();
             this.BindingRedirectsHeader = new System.Windows.Forms.Label();
+            this.packageDiagLogsCheckBox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // skipBindingRedirects
@@ -65,10 +66,17 @@
             resources.ApplyResources(this.BindingRedirectsHeader, "BindingRedirectsHeader");
             this.BindingRedirectsHeader.Name = "BindingRedirectsHeader";
             // 
+            // packageDiagLogsCheckBox
+            // 
+            resources.ApplyResources(this.packageDiagLogsCheckBox, "packageDiagLogsCheckBox");
+            this.packageDiagLogsCheckBox.Name = "packageDiagLogsCheckBox";
+            this.packageDiagLogsCheckBox.UseVisualStyleBackColor = true;
+            // 
             // GeneralOptionControl
             // 
             resources.ApplyResources(this, "$this");
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.packageDiagLogsCheckBox);
             this.Controls.Add(this.BindingRedirectsHeader);
             this.Controls.Add(this.skipBindingRedirects);
             this.Controls.Add(this.PackageRestoreHeader);
@@ -87,5 +95,6 @@
         private System.Windows.Forms.CheckBox packageRestoreConsentCheckBox;
         private System.Windows.Forms.CheckBox packageRestoreAutomaticCheckBox;
         private System.Windows.Forms.Label BindingRedirectsHeader;
+        private System.Windows.Forms.CheckBox packageDiagLogsCheckBox;
     }
 }

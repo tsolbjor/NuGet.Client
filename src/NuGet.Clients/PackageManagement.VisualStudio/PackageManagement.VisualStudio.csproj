@@ -107,6 +107,7 @@
     <Compile Include="IPackageAssemblyReference.cs" />
     <Compile Include="IScriptPackage.cs" />
     <Compile Include="IScriptPackageFile.cs" />
+    <Compile Include="OutputVerbosityBehavior.cs" />
     <Compile Include="PackageAssemblyReference.cs" />
     <Compile Include="ProjectSystems\BuildIntegratedProjectSystem.cs" />
     <Compile Include="ScriptPackage.cs" />

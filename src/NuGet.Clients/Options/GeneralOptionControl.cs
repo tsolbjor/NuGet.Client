@@ -36,6 +36,9 @@ namespace NuGet.Options
 
                     var bindingRedirects = new BindingRedirectBehavior(_settings);
                     skipBindingRedirects.Checked = bindingRedirects.IsSkipped;
+
+                    var outputVerbosity = new OutputVerbosityBehavior(_settings);
+                    packageDiagLogsCheckBox.Checked = outputVerbosity.IsDiagEnabled;
                 }
                 catch(InvalidOperationException)
                 {
@@ -60,6 +63,9 @@ namespace NuGet.Options
 
                 var bindingRedirects = new BindingRedirectBehavior(_settings);
                 bindingRedirects.IsSkipped = skipBindingRedirects.Checked;
+
+                var outputVerbosity = new OutputVerbosityBehavior(_settings);
+                outputVerbosity.IsDiagEnabled = packageDiagLogsCheckBox.Checked;
             }
             catch (InvalidOperationException)
             {

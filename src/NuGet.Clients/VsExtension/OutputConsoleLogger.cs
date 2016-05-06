@@ -21,6 +21,8 @@ namespace NuGetVSExtension
 
         private SolutionEvents _solutionEvents;
 
+        private OutputVerbosityBehavior _outputVerbosity;
+
         private const string LogEntrySource = "NuGet Package Manager";
 
         public IConsole OutputConsole { get; private set; }
@@ -37,6 +39,9 @@ namespace NuGetVSExtension
             _buildEvents.OnBuildBegin += (obj, ev) => { ErrorListProvider.Tasks.Clear(); };
             _solutionEvents = dte.Events.SolutionEvents;
             _solutionEvents.AfterClosing += () => { ErrorListProvider.Tasks.Clear(); };
+
+            var settings = ServiceLocator.GetInstance<NuGet.Configuration.ISettings>();
+            _outputVerbosity = new OutputVerbosityBehavior(settings);
 
             OutputConsole = outputConsoleProvider.CreateOutputConsole(requirePowerShellHost: false);
         }
@@ -56,7 +61,8 @@ namespace NuGetVSExtension
         {
             if (level == MessageLevel.Info
                 || level == MessageLevel.Error
-                || level == MessageLevel.Warning)
+                || level == MessageLevel.Warning
+                || _outputVerbosity.IsDiagEnabled)
             {
                 var s = string.Format(CultureInfo.CurrentCulture, message, args);
                 OutputConsole.WriteLine(s);
