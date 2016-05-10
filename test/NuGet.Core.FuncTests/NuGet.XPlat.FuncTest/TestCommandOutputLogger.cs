@@ -1,8 +1,9 @@
 ﻿using System.Collections.Concurrent;
+using NuGet.CommandLine.XPlat;
 using NuGet.Common;
 using NuGet.Test.Utility;
 
-namespace NuGet.CommandLine.XPlat
+namespace NuGet.XPlat.FuncTest
 {
     public class TestCommandOutputLogger : CommandOutputLogger
     {

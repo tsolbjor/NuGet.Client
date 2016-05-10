@@ -4635,7 +4635,7 @@ namespace NuGet.Test
                 var actions = new[] { NuGetProjectAction.CreateInstallProjectAction(identity, sourceRepositoryProvider.CreateRepository(packageSource)) };
 
                 // Act and Assert
-                var ex = await Assert.ThrowsAsync<PackageManagement.NuGetVersionNotSatisfiedException>(() =>
+                var ex = await Assert.ThrowsAsync<MinClientVersionException>(() =>
                     nuGetPackageManager.ExecuteNuGetProjectActionsAsync(
                         nugetProject,
                         actions,
@@ -4711,6 +4711,7 @@ namespace NuGet.Test
                 Common.ILogger logger,
                 CancellationToken token)
             {
+                var nuspecReader = new Mock<NuspecReader>(new XDocument());
                 var packageReader = new Mock<PackageReaderBase>(
                     new FrameworkNameProvider(new[] { DefaultFrameworkMappings.Instance },
                     new[] { DefaultPortableFrameworkMappings.Instance }))
@@ -4727,6 +4728,20 @@ namespace NuGet.Test
                 packageReader
                     .Setup(p => p.GetPackageTypes())
                     .Returns(_packageTypes);
+
+                nuspecReader
+                    .Setup(p => p.GetIdentity())
+                    .Returns(new PackageIdentity("ManagedCodeConventions", NuGetVersion.Parse("1.0.0")));
+                nuspecReader
+                    .Setup(p => p.GetMinClientVersion())
+                    .Returns(new NuGetVersion(2, 0, 0));
+                nuspecReader
+                    .Setup(p => p.GetPackageTypes())
+                    .Returns(_packageTypes);
+
+                packageReader
+                    .Setup(p => p.NuspecReader)
+                    .Returns(nuspecReader.Object);
 
                 return Task.FromResult(new DownloadResourceResult(Stream.Null, packageReader.Object));
             }

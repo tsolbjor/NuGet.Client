@@ -1,6 +1,7 @@
-﻿using Xunit;
+﻿using NuGet.CommandLine.XPlat;
+using Xunit;
 
-namespace NuGet.CommandLine.XPlat.Test
+namespace NuGet.XPlat.FuncTest
 {
     public class BasicLoggingTests
     {
@@ -9,7 +10,6 @@ namespace NuGet.CommandLine.XPlat.Test
         {
             // Arrange
             var log = new TestCommandOutputLogger();
-            Program.Log = log;
 
             var args = new string[]
             {
@@ -17,7 +17,7 @@ namespace NuGet.CommandLine.XPlat.Test
             };
 
             // Act
-            var exitCode = Program.Main(args);
+            var exitCode = Program.MainInternal(args, log);
 
             // Assert
             Assert.Equal(1, exitCode);
@@ -33,7 +33,6 @@ namespace NuGet.CommandLine.XPlat.Test
         {
             // Arrange
             var log = new TestCommandOutputLogger();
-            Program.Log = log;
 
             var args = new string[]
             {
@@ -41,7 +40,7 @@ namespace NuGet.CommandLine.XPlat.Test
             };
 
             // Act
-            var exitCode = Program.Main(args);
+            var exitCode = Program.MainInternal(args, log);
 
             // Assert
             Assert.Equal(0, exitCode);
@@ -52,7 +51,6 @@ namespace NuGet.CommandLine.XPlat.Test
         {
             // Arrange
             var log = new TestCommandOutputLogger();
-            Program.Log = log;
 
             var args = new string[]
             {
@@ -61,18 +59,16 @@ namespace NuGet.CommandLine.XPlat.Test
             };
 
             // Act
-            var exitCode = Program.Main(args);
+            var exitCode = Program.MainInternal(args, log);
 
             // Assert
             Assert.Equal(0, exitCode);
         }
 
-        [Fact(Skip = "Not working on CLI")]
         public void BasicLogging_RestoreConfigFile_ExitCode()
         {
             // Arrange
             var log = new TestCommandOutputLogger();
-            Program.Log = log;
 
             var args = new string[]
             {
@@ -82,7 +78,7 @@ namespace NuGet.CommandLine.XPlat.Test
             };
 
             // Act
-            var exitCode = Program.Main(args);
+            var exitCode = Program.MainInternal(args, log);
 
             // Assert
             Assert.Equal(1, exitCode);
@@ -95,7 +91,6 @@ namespace NuGet.CommandLine.XPlat.Test
         {
             // Arrange
             var log = new TestCommandOutputLogger();
-            Program.Log = log;
 
             var args = new string[]
             {
@@ -104,14 +99,14 @@ namespace NuGet.CommandLine.XPlat.Test
             };
 
             // Act
-            var exitCode = Program.Main(args);
+            var exitCode = Program.MainInternal(args, log);
 
             // Assert
             Assert.Equal(1, exitCode);
             Assert.Equal(3, log.Messages.Count);
             Assert.Equal(1, log.Errors);
             Assert.Equal(0, log.Warnings);
-            Assert.Contains("--unknown", log.Messages.ToArray()[1]);  // error
+            Assert.Contains("--unknown", log.Messages.ToArray()[2]);  // error
             Assert.Contains("Program.cs", log.Messages.ToArray()[2]); // verbose stack trace
         }
     }
