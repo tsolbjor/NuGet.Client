@@ -107,7 +107,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="PackageManagement.PowerShellCmdlets.nuspec" />
-    <None Include="project.json" />
+    <None Include="project.dev14.json" />
+    <None Include="project.dev15.json" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources.resx">

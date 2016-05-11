@@ -1,5 +1,7 @@
 ﻿{
-  "dependencies": {},
+  "dependencies": {
+    "Microsoft.TeamFoundationServer.ExtendedClient": "15.98.0-*"
+  },
   "frameworks": {
     "net46": {}
   },
