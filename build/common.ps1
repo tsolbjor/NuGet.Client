@@ -442,6 +442,28 @@ Function Test-CoreProjects {
     $xtests | Test-XProject -Configuration $Configuration
 }
 
+Function PreBuild-ClientsProjects ($ProjectsPath) {
+
+    Trace-Log "PreBuilding client projects and tests"
+
+    $clientsProjects = Find-ClientsProjects $ProjectsPath
+    
+    $clientsProjects | %{
+        $opts = $_, "/t:PreBuildEvent"
+
+        Trace-Log "$MSBuildExe $opts"
+        & $MSBuildExe $opts
+        if (-not $?) {
+            Error-Log "PreBuild of $ProjectsPath failed. Code: $LASTEXITCODE"
+        }
+    }
+}
+
+Function Find-ClientsProjects($ClientsProjectsLocation) {
+    Get-ChildItem $ClientsProjectsLocation -Recurse -Filter '*.csproj' |`
+        %{ $_.FullName }
+}
+
 Function Build-ClientsProjects {
     [CmdletBinding()]
     param(
@@ -454,6 +476,13 @@ Function Build-ClientsProjects {
 
     $solutionPath = Join-Path $NuGetClientRoot NuGet.Clients.sln
     if (-not $SkipRestore) {
+        $clientsProjectsLocation = Join-Path $NuGetClientRoot src\NuGet.Clients
+        $clientsTestsLocation = Join-Path $NuGetClientRoot test\NuGet.Clients.Tests
+        $testExtensionsLocation = Join-Path $NuGetClientRoot test\TestExtensions
+        PreBuild-ClientsProjects $clientsProjectsLocation
+        PreBuild-ClientsProjects $clientsTestsLocation
+        PreBuild-ClientsProjects $testExtensionsLocation
+    
         # Restore packages for NuGet.Tooling solution
         Restore-SolutionPackages -path $solutionPath -MSBuildVersion 14
     }
