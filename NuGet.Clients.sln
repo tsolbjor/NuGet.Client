@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio.Interop", "src
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio14", "src\NuGet.Clients\VisualStudio14\VisualStudio14.csproj", "{EEA49A74-6EFC-410E-9745-BAD367AC151D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisualStudio14.Packages", "src\NuGet.Clients\VisualStudio14.Packages\VisualStudio14.Packages.csproj", "{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "src\NuGet.Clients\VsConsole\Console\Console.csproj", "{50E33DA2-AF14-486D-81B8-BD8409744A38}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console.Types", "src\NuGet.Clients\VsConsole\Console.Types\Console.Types.csproj", "{6FD11460-39A3-4A10-BA63-7541B0A7D053}"
@@ -149,6 +151,16 @@ Global
 		{EEA49A74-6EFC-410E-9745-BAD367AC151D}.Mono Release|Any CPU.Build.0 = Debug|Any CPU
 		{EEA49A74-6EFC-410E-9745-BAD367AC151D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EEA49A74-6EFC-410E-9745-BAD367AC151D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Coverage|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Coverage|Any CPU.Build.0 = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Mono Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Mono Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Mono Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Mono Release|Any CPU.Build.0 = Debug|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}.Release|Any CPU.Build.0 = Release|Any CPU
 		{50E33DA2-AF14-486D-81B8-BD8409744A38}.Coverage|Any CPU.ActiveCfg = Debug|Any CPU
 		{50E33DA2-AF14-486D-81B8-BD8409744A38}.Coverage|Any CPU.Build.0 = Debug|Any CPU
 		{50E33DA2-AF14-486D-81B8-BD8409744A38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

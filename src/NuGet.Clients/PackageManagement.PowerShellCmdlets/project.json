@@ -1,7 +1,5 @@
 ﻿{
-  "dependencies": {
-    "NuGet.Resolver": "3.5.0-*"
-  },
+  "dependencies": {},
   "frameworks": {
     "net45": {}
   },
