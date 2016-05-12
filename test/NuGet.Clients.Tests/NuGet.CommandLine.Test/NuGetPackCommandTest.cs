@@ -25,6 +25,10 @@ namespace NuGet.CommandLine.Test
                     Path.Combine(workingDirectory, "contentFiles/any/any"),
                     "image.jpg",
                     "");
+                Util.CreateFile(
+                    Path.Combine(workingDirectory, "contentFiles/any/any"),
+                    "image2.jpg",
+                    "");
 
                 Util.CreateFile(
                     workingDirectory,
@@ -48,6 +52,10 @@ namespace NuGet.CommandLine.Test
         </group>
     </dependencies>
   </metadata>
+  <files>
+    <file src=""contentFiles/any/any/image.jpg"" target=""\Content\image.jpg"" />
+    <file src=""/contentFiles/any/any/image2.jpg"" target=""Content\other\image2.jpg"" />
+  </files>
 </package>");
 
                 // Act
@@ -80,6 +88,10 @@ namespace NuGet.CommandLine.Test
     <dependency id=""packageE"" version=""1.0.0"" exclude=""z"" />
   </group>
 </dependencies>".Replace("\r\n", "\n"), actual);
+
+                    var files = package.GetFiles().Select(f => f.Path).ToArray();
+                    Assert.Contains(@"Content\image.jpg", files);
+                    Assert.Contains(@"Content\other\image2.jpg", files);
                 }
             }
         }
@@ -96,6 +108,9 @@ namespace NuGet.CommandLine.Test
                     Path.Combine(workingDirectory, "contentFiles/any/any"),
                     "image.jpg",
                     "");
+
+                Directory.CreateDirectory(
+                    Path.Combine(workingDirectory, "bin/Debug"));
 
                 Util.CreateFile(
                     workingDirectory,
@@ -168,6 +183,173 @@ namespace NuGet.CommandLine.Test
         }
 
         [Fact]
+        public void PackCommand_PackageFromNuspecWithFrameworkAssemblies()
+        {
+            var nugetexe = Util.GetNuGetExePath();
+
+            using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                Util.CreateFile(
+                    workingDirectory,
+                    "packageA.nuspec",
+@"<package xmlns='http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd'>
+  <metadata>
+    <id>packageA</id>
+    <version>1.0.0.2</version>
+    <title>packageA</title>
+    <authors>test</authors>
+    <owners>test</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Description</description>
+    <copyright>Copyright ©  2013</copyright>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName=""System"" />
+      <frameworkAssembly assemblyName=""System.Core"" />
+      <frameworkAssembly assemblyName=""System.Xml"" />
+      <frameworkAssembly assemblyName=""System.Xml.Linq"" />
+      <frameworkAssembly assemblyName=""System.Net.Http"" targetFramework="""" />
+      <frameworkAssembly assemblyName=""System.Net.Http.Formatting"" targetFramework=""net45"" />
+      <frameworkAssembly assemblyName=""System.ComponentModel.DataAnnotations"" targetFramework=""net35"" />
+    </frameworkAssemblies>
+  </metadata>
+</package>");
+
+                // Act
+                var r = CommandRunner.Run(
+                    nugetexe,
+                    workingDirectory,
+                    "pack packageA.nuspec",
+                    waitForExit: true);
+                Assert.Equal(0, r.Item1);
+
+                // Assert
+                var path = Path.Combine(workingDirectory, "packageA.1.0.0.2.nupkg");
+                var package = new OptimizedZipPackage(path);
+                using (var zip = new ZipArchive(File.OpenRead(path)))
+                {
+                    var manifestReader
+                        = new StreamReader(zip.Entries.Single(file => file.FullName == "packageA.nuspec").Open());
+                    var nuspecXml = XDocument.Parse(manifestReader.ReadToEnd());
+
+                    var node = nuspecXml.Descendants().Single(e => e.Name.LocalName == "frameworkAssemblies");
+
+                    var actual = node.ToString().Replace("\r\n", "\n");
+
+                    Assert.Equal(
+                        @"<frameworkAssemblies xmlns=""http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd"">
+  <frameworkAssembly assemblyName=""System"" targetFramework="""" />
+  <frameworkAssembly assemblyName=""System.Core"" targetFramework="""" />
+  <frameworkAssembly assemblyName=""System.Xml"" targetFramework="""" />
+  <frameworkAssembly assemblyName=""System.Xml.Linq"" targetFramework="""" />
+  <frameworkAssembly assemblyName=""System.Net.Http"" targetFramework="""" />
+  <frameworkAssembly assemblyName=""System.Net.Http.Formatting"" targetFramework="".NETFramework4.5"" />
+  <frameworkAssembly assemblyName=""System.ComponentModel.DataAnnotations"" targetFramework="".NETFramework3.5"" />
+</frameworkAssemblies>".Replace("\r\n", "\n"), actual);
+                }
+            }
+        }
+
+        [Fact]
+        public void PackCommand_PackageFromNuspecWithEmptyFilesTag()
+        {
+            var nugetexe = Util.GetNuGetExePath();
+
+            using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                Util.CreateFile(
+                    Path.Combine(workingDirectory, "contentFiles"),
+                    "image.jpg",
+                    "");
+
+                Util.CreateFile(
+                    workingDirectory,
+                    "packageA.nuspec",
+@"<package xmlns='http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd'>
+  <metadata>
+    <id>packageA</id>
+    <version>1.0.0</version>
+    <title>packageA</title>
+    <authors>test</authors>
+    <owners>test</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Description</description>
+    <copyright>Copyright © 2013</copyright>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName=""System"" />
+    </frameworkAssemblies>
+  </metadata>
+  <files />
+</package>");
+
+                // Act
+                var r = CommandRunner.Run(
+                    nugetexe,
+                    workingDirectory,
+                    "pack packageA.nuspec",
+                    waitForExit: true);
+                Assert.Equal(0, r.Item1);
+
+                // Assert
+                var path = Path.Combine(workingDirectory, "packageA.1.0.0.nupkg");
+                var package = new OptimizedZipPackage(path);
+
+                var files = package.GetFiles();
+                Assert.Equal(0, files.Count());
+            }
+        }
+
+        [Fact]
+        public void PackCommand_PackageFromNuspecWithoutEmptyFilesTag()
+        {
+            var nugetexe = Util.GetNuGetExePath();
+
+            using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                Util.CreateFile(
+                    Path.Combine(workingDirectory, "contentFiles"),
+                    "image.jpg",
+                    "");
+
+                Util.CreateFile(
+                    workingDirectory,
+                    "packageA.nuspec",
+@"<package xmlns='http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd'>
+  <metadata>
+    <id>packageA</id>
+    <version>1.0.0</version>
+    <title>packageA</title>
+    <authors>test</authors>
+    <owners>test</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Description</description>
+    <copyright>Copyright © 2013</copyright>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName=""System"" />
+    </frameworkAssemblies>
+  </metadata>
+</package>");
+
+                // Act
+                var r = CommandRunner.Run(
+                    nugetexe,
+                    workingDirectory,
+                    "pack packageA.nuspec",
+                    waitForExit: true);
+                Assert.Equal(0, r.Item1);
+
+                // Assert
+                var path = Path.Combine(workingDirectory, "packageA.1.0.0.nupkg");
+                var package = new OptimizedZipPackage(path);
+
+                var files = package.GetFiles();
+                Assert.Equal(1, files.Count());
+            }
+        }
+
+        [Fact]
         public void PackCommand_PackRuntimesRefNativeNoWarnings()
         {
             var nugetexe = Util.GetNuGetExePath();
@@ -175,6 +357,7 @@ namespace NuGet.CommandLine.Test
             using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
             {
                 // Arrange
+                string id = Path.GetFileName(workingDirectory);
 
                 Util.CreateFile(
                     Path.Combine(workingDirectory, "ref/uap10.0"),
@@ -249,24 +432,16 @@ namespace NuGet.CommandLine.Test
             {
                 // Arrange
 
+                string id = Path.GetFileName(workingDirectory);
+
                 Util.CreateFile(
-                    Path.Combine(workingDirectory, "ref/uap10.0"),
-                    "a.dll",
+                    Path.Combine(workingDirectory, "bin/Debug/uap10.0"),
+                    id + ".dll",
                     string.Empty);
 
                 Util.CreateFile(
-                    Path.Combine(workingDirectory, "native"),
-                    "a.dll",
-                    string.Empty);
-
-                Util.CreateFile(
-                    Path.Combine(workingDirectory, "runtimes/win-x86/lib/uap10.0"),
-                    "a.dll",
-                    string.Empty);
-
-                Util.CreateFile(
-                    Path.Combine(workingDirectory, "lib/uap10.0"),
-                    "a.dll",
+                    Path.Combine(workingDirectory, "bin/Debug/native"),
+                    id + ".dll",
                     string.Empty);
 
                 Util.CreateFile(
@@ -279,7 +454,13 @@ namespace NuGet.CommandLine.Test
   ""owners"": [ ""test"" ],
   ""requireLicenseAcceptance"": ""false"",
   ""description"": ""Description"",
-  ""copyright"": ""Copyright ©  2013""
+  ""copyright"": ""Copyright ©  2013"",
+  ""frameworks"": {
+    ""native"": {
+    },
+    ""uap10.0"": {
+    }
+  }
 }");
 
                 // Act
@@ -300,10 +481,8 @@ namespace NuGet.CommandLine.Test
                     files,
                     new string[]
                     {
-                            @"lib\uap10.0\a.dll",
-                            @"native\a.dll",
-                            @"ref\uap10.0\a.dll",
-                            @"runtimes\win-x86\lib\uap10.0\a.dll",
+                            @"lib\native\" + id + ".dll",
+                            @"lib\uap10.0\" + id + ".dll",
                     });
 
                 Assert.False(r.Item2.Contains("Assembly outside lib folder"));
@@ -354,11 +533,11 @@ namespace NuGet.CommandLine.Test
                 Array.Sort(files);
 
                 Assert.Equal(
-                    files,
                     new string[]
                     {
-                            @"analyzers\cs\code\a.dll",
-                    });
+                        @"analyzers\cs\code\a.dll",
+                    },
+                    files);
 
                 Assert.False(r.Item2.Contains("Assembly outside lib folder"));
             }
@@ -372,10 +551,12 @@ namespace NuGet.CommandLine.Test
             using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
             {
                 // Arrange
+                string id = Path.GetFileName(workingDirectory);
+
                 Util.CreateFile(
-                    Path.Combine(workingDirectory, "analyzers/cs/code"),
-                    "a.dll",
-                    "");
+                    Path.Combine(workingDirectory, "bin/Debug/native"),
+                    id + ".dll",
+                    string.Empty);
 
                 Util.CreateFile(
                     workingDirectory,
@@ -408,7 +589,7 @@ namespace NuGet.CommandLine.Test
                     files,
                     new string[]
                     {
-                            @"analyzers\cs\code\a.dll",
+                            @"lib\native\" + id + ".dll",
                     });
 
                 Assert.False(r.Item2.Contains("Assembly outside lib folder"));
@@ -2381,6 +2562,163 @@ namespace " + projectName + @"
         public int A { get; set; }
     }
 }");
+        }
+
+        [Fact]
+        public void PackCommand_FrameworkAssemblies()
+        {
+            var nugetexe = Util.GetNuGetExePath();
+
+            using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                Util.CreateFile(
+                    Path.Combine(workingDirectory, "contentFiles/any/any"),
+                    "image.jpg",
+                    "");
+
+                Directory.CreateDirectory(
+                    Path.Combine(workingDirectory, "bin/Debug"));
+
+                Util.CreateFile(
+                    workingDirectory,
+                    Path.GetFileName(workingDirectory) + ".project.json",
+                @"{
+  ""version"": ""1.0.0"",
+  ""title"": ""packageA"",
+  ""authors"": [ ""test"" ],
+  ""owners"": [ ""test"" ],
+  ""requireLicenseAcceptance"": ""false"",
+  ""description"": ""Description"",
+  ""copyright"": ""Copyright ©  2013"",
+  ""frameworks"": {
+    ""net46"": {
+      ""frameworkAssemblies"": {
+        ""System.Xml"": """",
+        ""System.Xml.Linq"": """"
+      }
+    }
+  },
+  ""packInclude"": {
+    ""image"": ""contentFiles/any/any/image.jpg""
+  }
+}
+");
+
+                // Act
+                var r = CommandRunner.Run(
+                    nugetexe,
+                    workingDirectory,
+                    "pack " + Path.GetFileName(workingDirectory) + ".project.json",
+                    waitForExit: true);
+                Assert.Equal(0, r.Item1);
+
+                var id = Path.GetFileName(workingDirectory);
+
+                // Assert
+                var path = Path.Combine(workingDirectory, id + ".1.0.0.nupkg");
+                var package = new OptimizedZipPackage(path);
+                using (var zip = new ZipArchive(File.OpenRead(path)))
+                {
+                    var manifestReader
+                        = new StreamReader(zip.Entries.Single(file => file.FullName == id + ".nuspec").Open());
+                    var nuspecXml = XDocument.Parse(manifestReader.ReadToEnd());
+
+                    var node = nuspecXml.Descendants().Single(e => e.Name.LocalName == "dependencies");
+                    var actual = node.ToString().Replace("\r\n", "\n");
+
+                    Assert.Equal(
+                        @"<dependencies xmlns=""http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd"">
+  <group targetFramework="".NETFramework4.6"" />
+</dependencies>".Replace("\r\n", "\n"), actual);
+
+                    node = nuspecXml.Descendants().Single(e => e.Name.LocalName == "frameworkAssemblies");
+                    actual = node.ToString().Replace("\r\n", "\n");
+
+                    Assert.Equal(
+                        @"<frameworkAssemblies xmlns=""http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd"">
+  <frameworkAssembly assemblyName=""System.Xml"" targetFramework="".NETFramework4.6"" />
+  <frameworkAssembly assemblyName=""System.Xml.Linq"" targetFramework="".NETFramework4.6"" />
+</frameworkAssemblies>".Replace("\r\n", "\n"), actual);
+                }
+            }
+        }
+
+        [Fact]
+        public void PackCommand_PackageFromNuspecWithXmlEncoding()
+        {
+            var nugetexe = Util.GetNuGetExePath();
+
+            using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                Util.CreateFile(
+                    workingDirectory,
+                    "packageA.nuspec",
+@"<package xmlns='http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd'>
+  <metadata>
+    <id>packageA</id>
+    <version>1.0.0</version>
+    <title>packageA&lt;T&gt;</title>
+    <authors>test &lt;test@microsoft.com&gt;</authors>
+    <owners>test</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Description &lt;with&gt; &lt;&lt;bad
+stuff \n &lt;&lt;
+</description>
+    <copyright>Copyright © &lt;T&gt; 2013</copyright>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName=""System"" />
+    </frameworkAssemblies>
+  </metadata>
+</package>");
+
+                // Act
+                var r = CommandRunner.Run(
+                    nugetexe,
+                    workingDirectory,
+                    "pack packageA.nuspec",
+                    waitForExit: true);
+                Assert.Equal(0, r.Item1);
+
+                // Assert
+                var path = Path.Combine(workingDirectory, "packageA.1.0.0.nupkg");
+                var package = new OptimizedZipPackage(path);
+                using (var zip = new ZipArchive(File.OpenRead(path)))
+                {
+                    var manifestReader
+                        = new StreamReader(zip.Entries.Single(file => file.FullName == "packageA.nuspec").Open());
+                    var nuspecXml = XDocument.Parse(manifestReader.ReadToEnd());
+
+                    // First test the nuspec to make sure the XML is encoded correctly
+                    // Getting the value decodes the value so they will be unencoded here
+                    // If it weren't encoded properly, this would fail to parse or have different text
+                    var title = nuspecXml.Descendants().Single(e => e.Name.LocalName == "title");
+                    Assert.Equal("packageA<T>", title.Value);
+
+                    var authors = nuspecXml.Descendants().Single(e => e.Name.LocalName == "authors");
+                    Assert.Equal("test <test@microsoft.com>", authors.Value);
+
+                    var description = nuspecXml.Descendants().Single(e => e.Name.LocalName == "description");
+
+                    var expectedDescription = @"Description <with> <<bad
+stuff \n <<".Replace("\r\n", "\n");
+                    var actualDescription = description.Value.Replace("\r\n", "\n");
+                    Assert.Equal(expectedDescription, actualDescription);
+
+                    var copyright = nuspecXml.Descendants().Single(e => e.Name.LocalName == "copyright");
+                    Assert.Equal("Copyright © <T> 2013", copyright.Value);
+
+                    // Now test the description in the psmdcp file
+                    var packageReader
+                        = new StreamReader(zip.Entries.Single(file => file.FullName.EndsWith(".psmdcp")).Open());
+                    var packageXml = XDocument.Parse(packageReader.ReadToEnd());
+
+                    description = packageXml.Descendants().Single(e => e.Name.LocalName == "description");
+                    actualDescription = description.Value.Replace("\r\n", "\n");
+                    Assert.Equal(expectedDescription, actualDescription);
+                }
+            }
         }
 
         private class PackageDepencyComparer : IEqualityComparer<PackageDependency>

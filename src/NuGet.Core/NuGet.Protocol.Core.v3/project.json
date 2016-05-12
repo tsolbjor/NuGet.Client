@@ -36,7 +36,6 @@
   "frameworks": {
     "net45": {
       "frameworkAssemblies": {
-        "System.Collections.Concurrent": "",
         "System.IdentityModel": "",
         "System.Net.Http": "",
         "System.Net.Http.WebRequest": "",
@@ -55,8 +54,8 @@
         "portable-net45+win8"
       ],
       "dependencies": {
-        "NETStandard.Library": "1.5.0-rc2-24008",
-        "System.Dynamic.Runtime": "4.0.11-rc2-24008"
+        "NETStandard.Library": "1.5.0-rc2-24027",
+        "System.Dynamic.Runtime": "4.0.11-rc2-24027"
       },
       "compilationOptions": {
         "define": [

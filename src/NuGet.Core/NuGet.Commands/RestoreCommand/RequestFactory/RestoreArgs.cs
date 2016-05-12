@@ -17,7 +17,7 @@ namespace NuGet.Commands
 {
     public class RestoreArgs
     {
-        public string ConfigFileName { get; set; }
+        public string ConfigFile { get; set; }
 
         public IMachineWideSettings MachineWideSettings { get; set; }
 
@@ -57,12 +57,27 @@ namespace NuGet.Commands
 
         public ISettings GetSettings(string projectDirectory)
         {
-            return _settingsCache.GetOrAdd(projectDirectory, (dir) =>
+            if (string.IsNullOrEmpty(ConfigFile))
             {
-                return Settings.LoadDefaultSettings(dir,
-                    ConfigFileName,
-                    MachineWideSettings);
-            });
+                return _settingsCache.GetOrAdd(projectDirectory, (dir) =>
+                {
+                    return Settings.LoadDefaultSettings(dir,
+                        configFileName : null,
+                        machineWideSettings: MachineWideSettings);
+                });
+            }
+            else
+            {
+                var configFileFullPath = Path.GetFullPath(ConfigFile);
+                var directory = Path.GetDirectoryName(configFileFullPath);
+                var configFileName = Path.GetFileName(configFileFullPath);
+
+                return _settingsCache.GetOrAdd(directory, (dir) =>
+                {
+                    return Settings.LoadSpecificSettings(dir,
+                        configFileName: configFileName);
+                });
+            }
         }
 
         public string GetEffectiveGlobalPackagesFolder(string rootDirectory, ISettings settings)
@@ -96,6 +111,7 @@ namespace NuGet.Commands
         {
             // Take the passed in sources
             var packageSources = new HashSet<string>(Sources, StringComparer.Ordinal);
+            var sourceObjects = new Dictionary<string, PackageSource>(StringComparer.Ordinal);
 
             var packageSourceProvider = new Lazy<PackageSourceProvider>(() 
                 => new PackageSourceProvider(settings));
@@ -104,12 +120,18 @@ namespace NuGet.Commands
             if (packageSources.Count < 1)
             {
                 // Add enabled sources
-                var enabledSources = packageSourceProvider.Value
-                        .LoadPackageSources()
-                        .Where(source => source.IsEnabled)
-                        .Select(source => source.Source)
-                        .Distinct(StringComparer.Ordinal)
-                        .ToList();
+                foreach (var source in packageSourceProvider.Value.LoadPackageSources())
+                {
+                    if (source.IsEnabled)
+                    {
+                        sourceObjects[source.Source] = source;
+                    }
+                }
+
+                var enabledSources = sourceObjects.Values
+                    .Select(source => source.Source)
+                    .Distinct(StringComparer.Ordinal)
+                    .ToList();
 
                 packageSources.UnionWith(enabledSources);
             }
@@ -123,8 +145,16 @@ namespace NuGet.Commands
                 CachingSourceProvider = new CachingSourceProvider(packageSourceProvider.Value);
             }
 
-            return packageSources.Select(source => CachingSourceProvider.CreateRepository(source))
-                .ToList();
+            return packageSources.Select(sourceUri =>
+            {
+                PackageSource source;
+                if (!sourceObjects.TryGetValue(sourceUri, out source))
+                {
+                    source = new PackageSource(sourceUri);
+                }
+
+                return CachingSourceProvider.CreateRepository(source);
+            }).ToList();
         }
 
         public void ApplyStandardProperties(RestoreRequest request)

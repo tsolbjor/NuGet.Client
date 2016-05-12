@@ -215,6 +215,8 @@ namespace NuGet.Packaging
                     let assemblyNameAttribute = element.Attribute("assemblyName")
                     where assemblyNameAttribute != null && !String.IsNullOrEmpty(assemblyNameAttribute.Value)
                     select new FrameworkAssemblyReference(assemblyNameAttribute.Value?.Trim(),
+                        string.IsNullOrEmpty(element.GetOptionalAttributeValue("targetFramework")) ?
+                        new[] { NuGetFramework.AnyFramework } :
                         new[] { NuGetFramework.Parse(element.GetOptionalAttributeValue("targetFramework")?.Trim()) })
                     ).ToList();
         }
@@ -253,6 +255,11 @@ namespace NuGet.Packaging
                     if (targetFrameworkName != null)
                     {
                         targetFramework = NuGetFramework.Parse(targetFrameworkName);
+
+                        if (targetFramework.IsUnsupported)
+                        {
+                            throw new InvalidDataException(String.Format(CultureInfo.CurrentCulture, Strings.Error_InvalidTargetFramework, targetFrameworkName));
+                        }
                     }
 
                     // REVIEW: Is UnsupportedFramework correct?
@@ -297,12 +304,18 @@ namespace NuGet.Packaging
                     continue;
                 }
 
-                string target = file.GetOptionalAttributeValue("target").SafeTrim();
+                var slashes = new[] { '\\', '/' };
+                string target = file.GetOptionalAttributeValue("target").SafeTrim()?.TrimStart(slashes);
                 string exclude = file.GetOptionalAttributeValue("exclude").SafeTrim();
 
                 // Multiple sources can be specified by using semi-colon separated values. 
-                files.AddRange(from source in srcElement.Value.Trim(';').Split(';')
-                               select new ManifestFile { Source = source.SafeTrim(), Target = target.SafeTrim(), Exclude = exclude.SafeTrim() });
+                files.AddRange(srcElement.Value.Trim(';').Split(';').Select(s => 
+                    new ManifestFile
+                    {
+                        Source = s.SafeTrim().TrimStart(slashes),
+                        Target = target,
+                        Exclude = exclude
+                    }));
             }
             return files;
         }

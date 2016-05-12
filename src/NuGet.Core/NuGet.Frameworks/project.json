@@ -19,12 +19,15 @@
   "compile": [
     "../NuGet.Shared/*.cs"
   ],
-  "dependencies": {
-    "NuGet.Versioning": {
-      "target": "project"
-    }
-  },
   "frameworks": {
+    "net40-client": {
+      "compilationOptions": {
+        "define": [
+          "IS_DESKTOP",
+          "IS_NET40_CLIENT"
+        ]
+      }
+    },
     "net45": {
       "compilationOptions": {
         "define": [
@@ -34,7 +37,7 @@
     },
     "netstandard1.3": {
       "dependencies": {
-        "NETStandard.Library": "1.5.0-rc2-24008"
+        "NETStandard.Library": "1.5.0-rc2-24027"
       },
       "compilationOptions": {
         "define": [
