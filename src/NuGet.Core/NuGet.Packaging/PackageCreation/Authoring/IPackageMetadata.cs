@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using NuGet.Packaging.Core;
 using NuGet.Versioning;
 
 namespace NuGet.Packaging
@@ -48,5 +49,7 @@ namespace NuGet.Packaging
         /// Returns sets of Content Files specified in the manifest.
         /// </summary>
         ICollection<ManifestContentFiles> ContentFiles { get; }
+
+        IReadOnlyList<PackageType> PackageTypes { get; }
     }
 }

@@ -46,6 +46,8 @@ namespace NuGet.Packaging
                 ReadMetadataValue(manifestMetadata, element, allElements);
             }
 
+            manifestMetadata.PackageTypes = NuspecUtility.GetPackageTypes(xElement, false);
+
             // now check for required elements, which include <id>, <version>, <authors> and <description>
             foreach (var requiredElement in RequiredElements)
             {

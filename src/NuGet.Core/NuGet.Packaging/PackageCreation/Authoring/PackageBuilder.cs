@@ -63,6 +63,7 @@ namespace NuGet.Packaging
             FrameworkReferences = new Collection<FrameworkAssemblyReference>();
             ContentFiles = new Collection<ManifestContentFiles>();
             PackageAssemblyReferences = new Collection<PackageReferenceSet>();
+            PackageTypes = new Collection<PackageType>();
             Authors = new HashSet<string>();
             Owners = new HashSet<string>();
             Tags = new HashSet<string>();
@@ -192,6 +193,12 @@ namespace NuGet.Packaging
         }
 
         public ICollection<PackageReferenceSet> PackageAssemblyReferences
+        {
+            get;
+            set;
+        }
+
+        public IReadOnlyList<PackageType> PackageTypes
         {
             get;
             set;
@@ -490,6 +497,11 @@ namespace NuGet.Packaging
             if (manifestMetadata.PackageAssemblyReferences != null)
             {
                 PackageAssemblyReferences.AddRange(manifestMetadata.PackageAssemblyReferences);
+            }
+
+            if (manifestMetadata.PackageTypes != null)
+            {
+                PackageTypes = metadata.PackageTypes;
             }
         }
 

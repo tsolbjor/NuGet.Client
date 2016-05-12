@@ -384,6 +384,8 @@ namespace NuGet.Commands
                     AddDependencyGroups(spec.Dependencies, NuGetFramework.AnyFramework, builder);
                 }
             }
+
+            builder.PackageTypes = spec.PackOptions?.PackageType ?? new List<PackageType>();
         }
 
         private static void AddDependencyGroups(IEnumerable<LibraryDependency> dependencies, NuGetFramework framework, PackageBuilder builder)
