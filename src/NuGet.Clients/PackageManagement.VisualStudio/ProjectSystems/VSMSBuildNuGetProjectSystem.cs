@@ -404,8 +404,6 @@ namespace NuGet.PackageManagement.VisualStudio
 
                     if (buildProject != null)
                     {
-                                NuGetEventSource.Log.Load(10, "AddReference falling back to project file edit " + fullPath);
-
                         // Get the assembly name of the reference we are trying to add
                         var assemblyName = AssemblyName.GetAssemblyName(assemblyFullPath);
 
@@ -459,7 +457,6 @@ namespace NuGet.PackageManagement.VisualStudio
 
 
             NuGetProjectContext.Log(ProjectManagement.MessageLevel.Debug, Strings.Debug_AddReference, name, projectName);
-            NuGetEventSource.Log.Load(10, "AddReference end " + referencePath);
         }
 
         private static bool AssemblyNamesMatch(AssemblyName name1, AssemblyName name2)
