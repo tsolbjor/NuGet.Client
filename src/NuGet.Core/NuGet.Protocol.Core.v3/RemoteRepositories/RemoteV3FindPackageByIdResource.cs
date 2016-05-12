@@ -175,6 +175,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                 }
                 catch (Exception ex) when (retry < 2)
                 {
+                    NuGetEventSource.Log.Load(10, $"Exception {ex}");
+
                     var message = string.Format(CultureInfo.CurrentCulture, Strings.Log_FailedToDownloadPackage, package.ContentUri)
                         + Environment.NewLine
                         + ExceptionUtilities.DisplayMessage(ex);
@@ -182,6 +184,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                 }
                 catch (Exception ex) when (retry == 2)
                 {
+                    NuGetEventSource.Log.Load(10, $"Exception {ex}");
+
                     var message = string.Format(CultureInfo.CurrentCulture, Strings.Log_FailedToDownloadPackage, package.ContentUri)
                         + Environment.NewLine
                         + ExceptionUtilities.DisplayMessage(ex);

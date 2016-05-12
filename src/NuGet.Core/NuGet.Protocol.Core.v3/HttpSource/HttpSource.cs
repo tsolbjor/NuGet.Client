@@ -103,13 +103,17 @@ namespace NuGet.Protocol
             Action<Stream> ensureValidContents,
             CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"GetAsync {uri} start");
+
             var result = InitializeHttpCacheResult(cacheKey, cacheContext);
 
             return await ConcurrencyUtilities.ExecuteWithFileLockedAsync(
                 result.CacheFile,
                 action: async token =>
                 {
+                    NuGetEventSource.Log.Load(10, $"GetAsync READCACHE {uri} start");
                     result.Stream = TryReadCacheFile(uri, result.MaxAge, result.CacheFile);
+                    NuGetEventSource.Log.Load(10, $"GetAsync READCACHE {uri} end");
 
                     if (result.Stream != null)
                     {
@@ -118,9 +122,13 @@ namespace NuGet.Protocol
                         // Validate the content fetched from the cache.
                         try
                         {
+                            NuGetEventSource.Log.Load(10, $"ensureValidContents {uri} start");
                             ensureValidContents?.Invoke(result.Stream);
+                            NuGetEventSource.Log.Load(10, $"ensureValidContents {uri} end");
 
                             result.Stream.Seek(0, SeekOrigin.Begin);
+
+                            NuGetEventSource.Log.Load(10, $"GetAsync {uri} CACHED end");
 
                             return new HttpSourceResult(
                                 HttpSourceResultStatus.OpenedFromDisk,
@@ -159,11 +167,13 @@ namespace NuGet.Protocol
                     {
                         if (ignoreNotFounds && response.StatusCode == HttpStatusCode.NotFound)
                         {
+                            NuGetEventSource.Log.Load(10, $"GetAsync {uri} NOTFOUND end");
                             return new HttpSourceResult(HttpSourceResultStatus.NotFound);
                         }
 
                         if (response.StatusCode == HttpStatusCode.NoContent)
                         {
+                            NuGetEventSource.Log.Load(10, $"GetAsync {uri} end");
                             // Ignore reading and caching the empty stream.
                             return new HttpSourceResult(HttpSourceResultStatus.NoContent);
                         }
@@ -171,6 +181,8 @@ namespace NuGet.Protocol
                         response.EnsureSuccessStatusCode();
 
                         await CreateCacheFile(result, uri, response, cacheContext, ensureValidContents, token);
+
+                        NuGetEventSource.Log.Load(10, $"GetAsync {uri} end");
 
                         return new HttpSourceResult(
                             HttpSourceResultStatus.OpenedFromDisk,
@@ -528,7 +540,10 @@ namespace NuGet.Protocol
 
                 // Validate the content before putting it into the cache.
                 fileStream.Seek(0, SeekOrigin.Begin);
+
+                NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} start");
                 ensureValidContents?.Invoke(fileStream);
+                NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} end");
             }
 
             if (File.Exists(result.CacheFile))

@@ -8,6 +8,7 @@ using System.Text;
 using System.Xml;
 using Newtonsoft.Json;
 using NuGet.Packaging;
+using NuGet.Common;
 
 namespace NuGet.Protocol.Core.v3
 {
@@ -56,6 +57,7 @@ namespace NuGet.Protocol.Core.v3
         {
             try
             {
+                NuGetEventSource.Log.Load(10, $"ValidateNupkg {uri} start");
                 using (var reader = new PackageArchiveReader(
                     stream: stream,
                     leaveStreamOpen: true))
@@ -63,9 +65,12 @@ namespace NuGet.Protocol.Core.v3
                 {
                     new NuspecReader(nuspec); // This method throws if reading the .nuspec fails
                 }
+                NuGetEventSource.Log.Load(10, $"ValidateNupkg {uri} end");
             }
             catch (Exception e)
             {
+                NuGetEventSource.Log.Load(10, $"Exception {e}");
+
                 string message = string.Format(
                     CultureInfo.CurrentCulture,
                     Strings.Log_InvalidNupkgFromUrl,
