@@ -76,6 +76,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         public override async Task<FindPackageByIdDependencyInfo> GetDependencyInfoAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"HTTP GetNupkgStreamAsync2 {id} {version} start");
+
             var packageInfos = await EnsurePackagesAsync(id, cancellationToken);
 
             PackageInfo packageInfo;
@@ -86,19 +88,25 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                 OpenNupkgStreamAsync(packageInfo, cancellationToken),
                 Logger);
 
+                NuGetEventSource.Log.Load(10, $"HTTP GetNupkgStreamAsync2 {id} {version} end");
                 return GetDependencyInfo(reader);
             }
 
+            NuGetEventSource.Log.Load(10, $"HTTP GetNupkgStreamAsync2 {id} {version} end");
             return null;
         }
 
         public override async Task<Stream> GetNupkgStreamAsync(string id, NuGetVersion version, CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"HTTP GetNupkgStreamAsync {id} {version} start");
+
             var packageInfos = await EnsurePackagesAsync(id, cancellationToken);
 
             PackageInfo packageInfo;
             if (packageInfos.TryGetValue(version, out packageInfo))
             {
+                NuGetEventSource.Log.Load(10, $"HTTP GetNupkgStreamAsync {id} {version} end");
+
                 return await OpenNupkgStreamAsync(packageInfo, cancellationToken);
             }
 
@@ -112,6 +120,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         private async Task<SortedDictionary<NuGetVersion, PackageInfo>> FindPackagesByIdAsync(string id, CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"HTTP FindPackagesByIdAsync {id} start");
+
             for (var retry = 0; retry != 3; ++retry)
             {
                 var baseUri = _baseUris[retry % _baseUris.Count].OriginalString;
@@ -128,6 +138,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                         ensureValidContents: stream => HttpStreamValidation.ValidateJObject(uri, stream),
                         cancellationToken: cancellationToken))
                     {
+                        NuGetEventSource.Log.Load(10, $"HTTP FindPackagesByIdAsync {id} end");
+
                         if (result.Status == HttpSourceResultStatus.NotFound)
                         {
                             return new SortedDictionary<NuGetVersion, PackageInfo>();
@@ -160,6 +172,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                     throw new FatalProtocolException(message, ex);
                 }
             }
+
+            NuGetEventSource.Log.Load(10, $"HTTP FindPackagesByIdAsync {id} end");
 
             return null;
         }
@@ -210,26 +224,42 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         private async Task<Stream> OpenNupkgStreamAsync(PackageInfo package, CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} start");
+
+            NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} before lock");
+
             Task<NupkgEntry> task;
             lock (_nupkgCache)
             {
+                NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} lock start");
+
                 if (!_nupkgCache.TryGetValue(package.ContentUri, out task))
                 {
+                    NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} task start");
                     task = _nupkgCache[package.ContentUri] = OpenNupkgStreamAsyncCore(package, cancellationToken);
+                    NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} task end");
                 }
+
+                NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} lock end");
             }
 
+            NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} await task start");
             var result = await task;
             if (result == null)
             {
+                NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} await task null end");
                 return null;
             }
+
+            NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} await task end");
 
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
             return await ConcurrencyUtilities.ExecuteWithFileLockedAsync(result.TempFileName,
                 action: token =>
                 {
+                    NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} end");
+
                     return Task.FromResult(
                         new FileStream(result.TempFileName,
                                        FileMode.Open,
@@ -241,6 +271,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         private async Task<NupkgEntry> OpenNupkgStreamAsyncCore(PackageInfo package, CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} start");
+
             for (var retry = 0; retry != 3; ++retry)
             {
                 try
@@ -254,6 +286,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                         ensureValidContents: stream => HttpStreamValidation.ValidateNupkg(package.ContentUri, stream),
                         cancellationToken: cancellationToken))
                     {
+                        NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} success end");
+
                         return new NupkgEntry
                         {
                             TempFileName = data.CacheFileName
@@ -275,6 +309,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                     Logger.LogError(message);
                 }
             }
+
+            NuGetEventSource.Log.Load(10, $"HTTP OpenNupkgStreamAsync {package.ContentUri} null end");
 
             return null;
         }

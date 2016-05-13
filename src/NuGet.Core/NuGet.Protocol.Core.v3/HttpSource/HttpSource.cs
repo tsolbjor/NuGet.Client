@@ -123,9 +123,9 @@ namespace NuGet.Protocol
                         // Validate the content fetched from the cache.
                         try
                         {
-                            NuGetEventSource.Log.Load(10, $"ensureValidContents {uri} start");
-                            ensureValidContents?.Invoke(result.Stream);
-                            NuGetEventSource.Log.Load(10, $"ensureValidContents {uri} end");
+                            //NuGetEventSource.Log.Load(10, $"ensureValidContents {uri} start");
+                            //ensureValidContents?.Invoke(result.Stream);
+                            //NuGetEventSource.Log.Load(10, $"ensureValidContents {uri} end");
 
                             result.Stream.Seek(0, SeekOrigin.Begin);
 
@@ -601,9 +601,9 @@ namespace NuGet.Protocol
                 // Validate the content before putting it into the cache.
                 fileStream.Seek(0, SeekOrigin.Begin);
 
-                NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} start");
-                ensureValidContents?.Invoke(fileStream);
-                NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} end");
+                //NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} start");
+                // ensureValidContents?.Invoke(fileStream);
+                //NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} end");
             }
 
             if (File.Exists(result.CacheFile))

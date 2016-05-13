@@ -123,6 +123,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         private async Task<Stream> OpenNupkgStreamAsync(RemoteSourceDependencyInfo package, CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"REMOTE OpenNupkgStreamAsync {package.Identity} start");
+
             await EnsureDependencyProvider(cancellationToken);
 
             Task<NupkgEntry> task;
@@ -140,11 +142,15 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                 return null;
             }
 
+            
+
             // Acquire the lock on a file before we open it to prevent this process
             // from opening a file deleted by the logic in HttpSource.GetAsync() in another process
             return await ConcurrencyUtilities.ExecuteWithFileLockedAsync(result.TempFileName,
                 action: token =>
                 {
+                    NuGetEventSource.Log.Load(10, $"REMOTE OpenNupkgStreamAsync {package.Identity} end");
+
                     return Task.FromResult(
                         new FileStream(result.TempFileName, FileMode.Open, FileAccess.Read,
                             FileShare.ReadWrite | FileShare.Delete));
@@ -154,6 +160,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
 
         private async Task<NupkgEntry> OpenNupkgStreamAsyncCore(RemoteSourceDependencyInfo package, CancellationToken cancellationToken)
         {
+            NuGetEventSource.Log.Load(10, $"REMOTE OpenNupkgStreamAsyncCore {package.Identity} start");
+
             for (var retry = 0; retry != 3; ++retry)
             {
                 try
@@ -167,6 +175,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                         ensureValidContents: stream => HttpStreamValidation.ValidateNupkg(package.ContentUri, stream),
                         cancellationToken: cancellationToken))
                     {
+                        NuGetEventSource.Log.Load(10, $"OpenNupkgStreamAsyncCore {package.Identity} success end");
+
                         return new NupkgEntry
                         {
                             TempFileName = data.CacheFileName
@@ -192,6 +202,8 @@ namespace NuGet.Protocol.Core.v3.RemoteRepositories
                     Logger.LogError(message);
                 }
             }
+
+            NuGetEventSource.Log.Load(10, $"REMOTE OpenNupkgStreamAsyncCore {package.Identity} null end");
 
             return null;
         }
