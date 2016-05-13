@@ -367,7 +367,6 @@ function Test-AddingBindingRedirectAfterUpdate {
     Assert-BindingRedirect $p web.config B '0.0.0.0-2.0.0.0' '2.0.0.0'
 }
 
-
 function Test-UpdatePackageWithOlderVersionOfSharedDependencyInUse {
     param(
         $context

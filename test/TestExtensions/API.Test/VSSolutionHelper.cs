@@ -140,13 +140,21 @@ namespace API.Test
 
         private static async Task CloseSolutionAsync()
         {
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-
-            var solution2 = await GetSolution2Async();
-            var isSolutionAvailable = await IsSolutionAvailableAsync(solution2);
-            if (isSolutionAvailable)
+            try
             {
-                solution2.Close();
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                var solution2 = await GetSolution2Async();
+                var isSolutionAvailable = await IsSolutionAvailableAsync(solution2);
+                if (isSolutionAvailable)
+                {
+                    solution2.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.Fail("Failed on closesolution: " + ex);
+                throw;
             }
         }
 
@@ -203,10 +211,18 @@ namespace API.Test
 
         public static void BuildSolution()
         {
-            ThreadHelper.JoinableTaskFactory.Run(async delegate
+            try
             {
-                await BuildSolutionAsync();
-            });
+                ThreadHelper.JoinableTaskFactory.Run(async delegate
+                {
+                    await BuildSolutionAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.Fail("Failed on buildsolution: " + ex);
+                throw;
+            }
         }
 
         private static async Task BuildSolutionAsync()
