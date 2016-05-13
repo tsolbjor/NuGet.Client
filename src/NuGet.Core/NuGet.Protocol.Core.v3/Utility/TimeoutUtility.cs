@@ -13,12 +13,14 @@ namespace NuGet.Protocol
         /// Starts a task with a timeout. If the timeout occurs, a <see cref="TimeoutException"/>
         /// with no message will be thrown.
         /// </summary>
-        public static async Task<T> StartWithTimeout<T>(
+        public static Task<T> StartWithTimeout<T>(
             Func<CancellationToken, Task<T>> getTask,
             TimeSpan timeout,
             string timeoutMessage,
             CancellationToken token)
-        {                        
+        {
+            throw new Exception("failed");
+
             /*
              * Implement timeout. Two operations are started and run in parallel:
              *
@@ -32,23 +34,23 @@ namespace NuGet.Protocol
              * first, it could be that the response came back or that the caller cancelled
              * the task.
              */
-            using (var timeoutTcs = new CancellationTokenSource())
-            using (var taskTcs = new CancellationTokenSource())
-            using (token.Register(() => taskTcs.Cancel()))
-            {
-                var timeoutTask = Task.Delay(timeout, timeoutTcs.Token);
-                var responseTask = getTask(taskTcs.Token);
+            //using (var timeoutTcs = new CancellationTokenSource())
+            //using (var taskTcs = new CancellationTokenSource())
+            //using (token.Register(() => taskTcs.Cancel()))
+            //{
+            //    var timeoutTask = Task.Delay(timeout, timeoutTcs.Token);
+            //    var responseTask = getTask(taskTcs.Token);
 
-                if (timeoutTask == await Task.WhenAny(responseTask, timeoutTask).ConfigureAwait(false))
-                {
-                    taskTcs.Cancel();
+            //    if (timeoutTask == await Task.WhenAny(responseTask, timeoutTask).ConfigureAwait(false))
+            //    {
+            //        taskTcs.Cancel();
 
-                    throw new TimeoutException(timeoutMessage);
-                }
+            //        throw new TimeoutException(timeoutMessage);
+            //    }
 
-                timeoutTcs.Cancel();
-                return await responseTask.ConfigureAwait(false);
-            }
+            //    timeoutTcs.Cancel();
+            //    return await responseTask.ConfigureAwait(false);
+            //}
         }
 
         /// <summary>

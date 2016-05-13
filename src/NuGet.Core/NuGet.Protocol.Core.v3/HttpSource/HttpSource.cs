@@ -284,12 +284,12 @@ namespace NuGet.Protocol
                 response.EnsureSuccessStatusCode();
 
                 var networkStream = await response.Content.ReadAsStreamAsync();
-                var timeoutStream = new DownloadTimeoutStream(uri.ToString(), networkStream, DownloadTimeout);
+                //var timeoutStream = new DownloadTimeoutStream(uri.ToString(), networkStream, DownloadTimeout);
 
                 return new HttpSourceResult(
                     HttpSourceResultStatus.OpenedFromNetwork,
                     null,
-                    timeoutStream);
+                    networkStream);
             }
             catch
             {
@@ -593,17 +593,22 @@ namespace NuGet.Protocol
                 useAsync: true))
             {
                 using (var networkStream = await response.Content.ReadAsStreamAsync())
-                using (var timeoutStream = new DownloadTimeoutStream(uri, networkStream, DownloadTimeout))
                 {
-                    await timeoutStream.CopyToAsync(fileStream, 8192, cancellationToken);
+                    await networkStream.CopyToAsync(fileStream, 8192);
                 }
+
+                //using (var networkStream = await response.Content.ReadAsStreamAsync())
+                //using (var timeoutStream = new DownloadTimeoutStream(uri, networkStream, DownloadTimeout))
+                //{
+                //    await timeoutStream.CopyToAsync(fileStream, 8192, cancellationToken);
+                //}
 
                 // Validate the content before putting it into the cache.
                 fileStream.Seek(0, SeekOrigin.Begin);
 
-                NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} start");
-                ensureValidContents?.Invoke(fileStream);
-                NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} end");
+                //NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} start");
+                //ensureValidContents?.Invoke(fileStream);
+                //NuGetEventSource.Log.Load(10, $"ensureValidContents2 {uri} end");
             }
 
             if (File.Exists(result.CacheFile))
