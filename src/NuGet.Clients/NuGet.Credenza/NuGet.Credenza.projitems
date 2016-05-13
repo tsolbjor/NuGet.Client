@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>1c2def66-2c10-4d70-bb03-9c3bb5e03be4</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>NuGet.Credenza</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)CredentialProviderAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CredentialResponse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CredentialsConstants.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CredentialService.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CredentialServiceAdapter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CredentialStatus.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ICredentialProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PluginCredentialProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PluginCredentialProviderBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PluginCredentialRequest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PluginCredentialResponse.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PluginException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ProviderException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CredentialResources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>CredentialResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(MSBuildThisFileDirectory)CredentialResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>

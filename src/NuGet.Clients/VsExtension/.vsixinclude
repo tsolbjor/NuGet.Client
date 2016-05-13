@@ -3,7 +3,6 @@ NuGetConsole.Host.PowerShell.dll
 NuGetConsole.Host.PowerShellProvider.dll
 NuGet.Console.dll
 NuGet.Console.Types.dll
-NuGet.Credentials.dll
 NuGet.Options.dll
 NuGet.PackageManagement.PowerShellCmdlets.dll
 NuGet.PackageManagement.VisualStudio.dll

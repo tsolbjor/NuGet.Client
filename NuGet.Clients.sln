@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PackageManagement.VisualStudio", "src\NuGet.Clients\PackageManagement.VisualStudio\PackageManagement.VisualStudio.csproj", "{306CDDFA-FF0B-4299-930C-9EC6C9308160}"
 EndProject
@@ -74,8 +74,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.CommandLine.Test", "t
 		{E901BDC7-CB84-40FA-A2C0-03DB4F9AEA3C} = {E901BDC7-CB84-40FA-A2C0-03DB4F9AEA3C}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Credentials", "src\NuGet.Clients\NuGet.Credentials\NuGet.Credentials.csproj", "{32A23995-14C7-483B-98C3-0AE4185373EA}"
-EndProject
+# Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Credentials", "src\NuGet.Clients\NuGet.Credentials\NuGet.Credentials.csproj", "{32A23995-14C7-483B-98C3-0AE4185373EA}"
+# EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.Credentials.Test", "test\NuGet.Clients.Tests\NuGet.Credentials.Test\NuGet.Credentials.Test.csproj", "{E2853887-4959-4356-A379-50960060A78F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestExtensions", "TestExtensions", "{6F6D0E69-329D-4D0E-9795-A253FB2CA0CD}"
@@ -100,7 +100,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandaloneConsole", "src\Nu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NuGet.PackageManagement.UI.Test", "test\NuGet.Clients.Tests\NuGet.PackageManagement.UI.Test\NuGet.PackageManagement.UI.Test.csproj", "{6157BF46-D371-4126-A7F1-ED6E23F77ACD}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "NuGet.Credenza", "src\NuGet.Clients\NuGet.Credenza\NuGet.Credenza.shproj", "{1C2DEF66-2C10-4D70-BB03-9C3BB5E03BE4}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		src\NuGet.Clients\NuGet.Credenza\NuGet.Credenza.projitems*{1c2def66-2c10-4d70-bb03-9c3bb5e03be4}*SharedItemsImports = 13
+#		src\NuGet.Clients\NuGet.Credenza\NuGet.Credenza.projitems*{32a23995-14c7-483b-98c3-0ae4185373ea}*SharedItemsImports = 4
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Coverage|Any CPU = Coverage|Any CPU
 		Debug|Any CPU = Debug|Any CPU
@@ -268,16 +274,16 @@ Global
 		{33294BB8-5144-4363-B02C-332F6D94C1C1}.Mono Release|Any CPU.Build.0 = Release|Any CPU
 		{33294BB8-5144-4363-B02C-332F6D94C1C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{33294BB8-5144-4363-B02C-332F6D94C1C1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Coverage|Any CPU.ActiveCfg = Release|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Coverage|Any CPU.Build.0 = Release|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Debug|Any CPU.Build.0 = Debug|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Release|Any CPU.ActiveCfg = Release|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Release|Any CPU.Build.0 = Release|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{32A23995-14C7-483B-98C3-0AE4185373EA}.Release|Any CPU.Build.0 = Release|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Coverage|Any CPU.ActiveCfg = Release|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Coverage|Any CPU.Build.0 = Release|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Debug|Any CPU.ActiveCfg = Debug|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Debug|Any CPU.Build.0 = Debug|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Release|Any CPU.ActiveCfg = Release|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Mono Release|Any CPU.Build.0 = Release|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+#		{32A23995-14C7-483B-98C3-0AE4185373EA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E2853887-4959-4356-A379-50960060A78F}.Coverage|Any CPU.ActiveCfg = Release|Any CPU
 		{E2853887-4959-4356-A379-50960060A78F}.Coverage|Any CPU.Build.0 = Release|Any CPU
 		{E2853887-4959-4356-A379-50960060A78F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

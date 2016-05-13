@@ -8,7 +8,6 @@ NuGet.Common.dll
 NuGet.Configuration.dll
 NuGet.ContentModel.dll
 NuGet.Core.dll
-NuGet.Credentials.dll
 NuGet.DependencyResolver.Core.dll
 NuGet.DependencyResolver.dll
 NuGet.Frameworks.dll
