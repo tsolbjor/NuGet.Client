@@ -17,7 +17,7 @@
     <ResolveNuGetPackages>true</ResolveNuGetPackages>
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)' == '14.0'">
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)' == '15.0'">
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>

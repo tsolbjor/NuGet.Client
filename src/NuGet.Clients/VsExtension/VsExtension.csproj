@@ -26,7 +26,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)' == '14.0'">
     <DefineConstants>$(DefineConstants);VS14</DefineConstants>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <AssemblyName>NuGet.Tools</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(VisualStudioVersion)' == '15.0'">

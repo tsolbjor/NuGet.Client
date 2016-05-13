@@ -153,16 +153,6 @@
   <ItemGroup>
     <None Include="project.json" />
   </ItemGroup>
-  <Choose>
-    <When Condition="$(VisualStudioVersion)=='14.0'">
-      <ItemGroup>
-        <ProjectReference Include="..\VisualStudio14.Packages\VisualStudio14.Packages.csproj">
-          <Project>{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}</Project>
-          <Name>VisualStudio14.Packages</Name>
-        </ProjectReference>
-      </ItemGroup>
-    </When>
-  </Choose>
   <ItemGroup>
     <ProjectReference Include="..\NuGet.Credentials\NuGet.Credentials.csproj">
       <Project>{32a23995-14c7-483b-98c3-0ae4185373ea}</Project>

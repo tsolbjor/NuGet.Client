@@ -29,7 +29,7 @@
     "Test.Utility": "3.5.0-*"
   },
   "frameworks": {
-    "net45": {}
+    "net46": {}
   },
   "runtimes": {
     "win-anycpu": {},
