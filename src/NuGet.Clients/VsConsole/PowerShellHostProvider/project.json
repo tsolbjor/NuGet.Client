@@ -1,7 +1,5 @@
 ﻿{
-  "dependencies": {
-    "NuGet.PackageManagement": "3.5.0-*"
-  },
+  "dependencies": {},
   "frameworks": {
     "net45": {}
   },

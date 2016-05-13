@@ -56,3 +56,4 @@ System.ServiceModel.dll
 System.Xml.dll
 System.Xml.Linq.dll
 WindowsBase.dll
+xunit.execution.desktop.dll

@@ -9,12 +9,16 @@ Microsoft.VisualStudio.Services.Client.dll
 Microsoft.VisualStudio.Services.Common.dll
 Microsoft.VisualStudio.Services.WebApi.dll
 Microsoft.WindowsAzure.Configuration.dll
+mscorlib.dll
 Newtonsoft.Json.dll
+NuGet.Test.Utility.dll
+NuGet.VisualStudio14.Packages.dll
 System.ComponentModel.Composition.dll
 System.dll
 System.IdentityModel.dll
 System.IdentityModel.Tokens.Jwt.dll
 System.IO.Compression.dll
+System.Management.Automation.dll
 System.Net.Http.dll
 System.Net.Http.Formatting.dll
 System.Net.Http.WebRequest.dll
@@ -24,4 +28,9 @@ System.ServiceModel.dll
 System.Web.Http.dll
 System.Xml.dll
 System.Xml.Linq.dll
+Test.Utility.dll
 WindowsBase.dll
+xunit.abstractions.dll
+xunit.assert.dll
+xunit.core.dll
+xunit.execution.desktop.dll

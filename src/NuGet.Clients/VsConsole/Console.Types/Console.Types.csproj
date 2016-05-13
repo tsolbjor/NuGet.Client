@@ -75,13 +75,17 @@
   <ItemGroup>
     <None Include="project.json" />
   </ItemGroup>
+  <Choose>
+    <When Condition="$(VisualStudioVersion)=='14.0'">
+      <ItemGroup>
+        <ProjectReference Include="..\..\VisualStudio14.Packages\VisualStudio14.Packages.csproj">
+          <Project>{A3AB10FD-0E3E-426B-B3D9-B5BF34E5D190}</Project>
+          <Name>VisualStudio14.Packages</Name>
+        </ProjectReference>
+      </ItemGroup>
+    </When>
+  </Choose>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\..\..\..\build\common.targets" />
   <Import Project="..\..\..\..\build\sign.targets" />
-  <PropertyGroup Condition="'$(VisualStudioVersion)' == '14.0'">
-    <PreBuildEvent>copy /y "$(MSBuildProjectDirectory)\project.dev14.json" "$(MSBuildProjectDirectory)\project.json"</PreBuildEvent>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(VisualStudioVersion)' == '15.0'">
-    <PreBuildEvent>copy /y "$(MSBuildProjectDirectory)\project.dev15.json" "$(MSBuildProjectDirectory)\project.json"</PreBuildEvent>
-  </PropertyGroup>
 </Project>
