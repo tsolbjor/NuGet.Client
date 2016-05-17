@@ -126,12 +126,8 @@ namespace NuGet.Protocol
             {
                 fileName = Path.GetFileNameWithoutExtension(fileName);
 
-                if (fileName.EndsWith(".symbols", StringComparison.OrdinalIgnoreCase))
-                {
-                    fileName = Path.GetFileNameWithoutExtension(fileName);
-                }
-
-                if (fileName.Length > prefix.Length)
+                // Skip symbol packages
+                if (fileName.Length > prefix.Length && !fileName.EndsWith(".symbols", StringComparison.OrdinalIgnoreCase))
                 {
                     var versionString = fileName.Substring(prefix.Length, fileName.Length - prefix.Length);
 
@@ -158,40 +154,41 @@ namespace NuGet.Protocol
         {
             var pathResolver = new VersionFolderPathResolver(root);
 
-            // Construct the expected nupkg path
+            var packageRoot = pathResolver.GetInstallPath(identity.Id, identity.Version);
+
+            // Verify the neccessary files exist
             var nupkgPath = pathResolver.GetPackageFilePath(identity.Id, identity.Version);
+            var nuspecPath = pathResolver.GetManifestFilePath(identity.Id, identity.Version);
+            var hashPath = pathResolver.GetHashPath(identity.Id, identity.Version);
 
-            // Verify the files exist
-            if (File.Exists(nupkgPath) && IsValidForV3(pathResolver, identity.Id, identity.Version))
+            if (!File.Exists(nupkgPath))
             {
-                var nuspecPath = pathResolver.GetManifestFileName(identity.Id, identity.Version);
-
-                var packageHelper = new Func<PackageReaderBase>(() => new PackageArchiveReader(nupkgPath));
-
-                var nuspecHelper = new Lazy<NuspecReader>(() => {
-                    if (File.Exists(nuspecPath))
-                    {
-                        return new NuspecReader(nuspecPath);
-                    }
-                    else
-                    {
-                        using (var packageReader = packageHelper())
-                        {
-                            return packageReader.NuspecReader;
-                        }
-                    }
-                });
-
-                return new LocalPackageInfo()
-                {
-                    Identity = new PackageIdentity(identity.Id, identity.Version),
-                    Path = nupkgPath,
-                    NuspecHelper = nuspecHelper,
-                    PackageHelper = packageHelper
-                };
+                log.LogDebug($"Missing {nupkgPath}");
+                return null;
             }
 
-            return null;
+            if (!File.Exists(nupkgPath))
+            {
+                log.LogDebug($"Missing {nuspecPath}");
+                return null;
+            }
+
+            if (!File.Exists(hashPath))
+            {
+                log.LogDebug($"Missing {hashPath}");
+                return null;
+            }
+
+            var packageHelper = new Func<PackageReaderBase>(() => new PackageArchiveReader(nupkgPath));
+            var nuspecHelper = new Lazy<NuspecReader>(() => new NuspecReader(nuspecPath));
+
+            return new LocalPackageInfo()
+            {
+                Identity = new PackageIdentity(identity.Id, identity.Version),
+                Path = nupkgPath,
+                NuspecHelper = nuspecHelper,
+                PackageHelper = packageHelper
+            };
         }
 
         private static IEnumerable<LocalPackageInfo> GetPackagesFromNupkgs(IEnumerable<FileInfo> files)
@@ -369,36 +366,14 @@ namespace NuGet.Protocol
                 NuGetVersion version;
                 if (NuGetVersion.TryParse(versionDir.Name, out version))
                 {
-                    var nupkgPath = pathResolver.GetPackageFilePath(id, version);
+                    var identity = new PackageIdentity(id, version);
 
-                    // This may not exist if another thread is currently extracting the package, there is no reason to warn here.
-                    if (File.Exists(nupkgPath) && IsValidForV3(pathResolver, id, version))
+                    // Read the package, this may be null if files are missing
+                    var package = GetPackageV3(root, identity, log);
+
+                    if (package != null)
                     {
-                        var nuspecPath = pathResolver.GetManifestFileName(id, version);
-
-                        var packageHelper = new Func<PackageReaderBase>(() => new PackageArchiveReader(nupkgPath));
-
-                        var nuspecHelper = new Lazy<NuspecReader>(() => {
-                                if (File.Exists(nuspecPath))
-                                {
-                                    return new NuspecReader(nuspecPath);
-                                }
-                                else
-                                {
-                                    using (var packageReader = packageHelper())
-                                    {
-                                        return packageHelper().NuspecReader;
-                                    }
-                                }
-                            });
-
-                        yield return new LocalPackageInfo()
-                        {
-                            Identity = new PackageIdentity(id, version),
-                            Path = nupkgPath,
-                            NuspecHelper = nuspecHelper,
-                            PackageHelper = packageHelper
-                        };
+                        yield return package;
                     }
                 }
                 else
@@ -458,16 +433,6 @@ namespace NuGet.Protocol
             }
 
             return new FileInfo[0];
-        }
-
-        /// <summary>
-        /// True if the hash file exists.
-        /// </summary>
-        private static bool IsValidForV3(VersionFolderPathResolver pathResolver, string id, NuGetVersion version)
-        {
-            var hashPath = pathResolver.GetHashPath(id, version);
-
-            return File.Exists(hashPath);
         }
     }
 }

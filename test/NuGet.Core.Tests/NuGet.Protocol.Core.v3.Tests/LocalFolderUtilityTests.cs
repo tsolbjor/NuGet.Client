@@ -248,6 +248,153 @@ namespace NuGet.Protocol.Core.v3.Tests
             }
         }
 
+        [Fact]
+        public void LocalFolderUtility_GetPackageV3()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+                var a = new PackageIdentity("a", NuGetVersion.Parse("1.0.0"));
+                var b = new PackageIdentity("b", NuGetVersion.Parse("1.0.0"));
+                var c = new PackageIdentity("c", NuGetVersion.Parse("1.0.0"));
+
+                SimpleTestPackageUtility.CreateFolderFeedV3(root, a);
+                SimpleTestPackageUtility.CreateFolderFeedV3(root, b);
+                SimpleTestPackageUtility.CreateFolderFeedV3(root, c);
+
+                // Act
+                var foundA = LocalFolderUtility.GetPackageV3(root, a, testLogger);
+
+                // Assert
+                Assert.Equal(a, foundA.Identity);
+                Assert.Equal(a, foundA.Nuspec.GetIdentity());
+                Assert.True(foundA.IsNupkg);
+                Assert.Equal(a, foundA.Package.GetIdentity());
+                Assert.Contains("a.1.0.0.nupkg", foundA.Path);
+            }
+        }
+
+        [Fact]
+        public void LocalFolderUtility_GetPackageV3NotFound()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+                var a = new PackageIdentity("a", NuGetVersion.Parse("1.0.0"));
+                var b = new PackageIdentity("b", NuGetVersion.Parse("1.0.0"));
+                var c = new PackageIdentity("c", NuGetVersion.Parse("1.0.0"));
+
+                SimpleTestPackageUtility.CreateFolderFeedV3(root, b);
+                SimpleTestPackageUtility.CreateFolderFeedV3(root, c);
+
+                // Act
+                var foundA = LocalFolderUtility.GetPackageV3(root, a, testLogger);
+
+                // Assert
+                Assert.Null(foundA);
+            }
+        }
+
+        [Fact]
+        public void LocalFolderUtility_GetPackageV3NotFoundEmptyDir()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+                var a = new PackageIdentity("a", NuGetVersion.Parse("1.0.0"));
+
+                // Act
+                var foundA = LocalFolderUtility.GetPackageV3(root, a, testLogger);
+
+                // Assert
+                Assert.Null(foundA);
+            }
+        }
+
+        [Fact]
+        public void LocalFolderUtility_GetPackageV3NotFoundMissingDir()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+                var a = new PackageIdentity("a", NuGetVersion.Parse("1.0.0"));
+
+                // Act
+                var foundA = LocalFolderUtility.GetPackageV3(Path.Combine(root, "missing"), a, testLogger);
+
+                // Assert
+                Assert.Null(foundA);
+            }
+        }
+
+        [Fact]
+        public void LocalFolderUtility_GetPackagesV3NotFoundEmptyDir()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+
+                // Act
+                var packages = LocalFolderUtility.GetPackagesV3(root, testLogger).ToList();
+
+                // Assert
+                Assert.Equal(0, packages.Count);
+            }
+        }
+
+        [Fact]
+        public void LocalFolderUtility_GetPackagesV3NotFoundMissingDir()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+
+                // Act
+                var packages = LocalFolderUtility.GetPackagesV3(Path.Combine(root, "missing"), testLogger).ToList();
+
+                // Assert
+                Assert.Equal(0, packages.Count);
+            }
+        }
+
+        [Fact]
+        public void LocalFolderUtility_GetPackagesByIdV3NotFoundEmptyDir()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+
+                // Act
+                var packages = LocalFolderUtility.GetPackagesV3(root, "a", testLogger).ToList();
+
+                // Assert
+                Assert.Equal(0, packages.Count);
+            }
+        }
+
+        [Fact]
+        public void LocalFolderUtility_GetPackagesByIdV3NotFoundMissingDir()
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+
+                // Act
+                var packages = LocalFolderUtility.GetPackagesV3(root, "a", testLogger).ToList();
+
+                // Assert
+                Assert.Equal(0, packages.Count);
+            }
+        }
+
         [Theory]
         [InlineData("0.0.0")]
         [InlineData("0.0.1")]
@@ -329,6 +476,183 @@ namespace NuGet.Protocol.Core.v3.Tests
                 Assert.Equal(identity, findById.Identity);
                 Assert.Equal(identity, findAll.Identity);
             }
+        }
+
+        [Theory]
+        [InlineData("0.0.0")]
+        [InlineData("0.0.1")]
+        [InlineData("1.0.0-BETA")]
+        [InlineData("1.0.0")]
+        [InlineData("1.0")]
+        [InlineData("1.0.0.0")]
+        [InlineData("1.0.1")]
+        [InlineData("1.0.01")]
+        [InlineData("00000001.000000000.0000000001")]
+        [InlineData("1.0.01-alpha")]
+        [InlineData("1.0.1-alpha.1.2.3")]
+        [InlineData("1.0.1-alpha.1.2.3+metadata")]
+        [InlineData("1.0.1-alpha.1.2.3+a.b.c.d")]
+        [InlineData("1.0.1-alpha.10.a")]
+        public async Task LocalFolderUtility_VerifyPackageCanBeFoundV3_NonNormalizedOnDisk(string versionString)
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+                var version = NuGetVersion.Parse(versionString);
+                var normalizedVersion = NuGetVersion.Parse(NuGetVersion.Parse(versionString).ToNormalizedString());
+                var identity = new PackageIdentity("a", version);
+
+                await SimpleTestPackageUtility.CreateFolderFeedV3(root, identity);
+
+                // Act
+                var findPackage = LocalFolderUtility.GetPackageV3(root, "a", version, testLogger);
+                var findPackageNormalized = LocalFolderUtility.GetPackageV3(root, "a", normalizedVersion, testLogger);
+                var findById = LocalFolderUtility.GetPackagesV3(root, "a", testLogger).Single();
+                var findAll = LocalFolderUtility.GetPackagesV3(root, testLogger).Single();
+
+                // Assert
+                Assert.Equal(identity, findPackage.Identity);
+                Assert.Equal(identity, findPackageNormalized.Identity);
+                Assert.Equal(identity, findById.Identity);
+                Assert.Equal(identity, findAll.Identity);
+            }
+        }
+
+        [Theory]
+        [InlineData("0.0.0")]
+        [InlineData("0.0.1")]
+        [InlineData("1.0.0-BETA")]
+        [InlineData("1.0.0")]
+        [InlineData("1.0")]
+        [InlineData("1.0.0.0")]
+        [InlineData("1.0.1")]
+        [InlineData("1.0.01")]
+        [InlineData("00000001.000000000.0000000001")]
+        [InlineData("1.0.01-alpha")]
+        [InlineData("1.0.1-alpha.1.2.3")]
+        [InlineData("1.0.1-alpha.1.2.3+metadata")]
+        [InlineData("1.0.1-alpha.1.2.3+a.b.c.d")]
+        [InlineData("1.0.1-alpha.10.a")]
+        public async Task LocalFolderUtility_VerifyPackageCanBeFoundV3_NormalizedOnDisk(string versionString)
+        {
+            using (var root = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                // Arrange
+                var testLogger = new TestLogger();
+                var version = NuGetVersion.Parse(versionString);
+                var normalizedVersion = NuGetVersion.Parse(NuGetVersion.Parse(versionString).ToNormalizedString());
+                var identity = new PackageIdentity("a", version);
+                var normalizedIdentity = new PackageIdentity("a", normalizedVersion);
+
+                await SimpleTestPackageUtility.CreateFolderFeedV3(root, normalizedIdentity);
+
+                // Act
+                var findPackage = LocalFolderUtility.GetPackageV3(root, "a", version, testLogger);
+                var findPackageNormalized = LocalFolderUtility.GetPackageV3(root, "a", normalizedVersion, testLogger);
+                var findById = LocalFolderUtility.GetPackagesV3(root, "a", testLogger).Single();
+                var findAll = LocalFolderUtility.GetPackagesV3(root, testLogger).Single();
+
+                // Assert
+                Assert.Equal(identity, findPackage.Identity);
+                Assert.Equal(identity, findPackageNormalized.Identity);
+                Assert.Equal(identity, findById.Identity);
+                Assert.Equal(identity, findAll.Identity);
+            }
+        }
+
+        [Theory]
+        [InlineData("packageA.1.0.0.nupkg", "packageA", "packageA.1.0.0")]
+        [InlineData("packageA.1.0.nupkg", "packageA", "packageA.1.0")]
+        [InlineData("packageA.1.0.0.0.nupkg", "packageA", "packageA.1.0.0.0")]
+        [InlineData("packageA.1.0.0-alpha.nupkg", "packageA", "packageA.1.0.0-alpha")]
+        [InlineData("packageA.1.0.0-alpha.1.2.3.nupkg", "packageA", "packageA.1.0.0-alpha.1.2.3")]
+        [InlineData("packageA.1.0.0-alpha.1.2.3+a.b.c.nupkg", "packageA", "packageA.1.0.0-alpha.1.2.3")]
+        [InlineData("packageA.1.0.01.nupkg", "packageA", "packageA.1.0.01")]
+        [InlineData("packageA.0001.0.01.nupkg", "packageA", "packageA.0001.0.01")]
+        [InlineData("packageA.1.1.1.nupkg", "packageA.1", "packageA.1.1.1")]
+        [InlineData("packageA.1.1.1.1.nupkg", "packageA.1.1", "packageA.1.1.1.1")]
+        [InlineData("packageA.01.1.1.nupkg", "packageA.01", "packageA.01.1.1")]
+        [InlineData("packageA..1.1.nupkg", "packageA.", "packageA..1.1")]
+        [InlineData("a.1.0.nupkg", "a", "a.1.0")]
+        public void LocalFolderUtility_GetIdentityFromFile_Valid(string fileName, string id, string expected)
+        {
+            // Arrange
+            var file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), fileName));
+
+            // Act
+            var identity = LocalFolderUtility.GetIdentityFromFile(file, id);
+
+            // Assert
+            Assert.Equal(id, identity.Id);
+            Assert.Equal(expected, $"{identity.Id}.{identity.Version.ToString()}");
+        }
+
+        [Theory]
+        [InlineData("packageA.x.nupkg", "packageA")]
+        [InlineData("packageA.nupkg", "packageA")]
+        [InlineData("packageA.nupkg", "packageB")]
+        [InlineData("packageA.nupkg", "packageAAA")]
+        [InlineData("packageA.1.0.0.0.0.nupkg", "packageA")]
+        [InlineData("packageA.1.0.0-beta-#.nupkg", "packageA")]
+        [InlineData("packageA.1.0.0-beta.1.01.nupkg", "packageA")]
+        [InlineData("packageA.1.0.0-beta+a+b.nupkg", "packageA")]
+        [InlineData("1", "packageA")]
+        [InlineData("1.nupkg", "packageA")]
+        [InlineData("packageB.1.0.0.nupkg", "packageA")]
+        [InlineData("packageB.1.0.0.nupkg", "packageB1.0.0.0")]
+        [InlineData("packageB.1.0.0.nuspec", "packageB")]
+        [InlineData("file", "packageB")]
+        [InlineData("file.txt", "packageB")]
+        [InlineData("packageA.1.0.0.symbols.nupkg", "packageA")]
+        public void LocalFolderUtility_GetIdentityFromFile_Invalid(string fileName, string id)
+        {
+            // Arrange
+            var file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), fileName));
+
+            // Act
+            var identity = LocalFolderUtility.GetIdentityFromFile(file, id);
+
+            // Assert
+            Assert.Null(identity);
+        }
+
+        [Theory]
+        [InlineData("packageA.1.0.0.0.0-beta.nupkg", "packageA", false)]
+        [InlineData("packageA.1.0.0-beta.nupkg", "packageA", true)]
+        [InlineData("packageA.1.0.0-beta.nupkg", "packageA.1", true)]
+        [InlineData("packageA.1.0.0-beta-#.nupkg", "packageA", false)]
+        [InlineData("packageA.1.0.0-beta.txt", "packageA.1", false)]
+        public void LocalFolderUtility_IsPossiblePackageMatch(string fileName, string id, bool expected)
+        {
+            // Arrange
+            var file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), fileName));
+
+            // Act
+            var result = LocalFolderUtility.IsPossiblePackageMatch(file, id);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("packageA.1.0.0.0.0-beta.nupkg", "packageA", "1.0.0", false)]
+        [InlineData("packageA.1.0.0-beta.nupkg", "packageA", "1.0.0-beta", true)]
+        [InlineData("packageA.1.0.0-beta.symbols.nupkg", "packageA", "1.0.0-beta", false)]
+        [InlineData("packageA.1.0.0-beta.nupkg", "packageA.1", "0.0-beta", true)]
+        [InlineData("packageA.1.0.0-beta-#.nupkg", "packageA", "1.0.0", false)]
+        [InlineData("packageA.1.0.0-beta.txt", "packageA.1", "1.0.0", false)]
+        public void LocalFolderUtility_IsPossiblePackageMatch(string fileName, string id, string version, bool expected)
+        {
+            // Arrange
+            var file = new FileInfo(Path.Combine(Directory.GetCurrentDirectory(), fileName));
+            var identity = new PackageIdentity(id, NuGetVersion.Parse(version));
+
+            // Act
+            var result = LocalFolderUtility.IsPossiblePackageMatch(file, identity);
+
+            // Assert
+            Assert.Equal(expected, result);
         }
     }
 }
