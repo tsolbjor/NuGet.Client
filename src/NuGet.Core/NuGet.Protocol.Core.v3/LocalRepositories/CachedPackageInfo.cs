@@ -4,7 +4,7 @@
 using System;
 using NuGet.Packaging;
 
-namespace NuGet.Protocol.Core.v3.LocalRepositories
+namespace NuGet.Protocol
 {
     public class CachedPackageInfo
     {

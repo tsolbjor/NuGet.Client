@@ -17,7 +17,7 @@ using NuGet.Packaging.Core;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
-namespace NuGet.Protocol.Core.v3.LocalRepositories
+namespace NuGet.Protocol
 {
     public class LocalV3FindPackageByIdResource : FindPackageByIdResource
     {

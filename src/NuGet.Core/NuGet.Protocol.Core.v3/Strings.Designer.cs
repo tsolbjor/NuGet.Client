@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace NuGet.Protocol.Core.v3 {
+namespace NuGet.Protocol {
     using System;
     using System.Reflection;
     
@@ -596,6 +596,15 @@ namespace NuGet.Protocol.Core.v3 {
         public static string Protocol_PackageMetadataError {
             get {
                 return ResourceManager.GetString("Protocol_PackageMetadataError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///    Looks up a localized string similar to The path &apos;{0}&apos; for the selected source could not be resolved..
+        /// </summary>
+        public static string Protocol_Search_LocalSourceNotFound {
+            get {
+                return ResourceManager.GetString("Protocol_Search_LocalSourceNotFound", resourceCulture);
             }
         }
         
