@@ -32,7 +32,17 @@ namespace NuGet.Protocol
 
         public static IEnumerable<LocalPackageInfo> GetPackagesV2(string root, string id, ILogger log)
         {
-            return GetPackagesFromNupkgs(GetNupkgsFromFlatFolder(root, id, log));
+            foreach (var package in GetPackagesFromNupkgs(GetNupkgsFromFlatFolder(root, id, log)))
+            {
+                // Filter out any packages that were incorrectly identified
+                // Ex: id: packageA.1 version: 1.0 -> packageA.1.1.0 -> packageA 1.1.0
+                if (StringComparer.OrdinalIgnoreCase.Equals(id, package.Identity.Id))
+                {
+                    yield return package;
+                }
+            }
+
+            yield break;
         }
 
         public static LocalPackageInfo GetPackageV2(string root, string id, NuGetVersion version, ILogger log)
@@ -42,12 +52,98 @@ namespace NuGet.Protocol
 
         public static LocalPackageInfo GetPackageV2(string root, PackageIdentity identity, ILogger log)
         {
-            var possiblePaths = PackagePathHelper.GetPackageLookupPaths(identity, new PackagePathResolver(root))
-                .Where(path => path.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase)
-                    && File.Exists(path));
+            // Search directories starting with the top directory for any package matching the identity
+            // If multiple packages are found in the same directory that match (ex: 1.0, 1.0.0.0)
+            // then favor the exact non-normalized match. If no exact match is found take the first
+            // using the file system sort order. This is to match the legacy nuget 2.8.x behavior.
+            foreach (var directoryList in GetNupkgsFromFlatFolderChunked(root, log))
+            {
+                LocalPackageInfo fallbackMatch = null;
 
-            return GetPackagesFromNupkgs(possiblePaths)
-                .FirstOrDefault(package => identity.Equals(package.Identity));
+                // Check for any files that are in the form packageId.version.nupkg
+                foreach (var file in directoryList.Where(file => IsPossiblePackageMatch(file, identity)))
+                {
+                    var package = GetPackageFromNupkg(file.FullName);
+
+                    if (identity.Equals(package.Identity))
+                    {
+                        if (StringComparer.OrdinalIgnoreCase.Equals(
+                            identity.Version.ToString(),
+                            package.Identity.Version.ToString()))
+                        {
+                            // Take an exact match immediately
+                            return package;
+                        }
+                        else if (fallbackMatch == null)
+                        {
+                            // This matches the identity, but there may be an exact match still
+                            fallbackMatch = package;
+                        }
+                    }
+                }
+
+                if (fallbackMatch != null)
+                {
+                    // Use the fallback match if an exact match was not found
+                    return fallbackMatch;
+                }
+            }
+
+            // Not found
+            return null;
+        }
+
+        /// <summary>
+        /// True if the file name matches the identity. This is could be incorrect if
+        /// the package name ends with numbers. The result should be checked against the nuspec.
+        /// </summary>
+        public static bool IsPossiblePackageMatch(FileInfo file, PackageIdentity identity)
+        {
+            return identity.Equals(GetIdentityFromFile(file, identity.Id));
+        }
+
+        /// <summary>
+        /// True if the file name matches the id and is followed by a version. This is could be incorrect if
+        /// the package name ends with numbers. The result should be checked against the nuspec.
+        /// </summary>
+        public static bool IsPossiblePackageMatch(FileInfo file, string id)
+        {
+            return GetIdentityFromFile(file, id) != null;
+        }
+
+        /// <summary>
+        /// An imperfect attempt at finding the identity of a package from the file name.
+        /// This can fail if the package name ends with something such as .1
+        /// </summary>
+        public static PackageIdentity GetIdentityFromFile(FileInfo file, string id)
+        {
+            PackageIdentity result = null;
+            var prefix = $"{id}.";
+            var fileName = file.Name;
+
+            if (fileName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                && file.Name.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase))
+            {
+                fileName = Path.GetFileNameWithoutExtension(fileName);
+
+                if (fileName.EndsWith(".symbols", StringComparison.OrdinalIgnoreCase))
+                {
+                    fileName = Path.GetFileNameWithoutExtension(fileName);
+                }
+
+                if (fileName.Length > prefix.Length)
+                {
+                    var versionString = fileName.Substring(prefix.Length, fileName.Length - prefix.Length);
+
+                    NuGetVersion version;
+                    if (NuGetVersion.TryParse(versionString, out version))
+                    {
+                        result = new PackageIdentity(id, version);
+                    }
+                }
+            }
+
+            return result;
         }
 
         public static LocalPackageInfo GetPackageV3(string root, string id, NuGetVersion version, ILogger log)
@@ -98,6 +194,11 @@ namespace NuGet.Protocol
             return null;
         }
 
+        private static IEnumerable<LocalPackageInfo> GetPackagesFromNupkgs(IEnumerable<FileInfo> files)
+        {
+            return files.Select(file => GetPackageFromNupkg(file.FullName));
+        }
+
         private static IEnumerable<LocalPackageInfo> GetPackagesFromNupkgs(IEnumerable<string> files)
         {
             return files.Select(GetPackageFromNupkg);
@@ -126,7 +227,7 @@ namespace NuGet.Protocol
         /// Discover all nupkgs from a v2 local folder.
         /// </summary>
         /// <param name="root">Folder root.</param>
-        public static IEnumerable<string> GetNupkgsFromFlatFolder(string root, ILogger log)
+        public static IEnumerable<FileInfo> GetNupkgsFromFlatFolder(string root, ILogger log)
         {
             // Check for package files one level deep.
             DirectoryInfo rootDirectoryInfo = null;
@@ -143,24 +244,46 @@ namespace NuGet.Protocol
                 throw new FatalProtocolException(message, ex);
             }
 
+            // Return all directory file list chunks in a flat list
+            foreach (var directoryList in GetNupkgsFromFlatFolderChunked(rootDirectoryInfo.FullName, log))
+            {
+                foreach (var file in directoryList)
+                {
+                    yield return file;
+                }
+            }
+
+            yield break;
+        }
+
+        /// <summary>
+        /// Retrieve files in chunks, this helps maintain the legacy behavior of searching for
+        /// certain non-normalized file names.
+        /// </summary>
+        private static IEnumerable<FileInfo[]> GetNupkgsFromFlatFolderChunked(string root, ILogger log)
+        {
             // Ignore missing directories for v2
-            if (!Directory.Exists(rootDirectoryInfo.FullName))
+            if (!Directory.Exists(root))
             {
                 yield break;
             }
 
             // Search the top level directory
-            foreach (var path in GetNupkgsFromDirectory(root, log))
+            var topLevel = GetNupkgsFromDirectory(root, log);
+
+            if (topLevel.Length > 0)
             {
-                yield return path.FullName;
+                yield return topLevel;
             }
 
             // Search all sub directories
             foreach (var subDirectory in GetDirectoriesSafe(root, log))
             {
-                foreach (var path in GetNupkgsFromDirectory(subDirectory.FullName, log))
+                var files = GetNupkgsFromDirectory(subDirectory.FullName, log);
+
+                if (files.Length > 0)
                 {
-                    yield return path.FullName;
+                    yield return files;
                 }
             }
 
@@ -172,13 +295,11 @@ namespace NuGet.Protocol
         /// </summary>
         /// <param name="root">Folder root.</param>
         /// <param name="id">Package id file name prefix.</param>
-        public static IEnumerable<string> GetNupkgsFromFlatFolder(string root, string id, ILogger log)
+        public static IEnumerable<FileInfo> GetNupkgsFromFlatFolder(string root, string id, ILogger log)
         {
             foreach (var path in GetNupkgsFromFlatFolder(root, log))
             {
-                var fileName = Path.GetFileName(path);
-
-                if (fileName.StartsWith(id, StringComparison.OrdinalIgnoreCase))
+                if (IsPossiblePackageMatch(path, id))
                 {
                     yield return path;
                 }
