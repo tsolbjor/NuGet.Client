@@ -410,6 +410,26 @@ namespace NuGet.Protocol
             yield break;
         }
 
+        /// <summary>
+        /// Remove duplicate packages which can occur in directories.
+        /// In V2 packages may exist under multiple sub folders. 
+        /// Non-normalized versions also lead to duplicates: ex: 1.0, 1.0.0.0
+        /// </summary>
+        public static IEnumerable<LocalPackageInfo> GetDistinctPackages(IEnumerable<LocalPackageInfo> packages)
+        {
+            var seen = new HashSet<PackageIdentity>();
+
+            foreach (var package in packages)
+            {
+                if (seen.Add(package.Identity))
+                {
+                    yield return package;
+                }
+            }
+
+            yield break;
+        }
+
         private static DirectoryInfo[] GetDirectoriesSafe(string root, ILogger log)
         {
             try

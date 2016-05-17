@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using NuGet.Common;
 using NuGet.Packaging.Core;
-using NuGet.Protocol.Core.Types;
 
 namespace NuGet.Protocol
 {
@@ -20,7 +17,10 @@ namespace NuGet.Protocol
         {
             token.ThrowIfCancellationRequested();
 
-            return LocalFolderUtility.GetPackagesV2(Root, logger);
+            var packages = LocalFolderUtility.GetPackagesV2(Root, logger);
+
+            // Filter out any duplicates that may appear in the folder multiple times.
+            return LocalFolderUtility.GetDistinctPackages(packages);
         }
 
         public override LocalPackageInfo GetPackage(Uri path, ILogger logger, CancellationToken token)
@@ -41,7 +41,10 @@ namespace NuGet.Protocol
         {
             token.ThrowIfCancellationRequested();
 
-            return LocalFolderUtility.GetPackagesV2(Root, logger);
+            var packages = LocalFolderUtility.GetPackagesV2(Root, logger);
+
+            // Filter out any duplicates that may appear in the folder multiple times.
+            return LocalFolderUtility.GetDistinctPackages(packages);
         }
     }
 }
