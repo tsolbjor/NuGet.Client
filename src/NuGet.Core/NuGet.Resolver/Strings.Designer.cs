@@ -96,6 +96,15 @@ namespace NuGet.Resolver {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to Existing package.config is invalid and contains unresolved dependency &apos;{0}&apos;..
+        /// </summary>
+        public static string InvalidPackageConfig {
+            get {
+                return ResourceManager.GetString("InvalidPackageConfig", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to Unable to find package &apos;{0}&apos;. Existing packages must be restored before performing an install or update..
         /// </summary>
         public static string MissingDependencyInfo {

@@ -129,6 +129,9 @@
   <data name="FatalError" xml:space="preserve">
     <value>A fatal error occured while resolving dependencies.</value>
   </data>
+  <data name="InvalidPackageConfig" xml:space="preserve">
+    <value>Existing package.config is invalid and contains unresolved dependency '{0}'.</value>
+  </data>
   <data name="MissingDependencyInfo" xml:space="preserve">
     <value>Unable to find package '{0}'. Existing packages must be restored before performing an install or update.</value>
   </data>
