@@ -152,7 +152,7 @@ Function Install-DotnetCLI {
 
     wget https://raw.githubusercontent.com/dotnet/cli/rel/1.0.0/scripts/obtain/install.ps1 -OutFile cli/install.ps1
 
-    & cli/install.ps1 -Channel beta -i $CLIRoot -Version 1.0.0-rc2-002345
+    & cli/install.ps1 -Channel beta -i $CLIRoot -Version 1.0.0-preview1-002702
 
     if (-not (Test-Path $DotNetExe)) {
         Error-Log "Unable to find dotnet.exe. The CLI install may have failed."
