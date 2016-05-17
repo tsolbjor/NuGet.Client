@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Xml;
 using NuGet.Common;
 using NuGet.Configuration;
 using NuGet.Packaging;
@@ -18,75 +17,12 @@ namespace NuGet.Protocol
 {
     public static class LocalFolderUtility
     {
-        public static CachedPackageInfo GetPackage(string root, PackageIdentity packageIdentity, ILogger log)
-        {
-            return GetPackage(root, packageIdentity.Id, packageIdentity.Version, log);
-        }
-
-        public static CachedPackageInfo GetPackage(string root, string id, NuGetVersion version, ILogger log)
-        {
-            // TODO: Optimize this and bring back the older version fallback search
-            // A comparer should be written that contains the legacy fallback logic
-            return GetPackageInfos(root, id, log).FirstOrDefault(info => info.Reader.GetVersion() == version);
-        }
-
-        /// <summary>
-        /// Get package infos from a local folder. Used for project.json restore.
-        /// </summary>
-        /// <param name="root">Folder root.</param>
-        /// <param name="id">Package id.</param>
-        public static List<CachedPackageInfo> GetPackageInfos(string root, string id, ILogger log)
-        {
-            var result = new List<CachedPackageInfo>();
-
-            // packages\{packageId}.{version}.nupkg
-            foreach (var nupkgInfo in GetNupkgsFromFlatFolder(root, id, log))
-            {
-                using (var stream = nupkgInfo.OpenRead())
-                using (var packageReader = new PackageArchiveReader(stream))
-                {
-                    NuspecReader reader;
-                    try
-                    {
-                        using (var nuspecStream = packageReader.GetNuspec())
-                        {
-                            reader = new NuspecReader(nuspecStream);
-                        }
-                    }
-                    catch (XmlException ex)
-                    {
-                        var message = string.Format(
-                            CultureInfo.CurrentCulture,
-                            Strings.Protocol_PackageMetadataError,
-                            nupkgInfo.Name,
-                            root);
-
-                        throw new FatalProtocolException(message, ex);
-                    }
-                    catch (PackagingException ex)
-                    {
-                        var message = string.Format(
-                            CultureInfo.CurrentCulture,
-                            Strings.Protocol_PackageMetadataError,
-                            nupkgInfo.Name,
-                            root);
-
-                        throw new FatalProtocolException(message, ex);
-                    }
-
-                    if (string.Equals(reader.GetId(), id, StringComparison.OrdinalIgnoreCase))
-                    {
-                        result.Add(new CachedPackageInfo { Path = nupkgInfo.FullName, Reader = reader });
-                    }
-                }
-            }
-
-            return result;
-        }
+        // *.nupkg
+        private static readonly string NupkgFilter = $"*{NuGetConstants.PackageExtension}";
 
         public static LocalPackageInfo GetPackage(Uri path, ILogger log)
         {
-            return GetPackageFromNupkg(new FileInfo(path.LocalPath));
+            return GetPackageFromNupkg(path.LocalPath);
         }
 
         public static IEnumerable<LocalPackageInfo> GetPackagesV2(string root, ILogger log)
@@ -108,8 +44,7 @@ namespace NuGet.Protocol
         {
             var possiblePaths = PackagePathHelper.GetPackageLookupPaths(identity, new PackagePathResolver(root))
                 .Where(path => path.EndsWith(PackagingCoreConstants.NupkgExtension, StringComparison.OrdinalIgnoreCase)
-                    && File.Exists(path))
-                .Select(path => new FileInfo(path));
+                    && File.Exists(path));
 
             return GetPackagesFromNupkgs(possiblePaths)
                 .FirstOrDefault(package => identity.Equals(package.Identity));
@@ -120,12 +55,17 @@ namespace NuGet.Protocol
             return GetPackageV3(root, new PackageIdentity(id, version), log);
         }
 
+        /// <summary>
+        /// Retrieve a package from a v3 feed.
+        /// </summary>
         public static LocalPackageInfo GetPackageV3(string root, PackageIdentity identity, ILogger log)
         {
             var pathResolver = new VersionFolderPathResolver(root);
 
+            // Construct the expected nupkg path
             var nupkgPath = pathResolver.GetPackageFilePath(identity.Id, identity.Version);
 
+            // Verify the files exist
             if (File.Exists(nupkgPath) && IsValidForV3(pathResolver, identity.Id, identity.Version))
             {
                 var nuspecPath = pathResolver.GetManifestFileName(identity.Id, identity.Version);
@@ -158,24 +98,24 @@ namespace NuGet.Protocol
             return null;
         }
 
-        private static IEnumerable<LocalPackageInfo> GetPackagesFromNupkgs(IEnumerable<FileInfo> files)
+        private static IEnumerable<LocalPackageInfo> GetPackagesFromNupkgs(IEnumerable<string> files)
         {
             return files.Select(GetPackageFromNupkg);
         }
 
-        private static LocalPackageInfo GetPackageFromNupkg(FileInfo nupkgFile)
+        private static LocalPackageInfo GetPackageFromNupkg(string nupkgFile)
         {
-            using (var package = new PackageArchiveReader(nupkgFile.FullName))
+            using (var package = new PackageArchiveReader(nupkgFile))
             {
                 var nuspec = package.NuspecReader;
 
-                var packageHelper = new Func<PackageReaderBase>(() => new PackageArchiveReader(nupkgFile.FullName));
+                var packageHelper = new Func<PackageReaderBase>(() => new PackageArchiveReader(nupkgFile));
                 var nuspecHelper = new Lazy<NuspecReader>(() => nuspec);
 
                 return new LocalPackageInfo()
                 {
                     Identity = nuspec.GetIdentity(),
-                    Path = nupkgFile.FullName,
+                    Path = nupkgFile,
                     NuspecHelper = nuspecHelper,
                     PackageHelper = packageHelper
                 };
@@ -186,24 +126,14 @@ namespace NuGet.Protocol
         /// Discover all nupkgs from a v2 local folder.
         /// </summary>
         /// <param name="root">Folder root.</param>
-        public static IEnumerable<FileInfo> GetNupkgsFromFlatFolder(string root, ILogger log)
-        {
-            // Match all nupkgs in the folder
-            return GetNupkgsFromFlatFolder(root, id: string.Empty, log: log);
-        }
-
-        /// <summary>
-        /// Discover nupkgs from a v2 local folder.
-        /// </summary>
-        /// <param name="root">Folder root.</param>
-        /// <param name="id">Package id or package id prefix.</param>
-        public static IEnumerable<FileInfo> GetNupkgsFromFlatFolder(string root, string id, ILogger log)
+        public static IEnumerable<string> GetNupkgsFromFlatFolder(string root, ILogger log)
         {
             // Check for package files one level deep.
             DirectoryInfo rootDirectoryInfo = null;
 
             try
             {
+                // Verify that the directory is a valid path
                 rootDirectoryInfo = new DirectoryInfo(root);
             }
             catch (ArgumentException ex)
@@ -213,86 +143,56 @@ namespace NuGet.Protocol
                 throw new FatalProtocolException(message, ex);
             }
 
-            if (rootDirectoryInfo == null || !Directory.Exists(rootDirectoryInfo.FullName))
+            // Ignore missing directories for v2
+            if (!Directory.Exists(rootDirectoryInfo.FullName))
             {
                 yield break;
             }
 
-            var filter = $"*{NuGetConstants.PackageExtension}";
-
-            // Check top level directory
-            foreach (var path in rootDirectoryInfo.EnumerateFiles(filter))
+            // Search the top level directory
+            foreach (var path in GetNupkgsFromDirectory(root, log))
             {
-                if (path.Name.StartsWith(id, StringComparison.OrdinalIgnoreCase))
+                yield return path.FullName;
+            }
+
+            // Search all sub directories
+            foreach (var subDirectory in GetDirectoriesSafe(root, log))
+            {
+                foreach (var path in GetNupkgsFromDirectory(subDirectory.FullName, log))
+                {
+                    yield return path.FullName;
+                }
+            }
+
+            yield break;
+        }
+
+        /// <summary>
+        /// Discover nupkgs from a v2 local folder.
+        /// </summary>
+        /// <param name="root">Folder root.</param>
+        /// <param name="id">Package id file name prefix.</param>
+        public static IEnumerable<string> GetNupkgsFromFlatFolder(string root, string id, ILogger log)
+        {
+            foreach (var path in GetNupkgsFromFlatFolder(root, log))
+            {
+                var fileName = Path.GetFileName(path);
+
+                if (fileName.StartsWith(id, StringComparison.OrdinalIgnoreCase))
                 {
                     yield return path;
                 }
             }
 
-            // Check sub directories
-            foreach (var dir in rootDirectoryInfo.EnumerateDirectories(filter))
-            {
-                foreach (var path in dir.EnumerateFiles(filter))
-                {
-                    if (path.Name.StartsWith(id, StringComparison.OrdinalIgnoreCase))
-                    {
-                        yield return path;
-                    }
-                }
-            }
+            yield break;
         }
 
         /// <summary>
-        /// True if a nupkg exists in the root or the first level of sub folders.
+        /// Find all nupkgs in the top level of a directory.
         /// </summary>
-        public static bool IsV2FolderStructure(string root, ILogger log)
+        private static FileInfo[] GetNupkgsFromDirectory(string root, ILogger log)
         {
-            return GetNupkgsFromFlatFolder(root, log).Any();
-        }
-
-        /// <summary>
-        /// True if this is a v3 folder format.
-        /// </summary>
-        public static bool IsV3FolderStructure(string root, ILogger log)
-        {
-            // Treat missing directories as v2
-            if (Directory.Exists(root))
-            {
-                return false;
-            }
-
-            // Check for nupkgs in the root or sub folders.
-            if (IsV2FolderStructure(root, log))
-            {
-                return false;
-            }
-
-            var rootDir = new DirectoryInfo(root);
-            var pathResolver = new VersionFolderPathResolver(root);
-
-            // Check for an actual V3 file
-            foreach (var idDir in GetDirectoriesSafe(root, log))
-            {
-                foreach (var versionDir in GetDirectoriesSafe(root, log))
-                {
-                    var id = Path.GetDirectoryName(idDir);
-                    var versionString = Path.GetDirectoryName(versionDir);
-
-                    NuGetVersion version;
-                    if (NuGetVersion.TryParse(versionString, out version))
-                    {
-                        var hashPath = pathResolver.GetHashPath(id, version);
-
-                        if (File.Exists(hashPath))
-                        {
-                            // If we have files in the format {packageId}/{version}/{packageId}.nupkg.sha512, assume it's an expanded package repository.
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            return GetFilesSafe(root, NupkgFilter, log);
         }
 
         /// <summary>
@@ -302,9 +202,9 @@ namespace NuGet.Protocol
         public static IEnumerable<LocalPackageInfo> GetPackagesV3(string root, ILogger log)
         {
             // Match all nupkgs in the folder
-            foreach (var id in GetDirectoriesSafe(root, log))
+            foreach (var idPath in GetDirectoriesSafe(root, log))
             {
-                foreach (var nupkg in GetPackagesV3(root, id: id, log: log))
+                foreach (var nupkg in GetPackagesV3(root, id: idPath.Name, log: log))
                 {
                     yield return nupkg;
                 }
@@ -334,7 +234,7 @@ namespace NuGet.Protocol
                 throw new FatalProtocolException(message, ex);
             }
 
-            if (rootDirectoryInfo == null || !Directory.Exists(rootDirectoryInfo.FullName))
+            if (!Directory.Exists(rootDirectoryInfo.FullName))
             {
                 // Directory is missing
                 yield break;
@@ -346,9 +246,9 @@ namespace NuGet.Protocol
             foreach (var versionDir in GetDirectoriesSafe(idRoot, log))
             {
                 NuGetVersion version;
-                if (NuGetVersion.TryParse(versionDir, out version))
+                if (NuGetVersion.TryParse(versionDir.Name, out version))
                 {
-                    var nupkgPath = pathResolver.GetPackageFileName(id, version);
+                    var nupkgPath = pathResolver.GetPackageFilePath(id, version);
 
                     // This may not exist if another thread is currently extracting the package, there is no reason to warn here.
                     if (File.Exists(nupkgPath) && IsValidForV3(pathResolver, id, version))
@@ -382,39 +282,41 @@ namespace NuGet.Protocol
                 }
                 else
                 {
-                    log.LogWarning($"Unable to parse version: {versionDir}");
+                    log.LogWarning(string.Format(CultureInfo.CurrentCulture, Strings.UnableToParseFolderV3Version, versionDir));
                 }
             }
 
             yield break;
         }
 
-        private static IEnumerable<string> GetDirectoriesSafe(string root, ILogger log)
+        private static DirectoryInfo[] GetDirectoriesSafe(string root, ILogger log)
         {
             try
             {
-                return Directory.GetDirectories(root);
+                var rootDir = new DirectoryInfo(root);
+                return rootDir.GetDirectories();
             }
             catch (Exception e)
             {
                 log.LogWarning(e.Message);
             }
 
-            return Enumerable.Empty<string>();
+            return new DirectoryInfo[0];
         }
 
-        private static IEnumerable<string> GetFilesSafe(string root, string filter, ILogger log)
+        private static FileInfo[] GetFilesSafe(string root, string filter, ILogger log)
         {
             try
             {
-                return Directory.GetFiles(root, filter);
+                var rootDir = new DirectoryInfo(root);
+                return rootDir.GetFiles(filter);
             }
             catch (Exception e)
             {
                 log.LogWarning(e.Message);
             }
 
-            return Enumerable.Empty<string>();
+            return new FileInfo[0];
         }
 
         /// <summary>

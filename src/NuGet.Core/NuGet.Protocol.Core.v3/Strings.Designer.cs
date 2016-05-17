@@ -663,6 +663,15 @@ namespace NuGet.Protocol {
         }
         
         /// <summary>
+        ///    Looks up a localized string similar to Unable to parse a valid version from a v3 folder: &apos;{0}&apos;..
+        /// </summary>
+        public static string UnableToParseFolderV3Version {
+            get {
+                return ResourceManager.GetString("UnableToParseFolderV3Version", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///    Looks up a localized string similar to Found symbols package &apos;{0}&apos;, but no API key was specified for the symbol server. To save an API Key, run &apos;NuGet.exe setApiKey [your API key from http://www.NuGet.org]&apos;..
         /// </summary>
         public static string Warning_SymbolServerNotConfigured {

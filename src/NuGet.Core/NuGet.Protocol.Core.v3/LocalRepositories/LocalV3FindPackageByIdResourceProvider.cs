@@ -23,7 +23,10 @@ namespace NuGet.Protocol
             INuGetResource resource = null;
 
             var feedType = await source.GetFeedType(token);
-            if (feedType == FeedType.FileSystemV3)
+
+            // Default to v3 if the type is unknown
+            if (feedType == FeedType.FileSystemV3
+                || feedType == FeedType.FileSystemUnknown)
             {
                 resource = new LocalV3FindPackageByIdResource(source.PackageSource);
             }

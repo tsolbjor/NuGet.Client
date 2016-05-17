@@ -1,13 +1,16 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using NuGet.Common;
 using NuGet.Configuration;
-using NuGet.Protocol;
 
 namespace NuGet.Protocol
 {
     public static class FeedTypeUtility
     {
+        /// <summary>
+        /// Determine the type of a nuget source. This works for both offline and online sources.
+        /// </summary>
         public static FeedType GetFeedType(PackageSource packageSource)
         {
             // Default to unknown file system
@@ -35,14 +38,14 @@ namespace NuGet.Protocol
                 }
                 else
                 {
-                    if (LocalFolderUtility.IsV3FolderStructure(path, NullLogger.Instance))
+                    // Try to determine the actual folder feed type by looking for nupkgs
+                    if (LocalFolderUtility.GetNupkgsFromFlatFolder(path, NullLogger.Instance).Any())
+                    {
+                        type = FeedType.FileSystemV2;
+                    }
+                    else if (LocalFolderUtility.GetPackagesV3(path, NullLogger.Instance).Any())
                     {
                         type = FeedType.FileSystemV3;
-                    }
-                    else
-                    {
-                        // Use v2 if the folder does not exist yet
-                        type = FeedType.FileSystemV2;
                     }
                 }
             }
