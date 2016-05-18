@@ -76,7 +76,10 @@ namespace NuGet.Protocol
             var result = new List<CachedPackageInfo>();
 
             // packages\{packageId}.{version}.nupkg
-            foreach (var nupkgInfo in GetNupkgFiles(_source, id))
+            var nupkgFiles = LocalFolderUtility.GetNupkgsFromFlatFolder(_source, Logger)
+                .Where(path => LocalFolderUtility.IsPossiblePackageMatch(path, id));
+
+            foreach (var nupkgInfo in nupkgFiles)
             {
                 var cachedPackageInfo = cachedPackageInfos?.FirstOrDefault(package => string.Equals(package.Path, nupkgInfo.FullName, StringComparison.OrdinalIgnoreCase));
                 if (cachedPackageInfo != null
@@ -108,7 +111,14 @@ namespace NuGet.Protocol
 
                     if (string.Equals(reader.GetId(), id, StringComparison.OrdinalIgnoreCase))
                     {
-                        result.Add(new CachedPackageInfo { Path = nupkgInfo.FullName, Reader = reader });
+                        var cachePackage = new CachedPackageInfo()
+                        {
+                            Path = nupkgInfo.FullName,
+                            Reader = reader,
+                            LastWriteTimeUtc = nupkgInfo.LastWriteTimeUtc
+                        };
+
+                        result.Add(cachePackage);
                     }
                 }
             }
@@ -116,50 +126,6 @@ namespace NuGet.Protocol
             _packageInfoCache.TryAdd(id, result);
 
             return result;
-        }
-
-        internal static IEnumerable<FileInfo> GetNupkgFiles(string sourceDir, string id)
-        {
-            // Check for package files one level deep.
-            DirectoryInfo rootDirectoryInfo = null;
-            try
-            {
-                rootDirectoryInfo = new DirectoryInfo(sourceDir);
-            }
-            catch (ArgumentException ex)
-            {
-                var message = string.Format(CultureInfo.CurrentCulture, Strings.Log_FailedToRetrievePackage, sourceDir);
-
-                throw new FatalProtocolException(message, ex);
-            }
-
-            if (rootDirectoryInfo == null || !Directory.Exists(rootDirectoryInfo.FullName))
-            {
-                yield break;
-            }
-
-            var filter = "*.nupkg";
-
-            // Check top level directory
-            foreach (var path in rootDirectoryInfo.EnumerateFiles(filter))
-            {
-                if (path.Name.StartsWith(id, StringComparison.OrdinalIgnoreCase))
-                {
-                    yield return path;
-                }
-            }
-
-            // Check sub directories
-            foreach (var dir in rootDirectoryInfo.EnumerateDirectories(filter))
-            {
-                foreach (var path in dir.EnumerateFiles(filter))
-                {
-                    if (path.Name.StartsWith(id, StringComparison.OrdinalIgnoreCase))
-                    {
-                        yield return path;
-                    }
-                }
-            }
         }
     }
 }
