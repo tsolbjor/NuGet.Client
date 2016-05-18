@@ -17,7 +17,7 @@ namespace NuGet.Protocol
         {
             token.ThrowIfCancellationRequested();
 
-            return LocalFolderUtility.GetPackagesV3(Root, logger);
+            return LocalFolderUtility.GetPackagesV3(Root, id, logger);
         }
 
         public override LocalPackageInfo GetPackage(Uri path, ILogger logger, CancellationToken token)

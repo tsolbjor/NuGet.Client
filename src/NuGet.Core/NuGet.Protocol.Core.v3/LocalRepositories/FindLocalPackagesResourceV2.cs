@@ -17,7 +17,7 @@ namespace NuGet.Protocol
         {
             token.ThrowIfCancellationRequested();
 
-            var packages = LocalFolderUtility.GetPackagesV2(Root, logger);
+            var packages = LocalFolderUtility.GetPackagesV2(Root, id, logger);
 
             // Filter out any duplicates that may appear in the folder multiple times.
             return LocalFolderUtility.GetDistinctPackages(packages);

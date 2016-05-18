@@ -98,6 +98,11 @@ namespace NuGet.Protocol
         {
             var rootDirInfo = new DirectoryInfo(root);
 
+            if (!rootDirInfo.Exists)
+            {
+                return new List<LocalPackageInfo>();
+            }
+
             var files = rootDirInfo.GetFiles("*" + PackagingCoreConstants.NupkgExtension, SearchOption.TopDirectoryOnly);
             var directories = rootDirInfo.GetDirectories("*", SearchOption.TopDirectoryOnly);
 
