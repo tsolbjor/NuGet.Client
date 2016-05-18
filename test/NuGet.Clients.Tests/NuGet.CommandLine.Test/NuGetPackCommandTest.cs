@@ -2506,12 +2506,14 @@ namespace Proj2
         /// <param name="referencedProject">The list of projects referenced by this project. Can be null.</param>
         /// <param name="targetFrameworkVersion">The target framework version of the project.</param>
         /// <param name="version">The version of the assembly.</param>
+        /// <param name="informationalVersion">The informationversion of the assembly Can be null.</param>
         private void CreateTestProject(
             string baseDirectory,
             string projectName,
             string[] referencedProject,
             string targetFrameworkVersion = "v4.0",
-            string version = "0.0.0.0")
+            string version = "0.0.0.0",
+            string informationalVersion = null)
         {
             var projectDirectory = Path.Combine(baseDirectory, projectName);
             Directory.CreateDirectory(projectDirectory);
@@ -2554,7 +2556,8 @@ namespace Proj2
 @"using System;
 using System.Reflection;
 
-[assembly: AssemblyVersion(" + "\"" + version + "\"" + @")]
+[assembly: AssemblyVersion(" + "\"" + version + "\"" + @")] 
+" + (informationalVersion != null ? "[assembly: AssemblyInformationalVersion(" + "\"" + informationalVersion + "\"" + @")]" : "") + @"
 namespace " + projectName + @"
 {
     public class Class1
@@ -2718,6 +2721,55 @@ stuff \n <<".Replace("\r\n", "\n");
                     actualDescription = description.Value.Replace("\r\n", "\n");
                     Assert.Equal(expectedDescription, actualDescription);
                 }
+            }
+        }
+
+        // Test that recognized tokens such as $id$ in the nuspec file of the
+        // referenced project are replaced.
+        [Fact]
+        public void PackCommand_PackShouldIgnoreInformationalVersionIfProvidedIsCommandLineArgument()
+        {
+            var nugetexe = Util.GetNuGetExePath();
+
+            using (var workingDirectory = TestFileSystemUtility.CreateRandomTestFolder())
+            {
+                CreateTestProject(workingDirectory, "proj1", null, "v4.0", "3.0.0", "3.0.0-beta.1+9.Branch.release/3.0.Sha.561a308094afcd71615db5f3a5e3ce6d8d01d281");
+                Util.CreateFile(
+                    Path.Combine(workingDirectory, "proj1"),
+                    "proj2.nuspec",
+@"<package xmlns='http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd'>
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>Proj1</title>
+    <authors>test</authors>
+    <owners>test</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Description</description>
+    <copyright>Copyright ©  2013</copyright>
+  </metadata>
+</package>");
+
+                // Act
+                var proj1Directory = Path.Combine(workingDirectory, "proj1");
+                var r = CommandRunner.Run(
+                    nugetexe,
+                    proj1Directory,
+                    "pack proj1.csproj -version 3.0.0-beta001-009 -build",
+                    waitForExit: true);
+                Assert.Equal(0, r.Item1);
+
+                // Assert
+                var package = new OptimizedZipPackage(Path.Combine(proj1Directory, "proj1.3.0.0-beta001-009.nupkg"));
+                var files = package.GetFiles().Select(f => f.Path).ToArray();
+                Array.Sort(files);
+
+                Assert.Equal(
+                    files,
+                    new string[]
+                    {
+                        @"lib\net40\proj1.dll"
+                    });
             }
         }
 
