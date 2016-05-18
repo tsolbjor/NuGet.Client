@@ -205,6 +205,51 @@ namespace NuGet.Test.Utility
         }
 
         /// <summary>
+        /// Create an unzipped repository folder of nupkgs
+        /// </summary>
+        public static void CreateFolderFeedUnzip(string root, params PackageIdentity[] packages)
+        {
+            var contexts = packages.Select(package => new SimpleTestPackageContext(package)).ToList();
+
+            foreach (var context in contexts)
+            {
+                var name = $"{context.Id}.{context.Version.ToString()}";
+
+                var nupkgPath = Path.Combine(root, name + ".nupkg");
+                var folder = Path.Combine(root, name);
+                var nuspecPath = Path.Combine(root, name, name + ".nuspec");
+
+                Directory.CreateDirectory(folder);
+
+                using (var tempRoot = TestFileSystemUtility.CreateRandomTestFolder())
+                {
+                    CreatePackages(tempRoot, context);
+
+                    var input = Directory.GetFiles(tempRoot).Single();
+
+                    using (var zip = new ZipArchive(File.OpenRead(input)))
+                    {
+                        zip.ExtractAll(folder);
+                    }
+
+                    foreach (var file in Directory.GetFiles(folder))
+                    {
+                        if (file.EndsWith(".nuspec"))
+                        {
+                            File.Move(file, nuspecPath);
+                        }
+
+                        // Delete the rest
+                        File.Delete(file);
+                    }
+
+                    // move the nupkg
+                    File.Move(input, nupkgPath);
+                }
+            }
+        }
+
+        /// <summary>
         /// Create a v2 folder of nupkgs
         /// </summary>
         public static void CreateFolderFeedV2(string root, params PackageIdentity[] packages)
