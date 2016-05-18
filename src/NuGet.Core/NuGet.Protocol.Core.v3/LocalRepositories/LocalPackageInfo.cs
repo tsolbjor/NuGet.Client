@@ -10,18 +10,18 @@ namespace NuGet.Protocol
         /// <summary>
         /// Package id and version.
         /// </summary>
-        public PackageIdentity Identity { get; internal set; }
+        public virtual PackageIdentity Identity { get; internal set; }
 
         /// <summary>
         /// Nupkg or folder path.
         /// </summary>
-        public string Path { get; internal set; }
+        public virtual string Path { get; internal set; }
 
         internal Func<PackageReaderBase> PackageHelper { get; set; }
 
         internal Lazy<NuspecReader> NuspecHelper { get; set; }
 
-        public PackageReaderBase Package
+        public virtual PackageReaderBase Package
         {
             get
             {
@@ -29,7 +29,7 @@ namespace NuGet.Protocol
             }
         }
 
-        public NuspecReader Nuspec
+        public virtual NuspecReader Nuspec
         {
             get
             {
@@ -37,7 +37,7 @@ namespace NuGet.Protocol
             }
         }
 
-        public DateTime LastWriteTimeUtc
+        public virtual DateTime LastWriteTimeUtc
         {
             get
             {
@@ -56,7 +56,7 @@ namespace NuGet.Protocol
             }
         }
 
-        public bool IsNupkg
+        public virtual bool IsNupkg
         {
             get
             {

@@ -31,7 +31,7 @@ namespace NuGet.Protocol
         {
             return GetPackageIdsFromLocalPackageRepository(
                 packageIdPrefix,
-                includePrerelease: true,
+                includePrerelease: includePrerelease,
                 log: log,
                 token: token);
         }
@@ -66,7 +66,8 @@ namespace NuGet.Protocol
 
                 if (!string.IsNullOrEmpty(searchFilter))
                 {
-                    packages = packages.Where(p => p.Identity.Id.StartsWith(searchFilter, StringComparison.OrdinalIgnoreCase));
+                    packages = packages.Where(p =>
+                        p.Identity.Id.StartsWith(searchFilter, StringComparison.OrdinalIgnoreCase));
                 }
 
                 if (!includePrerelease)
@@ -100,8 +101,10 @@ namespace NuGet.Protocol
                     packages = packages.Where(p => !p.Identity.Version.IsPrerelease);
                 }
 
+                // Check both the non-normalized and full string versions
                 return packages.Where(p => p.Identity.Version.ToString()
-                    .StartsWith(versionPrefix, StringComparison.OrdinalIgnoreCase))
+                    .StartsWith(versionPrefix, StringComparison.OrdinalIgnoreCase)
+                    || p.Identity.Version.ToFullString().StartsWith(versionPrefix, StringComparison.OrdinalIgnoreCase))
                     .Select(p => p.Identity.Version)
                     .ToList();
             },
