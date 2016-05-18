@@ -20,20 +20,20 @@ namespace NuGet.Protocol
 {
     public class LocalV2FindPackageByIdResource : FindPackageByIdResource
     {
-        private readonly ConcurrentDictionary<string, List<CachedPackageInfo>> _packageInfoCache;
+        private readonly ConcurrentDictionary<string, IReadOnlyList<LocalPackageInfo>> _packageInfoCache
+            = new ConcurrentDictionary<string, IReadOnlyList<LocalPackageInfo>>(StringComparer.OrdinalIgnoreCase);
+
         private readonly string _source;
 
-        public LocalV2FindPackageByIdResource(PackageSource packageSource,
-            ConcurrentDictionary<string, List<CachedPackageInfo>> packageInfoCache)
+        public LocalV2FindPackageByIdResource(PackageSource packageSource)
         {
             _source = packageSource.Source;
-            _packageInfoCache = packageInfoCache;
         }
 
         public override Task<IEnumerable<NuGetVersion>> GetAllVersionsAsync(string id, CancellationToken token)
         {
             var infos = GetPackageInfos(id);
-            return Task.FromResult(infos.Select(p => p.Reader.GetVersion()));
+            return Task.FromResult(infos.Select(p => p.Identity.Version));
         }
 
         public override Task<Stream> GetNupkgStreamAsync(string id, NuGetVersion version, CancellationToken token)
@@ -53,27 +53,25 @@ namespace NuGet.Protocol
             var info = GetPackageInfo(id, version);
             if (info != null)
             {
-                dependencyInfo = GetDependencyInfo(info.Reader);
+                dependencyInfo = GetDependencyInfo(info.Nuspec);
             }
 
             return Task.FromResult(dependencyInfo);
         }
 
-        private CachedPackageInfo GetPackageInfo(string id, NuGetVersion version)
+        private LocalPackageInfo GetPackageInfo(string id, NuGetVersion version)
         {
-            return GetPackageInfos(id).FirstOrDefault(package => package.Reader.GetVersion() == version);
+            return GetPackageInfos(id).FirstOrDefault(package => package.Identity.Version == version);
         }
 
-        private List<CachedPackageInfo> GetPackageInfos(string id)
+        private IReadOnlyList<LocalPackageInfo> GetPackageInfos(string id)
         {
-            List<CachedPackageInfo> cachedPackageInfos;
+            return _packageInfoCache.GetOrAdd(id, (packageId) => GetPackageInfosCore(packageId));
+        }
 
-            if (_packageInfoCache.TryGetValue(id, out cachedPackageInfos))
-            {
-                cachedPackageInfos = cachedPackageInfos.ToList();
-            }
-
-            var result = new List<CachedPackageInfo>();
+        private IReadOnlyList<LocalPackageInfo> GetPackageInfosCore(string id)
+        {
+            var result = new List<LocalPackageInfo>();
 
             // packages\{packageId}.{version}.nupkg
             var nupkgFiles = LocalFolderUtility.GetNupkgsFromFlatFolder(_source, Logger)
@@ -81,13 +79,6 @@ namespace NuGet.Protocol
 
             foreach (var nupkgInfo in nupkgFiles)
             {
-                var cachedPackageInfo = cachedPackageInfos?.FirstOrDefault(package => string.Equals(package.Path, nupkgInfo.FullName, StringComparison.OrdinalIgnoreCase));
-                if (cachedPackageInfo != null
-                    && cachedPackageInfo.LastWriteTimeUtc == nupkgInfo.LastWriteTimeUtc)
-                {
-                    result.Add(cachedPackageInfo);
-                }
-
                 using (var stream = nupkgInfo.OpenRead())
                 using (var packageReader = new PackageArchiveReader(stream))
                 {
@@ -109,21 +100,22 @@ namespace NuGet.Protocol
                         throw new FatalProtocolException(message, ex);
                     }
 
-                    if (string.Equals(reader.GetId(), id, StringComparison.OrdinalIgnoreCase))
+                    var identity = reader.GetIdentity();
+
+                    if (string.Equals(identity.Id, id, StringComparison.OrdinalIgnoreCase))
                     {
-                        var cachePackage = new CachedPackageInfo()
+                        var cachePackage = new LocalPackageInfo()
                         {
                             Path = nupkgInfo.FullName,
-                            Reader = reader,
-                            LastWriteTimeUtc = nupkgInfo.LastWriteTimeUtc
+                            Identity = identity,
+                            NuspecHelper = new Lazy<NuspecReader>(() => reader),
+                            PackageHelper = new Func<PackageReaderBase>(() => new PackageArchiveReader(nupkgInfo.FullName))
                         };
 
                         result.Add(cachePackage);
                     }
                 }
             }
-
-            _packageInfoCache.TryAdd(id, result);
 
             return result;
         }

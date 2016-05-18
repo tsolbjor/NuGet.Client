@@ -15,9 +15,6 @@ namespace NuGet.Protocol
     /// </summary>
     public class LocalV2FindPackageByIdResourceProvider : ResourceProvider
     {
-        private readonly ConcurrentDictionary<string, List<CachedPackageInfo>> _packageInfoCache =
-            new ConcurrentDictionary<string, List<CachedPackageInfo>>(StringComparer.Ordinal);
-
         public LocalV2FindPackageByIdResourceProvider()
             : base(typeof(FindPackageByIdResource),
                   nameof(LocalV2FindPackageByIdResourceProvider),
@@ -32,7 +29,7 @@ namespace NuGet.Protocol
             var feedType = await source.GetFeedType(token);
             if (feedType == FeedType.FileSystemV2)
             {
-                resource = new LocalV2FindPackageByIdResource(source.PackageSource, _packageInfoCache);
+                resource = new LocalV2FindPackageByIdResource(source.PackageSource);
             }
 
             return Tuple.Create(resource != null, resource);
