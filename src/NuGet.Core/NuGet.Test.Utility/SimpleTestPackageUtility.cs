@@ -253,9 +253,7 @@ namespace NuGet.Test.Utility
                                     identity,
                                     root,
                                     NullLogger.Instance,
-                                    false,
                                     saveMode,
-                                    false,
                                     XmlDocFileSaveMode.None),
                                     CancellationToken.None);
                         }
